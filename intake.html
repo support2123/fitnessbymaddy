@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>New Client Intake · Fitness by Maddy</title>
+<meta name="description" content="Tell Maddy about your goals, lifestyle, and preferences so your program can be tailored to you.">
+<link rel="stylesheet" href="/css/forms.css">
+</head>
+<body>
+<main class="form-shell">
+  <div class="form-brand">Fitness by Maddy</div>
+  <div class="form-eyebrow">Step 1 of 1</div>
+  <h1 class="form-title">Your <em>Intake</em></h1>
+  <p class="form-sub">Two minutes. Helps Maddy build a plan that actually fits your body, goals, and schedule.</p>
+
+  <div id="msg"></div>
+  <form id="form" novalidate>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="name">Full name</label>
+        <input class="form-input" id="name" name="name" required autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="age">Age</label>
+        <input class="form-input" id="age" name="age" type="number" min="14" max="90" inputmode="numeric">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="phone">WhatsApp number</label>
+        <input class="form-input" id="phone" name="phone" required autocomplete="tel" placeholder="+91…">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="email">Email</label>
+        <input class="form-input" id="email" name="email" type="email" autocomplete="email">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="goal">Main goal</label>
+      <select class="form-select" id="goal" name="goal" required>
+        <option value="">Select…</option>
+        <option>Fat loss</option>
+        <option>Build muscle / tone</option>
+        <option>PCOS / hormonal</option>
+        <option>40+ fitness / joint-safe</option>
+        <option>General strength</option>
+        <option>Not sure — want guidance</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="equipment">Equipment access</label>
+      <select class="form-select" id="equipment" name="equipment">
+        <option value="">Select…</option>
+        <option>Full gym</option>
+        <option>Home — dumbbells + bands</option>
+        <option>Bodyweight only</option>
+        <option>Hotel / travel</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="schedule">Workout days per week</label>
+      <select class="form-select" id="schedule" name="schedule">
+        <option value="">Select…</option>
+        <option>2–3 days</option>
+        <option>4 days</option>
+        <option>5 days</option>
+        <option>6+ days</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="diet_pref">Diet preference</label>
+      <select class="form-select" id="diet_pref" name="diet_pref">
+        <option value="">Select…</option>
+        <option>Veg</option>
+        <option>Non-veg</option>
+        <option>Eggetarian</option>
+        <option>Vegan</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="injuries">Any injuries, conditions, or medications?</label>
+      <textarea class="form-textarea" id="injuries" name="injuries" placeholder="e.g. lower-back issue, PCOS, thyroid, BP…"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Starting photos (front / side / back) — optional</label>
+      <label class="photo-input-wrap">
+        Tap to upload up to 3 photos
+        <input type="file" id="photos" accept="image/*" multiple>
+      </label>
+      <div class="photo-preview" id="photoPreview"></div>
+    </div>
+
+    <input type="hidden" id="lead" name="lead">
+    <input type="hidden" id="client" name="client">
+
+    <button class="form-submit" type="submit" id="submitBtn">Submit intake</button>
+  </form>
+  <p class="form-note">Your data is stored securely. Only Maddy and her team see it.</p>
+</main>
+
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  document.getElementById('lead').value = params.get('lead') || '';
+  document.getElementById('client').value = params.get('client') || '';
+
+  const photos = [];
+  const photoInput = document.getElementById('photos');
+  const preview = document.getElementById('photoPreview');
+  photoInput.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []).slice(0, 3);
+    photos.length = 0;
+    preview.innerHTML = '';
+    for (const f of files) {
+      const dataUrl = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); });
+      photos.push({ name: f.name, type: f.type, data: dataUrl });
+      const img = document.createElement('img'); img.src = dataUrl; preview.appendChild(img);
+    }
+  });
+
+  const form = document.getElementById('form');
+  const btn = document.getElementById('submitBtn');
+  const msg = document.getElementById('msg');
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    msg.innerHTML = '';
+    btn.disabled = true; btn.textContent = 'Submitting…';
+
+    const payload = {
+      lead: form.lead.value || undefined,
+      client: form.client.value || undefined,
+      name: form.name.value.trim(),
+      phone: form.phone.value.trim(),
+      email: form.email.value.trim(),
+      age: form.age.value,
+      goal: form.goal.value,
+      equipment: form.equipment.value,
+      schedule: form.schedule.value,
+      diet_pref: form.diet_pref.value,
+      injuries: form.injuries.value.trim(),
+      photos,
+    };
+
+    try {
+      const r = await fetch('/api/lead-intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await r.json();
+      if (!r.ok || !data.ok) throw new Error(data.error || 'failed');
+      msg.innerHTML = '<div class="form-success">Got it 🙌 Maddy will take it from here — you\'ll hear on WhatsApp.</div>';
+      form.reset();
+    } catch (e) {
+      msg.innerHTML = '<div class="form-error">Something went wrong. Please try again or WhatsApp +91 70824 78374.</div>';
+      btn.disabled = false; btn.textContent = 'Submit intake';
+    }
+  });
+})();
+</script>
+</body>
+</html>

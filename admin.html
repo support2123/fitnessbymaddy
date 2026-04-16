@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · Fitness by Maddy</title>
+<link rel="stylesheet" href="/css/forms.css">
+<style>
+  body { padding: 40px 24px; }
+  .dash { max-width: 960px; margin: 0 auto; }
+  .dash-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+  .dash-title { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; }
+  .dash-title em { font-style: italic; color: #B8965A; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 2px; background: #E8E3DC; margin-bottom: 24px; }
+  .kpi { background: #fff; padding: 24px; }
+  .kpi-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #6B6B6B; margin-bottom: 8px; }
+  .kpi-value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: #2C2C2C; line-height: 1; }
+  .kpi-sub { font-size: 12px; color: #6B6B6B; margin-top: 6px; }
+  .panel { background: #fff; padding: 24px; margin-bottom: 16px; border: 1px solid #E8E3DC; border-radius: 2px; }
+  .panel-title { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #B8965A; margin-bottom: 16px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #F0EAE0; }
+  th { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #6B6B6B; font-weight: 600; }
+  .login-box { max-width: 400px; margin: 120px auto; }
+  .logout-btn { background: none; border: 1.5px solid #2C2C2C; padding: 8px 18px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; color: #2C2C2C; }
+  .logout-btn:hover { background: #2C2C2C; color: #fff; }
+  .prog-pill { display: inline-block; background: #F0EAE0; padding: 4px 10px; border-radius: 999px; font-size: 11px; color: #2C2C2C; margin: 2px; }
+  .prog-pill strong { color: #B8965A; margin-left: 4px; }
+</style>
+</head>
+<body>
+
+<div id="loginView" class="login-box form-shell" style="display:none">
+  <div class="form-brand">Fitness by Maddy</div>
+  <div class="form-eyebrow">Admin</div>
+  <h1 class="form-title">Sign <em>In</em></h1>
+  <p class="form-sub">Magic-link to your Supabase-authorised email.</p>
+  <div id="loginMsg"></div>
+  <form id="loginForm">
+    <div class="form-group">
+      <label class="form-label" for="email">Email</label>
+      <input class="form-input" id="email" type="email" required autocomplete="email">
+    </div>
+    <button class="form-submit" type="submit">Send magic link</button>
+  </form>
+</div>
+
+<div id="dashView" class="dash" style="display:none">
+  <div class="dash-head">
+    <h1 class="dash-title">Daily <em>Ops</em></h1>
+    <button class="logout-btn" id="logoutBtn">Sign out</button>
+  </div>
+  <div id="dashMsg"></div>
+  <div class="kpi-grid" id="kpis"></div>
+  <div class="panel">
+    <div class="panel-title">Active Clients by Program</div>
+    <div id="byProgram"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Escalations Awaiting Maddy</div>
+    <table><thead><tr><th>When</th><th>Trigger</th><th>Phone</th><th>Detail</th></tr></thead>
+      <tbody id="escBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+(async function () {
+  // Supabase client is initialised from public env keys exposed at window.__ENV.
+  // In production you'd render this from the server; for now, hardcode the anon URL/key into a small
+  // /api/admin/env endpoint OR read from meta tags. Fallback: prompt once and cache in localStorage.
+  let envUrl = localStorage.getItem('sb_url');
+  let envKey = localStorage.getItem('sb_anon');
+  if (!envUrl || !envKey) {
+    envUrl = prompt('Supabase URL:') || '';
+    envKey = prompt('Supabase anon key:') || '';
+    if (envUrl && envKey) {
+      localStorage.setItem('sb_url', envUrl);
+      localStorage.setItem('sb_anon', envKey);
+    }
+  }
+  if (!envUrl || !envKey) { document.body.innerHTML = '<p style="text-align:center;margin:80px 20px">Supabase config missing.</p>'; return; }
+
+  const sb = window.supabase.createClient(envUrl, envKey);
+  const loginView = document.getElementById('loginView');
+  const dashView = document.getElementById('dashView');
+
+  const { data: session } = await sb.auth.getSession();
+  if (session?.session) {
+    await showDash(session.session.access_token);
+  } else {
+    loginView.style.display = 'block';
+  }
+
+  document.getElementById('loginForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href } });
+    const box = document.getElementById('loginMsg');
+    box.innerHTML = error
+      ? '<div class="form-error">' + error.message + '</div>'
+      : '<div class="form-success">Check your email for a sign-in link.</div>';
+  });
+
+  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+    await sb.auth.signOut(); location.reload();
+  });
+
+  async function showDash(token) {
+    loginView.style.display = 'none';
+    dashView.style.display = 'block';
+    try {
+      const r = await fetch('/api/admin/stats', { headers: { Authorization: 'Bearer ' + token } });
+      const d = await r.json();
+      if (!r.ok || !d.ok) throw new Error(d.error || 'failed');
+      renderKpis(d);
+      renderByProgram(d.active_by_program || {});
+      renderEsc(d.escalations_open || []);
+    } catch (e) {
+      document.getElementById('dashMsg').innerHTML = '<div class="form-error">' + (e.message || 'Failed to load') + '</div>';
+    }
+  }
+
+  function renderKpis(d) {
+    const items = [
+      ['New leads today', d.new_leads_today],
+      ['New leads this week', d.new_leads_week],
+      ['Conversion rate (week)', (d.conversion_rate_week || 0) + '%'],
+      ['Active clients', d.active_clients],
+      ['Pending check-ins', d.pending_checkins],
+      ['Programs this week', d.programs_week],
+      ['Flagged (needs review)', d.flagged_week],
+      ['Escalations open', (d.escalations_open || []).length],
+    ];
+    const html = items.map(([label, val]) =>
+      `<div class="kpi"><div class="kpi-label">${label}</div><div class="kpi-value">${val ?? '-'}</div></div>`).join('');
+    document.getElementById('kpis').innerHTML = html;
+  }
+
+  function renderByProgram(byProg) {
+    const entries = Object.entries(byProg);
+    document.getElementById('byProgram').innerHTML = entries.length
+      ? entries.map(([p, n]) => `<span class="prog-pill">${labelFor(p)} <strong>${n}</strong></span>`).join('')
+      : '<p style="color:#6B6B6B;font-size:13px">No active clients yet.</p>';
+  }
+
+  function renderEsc(rows) {
+    document.getElementById('escBody').innerHTML = rows.length
+      ? rows.map((r) => `<tr><td>${fmt(r.created_at)}</td><td>${r.trigger}</td><td>${maskPhone(r.phone)}</td><td>${(r.detail || '').slice(0,140)}</td></tr>`).join('')
+      : '<tr><td colspan="4" style="text-align:center;color:#6B6B6B">All clear ✨</td></tr>';
+  }
+
+  function labelFor(p) {
+    return {
+      '6wk_gym': '6-Week Gym', '6wk_home': '6-Week Home', '12wk': '12-Week Flagship',
+      'pcos': 'PCOS Warrior', '40plus': '40+ Strong', 'zoom_trial': 'Zoom Trial', 'zoom_pack': 'Zoom Pack',
+    }[p] || p;
+  }
+  function fmt(iso) { try { return new Date(iso).toLocaleString(); } catch { return iso; } }
+  function maskPhone(p) { if (!p) return '-'; const d = String(p).replace(/\D/g,''); return d.length < 6 ? '+X…' : `+${d.slice(0,2)}XXX…${d.slice(-3)}`; }
+})();
+</script>
+</body>
+</html>
