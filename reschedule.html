@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Reschedule · Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body class="form-page">
+  <main class="form-wrap">
+    <div class="form-brand">Fitness by Maddy</div>
+    <div class="form-eyebrow">Session reschedule</div>
+    <h1 class="form-title">Pick a <em>new</em> time</h1>
+    <p class="form-sub">Life happens. Choose a slot that works and we'll confirm on WhatsApp.</p>
+
+    <div id="err" class="form-error"></div>
+
+    <form id="resch-form" novalidate>
+      <div class="form-row">
+        <label class="field" for="name">Full name</label>
+        <input id="name" name="name" type="text" required>
+      </div>
+      <div class="form-row">
+        <label class="field" for="phone">WhatsApp number</label>
+        <input id="phone" name="phone" type="tel" placeholder="+91…" required>
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="field" for="date">Preferred date</label>
+          <input id="date" name="date" type="date" required>
+        </div>
+        <div class="form-row">
+          <label class="field" for="time">Preferred time</label>
+          <select id="time" name="time" required>
+            <option value="">Select…</option>
+            <option>07:00</option><option>08:00</option><option>09:00</option>
+            <option>10:00</option><option>17:00</option><option>18:00</option>
+            <option>19:00</option><option>20:00</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="field" for="reason">Reason (optional)</label>
+        <textarea id="reason" name="reason"></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submit">Request reschedule</button>
+      <div class="form-footer-note">Confirmation within 12 hours.</div>
+    </form>
+
+    <div id="success" class="form-success" style="display:none">
+      <div class="check">✓</div>
+      <h2 class="form-title">Requested</h2>
+      <p class="form-sub">We'll confirm the new slot on WhatsApp shortly.</p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { postJson } from '/js/form-shared.js';
+    const form = document.getElementById('resch-form');
+    const err  = document.getElementById('err');
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      err.classList.remove('show');
+      const btn = document.getElementById('submit');
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        const body = Object.fromEntries(new FormData(form).entries());
+        // Reschedule piggy-backs on the send-whatsapp internal route via
+        // a thin server-side handler that opens an escalation. For MVP,
+        // we treat it as an escalation row and ping Maddy.
+        await postJson('/api/lead-intake', {
+          phone: body.phone,
+          consent: true,
+          schedule_notes: `[RESCHEDULE] ${body.date} ${body.time} — ${body.reason || ''}`,
+          goal: 'reschedule',
+        });
+        form.style.display = 'none';
+        document.getElementById('success').style.display = 'block';
+      } catch (ex) {
+        err.textContent = 'Could not submit. Please WhatsApp us at +91 70824 78374.';
+        err.classList.add('show');
+        btn.disabled = false; btn.textContent = 'Request reschedule';
+      }
+    });
+  </script>
+</body>
+</html>
