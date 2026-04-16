@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intake · Fitness by Maddy</title>
+  <meta name="description" content="Quick 2-minute onboarding form — age, goal, injuries, diet, schedule.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body class="form-page">
+  <main class="form-shell">
+    <div class="form-eyebrow">Welcome</div>
+    <h1 class="form-title">Let's get to know<br>you</h1>
+    <p class="form-sub">Two minutes. Honest answers only — this shapes every plan we send.</p>
+
+    <form id="intakeForm" novalidate>
+      <div class="form-field">
+        <label for="name">Full name</label>
+        <input id="name" name="name" type="text" required>
+      </div>
+      <div class="form-field">
+        <label for="phone">WhatsApp number (with country code)</label>
+        <input id="phone" name="phone" type="tel" placeholder="+91 70824 78374" required>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="age">Age</label>
+          <input id="age" name="age" type="number" min="14" max="90" required>
+        </div>
+        <div class="form-field">
+          <label for="experience">Training experience</label>
+          <select id="experience" name="experience" required>
+            <option value="">Select</option>
+            <option>Beginner</option>
+            <option>Intermediate</option>
+            <option>Advanced</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="height_cm">Height (cm)</label>
+          <input id="height_cm" name="height_cm" type="number" min="120" max="220">
+        </div>
+        <div class="form-field">
+          <label for="weight_kg">Weight (kg)</label>
+          <input id="weight_kg" name="weight_kg" type="number" min="30" max="200" step="0.1">
+        </div>
+      </div>
+      <div class="form-field">
+        <label for="goal">Primary goal</label>
+        <select id="goal" name="goal" required>
+          <option value="">Select</option>
+          <option>Fat loss</option>
+          <option>Muscle / strength</option>
+          <option>PCOS / hormonal</option>
+          <option>40+ fitness</option>
+          <option>General health</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="diet">Diet preference</label>
+        <select id="diet" name="diet" required>
+          <option value="">Select</option>
+          <option>Vegetarian</option>
+          <option>Eggetarian</option>
+          <option>Non-vegetarian</option>
+          <option>Vegan</option>
+          <option>Jain</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="schedule">Training days per week</label>
+        <select id="schedule" name="schedule" required>
+          <option value="">Select</option>
+          <option>2</option><option>3</option><option>4</option>
+          <option>5</option><option>6</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="injuries">Injuries or medical conditions</label>
+        <textarea id="injuries" name="injuries" placeholder="Back, knees, PCOS, meds, pregnancy, anything relevant. Leave blank if none."></textarea>
+      </div>
+      <div class="form-field">
+        <label for="notes">Anything else Maddy should know</label>
+        <textarea id="notes" name="notes"></textarea>
+      </div>
+
+      <button class="btn-submit" type="submit" id="submitBtn">Send it</button>
+      <div id="status" class="form-status" role="status" aria-live="polite"></div>
+    </form>
+  </main>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(location.search);
+      const leadId = params.get('lead');
+      const form = document.getElementById('intakeForm');
+      const btn  = document.getElementById('submitBtn');
+      const st   = document.getElementById('status');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        st.textContent = ''; st.className = 'form-status';
+        const fd = new FormData(form);
+        const payload = Object.fromEntries(fd.entries());
+        if (leadId) payload.lead_id = leadId;
+        btn.disabled = true;
+        try {
+          const r = await fetch('/api/lead-intake', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!r.ok) throw new Error((await r.json()).error || 'Failed');
+          st.className = 'form-status ok';
+          st.textContent = 'Got it. Maddy\u2019s team will follow up on WhatsApp.';
+          form.reset();
+        } catch (err) {
+          st.className = 'form-status err';
+          st.textContent = 'Something broke: ' + err.message;
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

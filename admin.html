@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+  <style>
+    .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
+    .admin-head { display:flex; justify-content: space-between; align-items:center; margin-bottom: 28px; }
+    .admin-head h1 { font-family: 'Bebas Neue', sans-serif; font-size: 40px; letter-spacing: 3px; color: var(--charcoal); }
+    .admin-head button { background: transparent; border: 1.5px solid var(--charcoal); padding: 8px 16px; border-radius: 3px; cursor: pointer; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 32px; }
+    .card { background: white; padding: 20px; border-radius: 4px; box-shadow: 0 2px 14px rgba(0,0,0,0.04); }
+    .card-label { font-size: 11px; letter-spacing: 2px; color: var(--mid-grey); text-transform: uppercase; margin-bottom: 6px; }
+    .card-value { font-family: 'Bebas Neue', sans-serif; font-size: 40px; color: var(--charcoal); letter-spacing: 2px; }
+    .panel { background: white; padding: 24px; border-radius: 4px; box-shadow: 0 2px 14px rgba(0,0,0,0.04); margin-bottom: 20px; }
+    .panel h2 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: var(--charcoal); margin-bottom: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 4px; border-bottom: 1px solid var(--light-grey); }
+    th { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); }
+    .program-chips { display:flex; flex-wrap: wrap; gap: 8px; }
+    .chip { background: var(--sand); padding: 6px 12px; border-radius: 3px; font-size: 12px; }
+    .chip strong { color: var(--gold); margin-left: 4px; }
+    .empty { color: var(--mid-grey); font-size: 13px; }
+    .login-card { max-width: 360px; margin: 120px auto; }
+  </style>
+</head>
+<body style="background: var(--cream);">
+  <div id="loginView" class="form-page" style="display:none;">
+    <main class="form-shell login-card">
+      <div class="form-eyebrow">Admin</div>
+      <h1 class="form-title">Sign in</h1>
+      <form id="loginForm">
+        <div class="form-field"><label>Email</label><input id="email" type="email" required></div>
+        <div class="form-field"><label>Password</label><input id="password" type="password" required></div>
+        <button class="btn-submit" type="submit">Sign in</button>
+        <div id="loginStatus" class="form-status"></div>
+      </form>
+    </main>
+  </div>
+
+  <div id="dashView" class="admin-wrap" style="display:none;">
+    <div class="admin-head">
+      <h1>Ops Dashboard</h1>
+      <button id="logoutBtn" type="button">Sign out</button>
+    </div>
+
+    <div class="cards">
+      <div class="card"><div class="card-label">Leads today</div><div class="card-value" id="lt">—</div></div>
+      <div class="card"><div class="card-label">Leads this week</div><div class="card-value" id="lw">—</div></div>
+      <div class="card"><div class="card-label">Conversion %</div><div class="card-value" id="cr">—</div></div>
+      <div class="card"><div class="card-label">Programs / week</div><div class="card-value" id="pw">—</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Active clients by program</h2>
+      <div id="activePrograms" class="program-chips"><span class="empty">Loading…</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>Pending check-ins</h2>
+      <table><thead><tr><th>Client</th><th>Week</th><th>Phone</th></tr></thead>
+        <tbody id="pendingBody"><tr><td colspan="3" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Escalations awaiting Maddy</h2>
+      <table><thead><tr><th>Phone</th><th>Reason</th><th>When</th></tr></thead>
+        <tbody id="escBody"><tr><td colspan="3" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+
+    // These are public-safe (anon + URL).
+    const SUPABASE_URL = window.__SUPABASE_URL || '';
+    const SUPABASE_ANON = window.__SUPABASE_ANON || '';
+    const supa = SUPABASE_URL && SUPABASE_ANON ? createClient(SUPABASE_URL, SUPABASE_ANON) : null;
+
+    const loginView = document.getElementById('loginView');
+    const dashView  = document.getElementById('dashView');
+
+    async function boot() {
+      if (!supa) {
+        loginView.style.display = 'flex';
+        document.getElementById('loginStatus').textContent = 'Supabase not configured. Inject window.__SUPABASE_URL and window.__SUPABASE_ANON.';
+        return;
+      }
+      const { data: { session } } = await supa.auth.getSession();
+      if (session) showDash(session.access_token);
+      else loginView.style.display = 'flex';
+    }
+
+    document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const { data, error } = await supa.auth.signInWithPassword({ email, password });
+      const st = document.getElementById('loginStatus');
+      if (error) { st.className = 'form-status err'; st.textContent = error.message; return; }
+      showDash(data.session.access_token);
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+      await supa.auth.signOut();
+      location.reload();
+    });
+
+    async function showDash(token) {
+      loginView.style.display = 'none';
+      dashView.style.display = 'block';
+      const r = await fetch('/api/admin', { headers: { Authorization: `Bearer ${token}` } });
+      if (!r.ok) {
+        dashView.innerHTML = `<p class="empty">Access denied (${r.status}). Ensure your email is in ADMIN_ALLOWED_EMAILS.</p>`;
+        return;
+      }
+      const d = await r.json();
+      document.getElementById('lt').textContent = d.leads_today;
+      document.getElementById('lw').textContent = d.leads_week;
+      document.getElementById('cr').textContent = d.conversion_rate_pct + '%';
+      document.getElementById('pw').textContent = d.programs_generated_week;
+
+      const ap = document.getElementById('activePrograms');
+      const programs = Object.entries(d.active_by_program || {});
+      ap.innerHTML = programs.length
+        ? programs.map(([p, n]) => `<span class="chip">${p}<strong>${n}</strong></span>`).join('')
+        : '<span class="empty">No active clients yet.</span>';
+
+      const pb = document.getElementById('pendingBody');
+      pb.innerHTML = (d.pending_checkins || []).length
+        ? d.pending_checkins.map((c) => `<tr><td>${escapeHtml(c.name || '—')}</td><td>${c.week_no}</td><td>${maskPhone(c.phone)}</td></tr>`).join('')
+        : '<tr><td colspan="3" class="empty">All caught up.</td></tr>';
+
+      const eb = document.getElementById('escBody');
+      eb.innerHTML = (d.escalations || []).length
+        ? d.escalations.map((e) => `<tr><td>${maskPhone(e.phone)}</td><td>${escapeHtml(e.escalation_reason || '')}</td><td>${new Date(e.created_at).toLocaleString()}</td></tr>`).join('')
+        : '<tr><td colspan="3" class="empty">No escalations.</td></tr>';
+    }
+
+    function maskPhone(p) {
+      if (!p) return '';
+      return p.slice(0,4) + 'XXX...' + p.slice(-3);
+    }
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+    }
+
+    boot();
+  </script>
+  <script>
+    // Inject Supabase public config. Replace at deploy time or via a
+    // build-time snippet. Keeping these public is safe (anon key).
+    window.__SUPABASE_URL  = window.__SUPABASE_URL  || '';
+    window.__SUPABASE_ANON = window.__SUPABASE_ANON || '';
+  </script>
+</body>
+</html>
