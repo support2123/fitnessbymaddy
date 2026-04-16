@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Intake · Fitness by Maddy</title>
+  <meta name="description" content="Quick intake form to personalise your FitnessByMaddy program.">
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+  <div class="form-page">
+    <div class="form-shell">
+      <p class="section-eyebrow">New Client Intake</p>
+      <h1>Tell Maddy <em>About You</em></h1>
+      <p class="subhead">2 minutes. The more honest this is, the better the plan — no judgement, ever.</p>
+
+      <form class="form-card" id="intake-form" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Full name</label>
+            <input class="form-input" name="name" required autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">WhatsApp number</label>
+            <input class="form-input" name="phone" required placeholder="+91…" autocomplete="tel">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input class="form-input" type="email" name="email" autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Age</label>
+            <input class="form-input" type="number" name="age" min="14" max="90" required>
+          </div>
+        </div>
+
+        <div class="form-row three">
+          <div class="form-group">
+            <label class="form-label">Sex</label>
+            <select class="form-select" name="sex" required>
+              <option value="">Select</option>
+              <option value="F">Female</option>
+              <option value="M">Male</option>
+              <option value="X">Prefer not to say</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Height (cm)</label>
+            <input class="form-input" type="number" name="height_cm" min="120" max="220">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Weight (kg)</label>
+            <input class="form-input" type="number" step="0.1" name="weight_kg">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Primary goal</label>
+          <select class="form-select" name="goal" required>
+            <option value="">Select one</option>
+            <option value="fat_loss">Fat loss</option>
+            <option value="muscle_gain">Muscle gain</option>
+            <option value="pcos">PCOS management</option>
+            <option value="40plus">40+ strength &amp; mobility</option>
+            <option value="general">General fitness</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Any injuries / medical conditions / medications?</label>
+          <textarea class="form-textarea" name="injuries" placeholder="Eg. lower back pain, PCOS, BP medication…"></textarea>
+          <div class="form-help">Be thorough — this keeps your plan safe.</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Diet preference</label>
+            <select class="form-select" name="diet_pref">
+              <option value="non_veg">Non-veg</option>
+              <option value="veg">Vegetarian</option>
+              <option value="vegan">Vegan</option>
+              <option value="eggetarian">Eggetarian</option>
+              <option value="jain">Jain</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Equipment</label>
+            <select class="form-select" name="equipment">
+              <option value="full_gym">Full gym</option>
+              <option value="home_basic">Home — dumbbells / bands</option>
+              <option value="bodyweight">Bodyweight only</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Typical week schedule</label>
+          <textarea class="form-textarea" name="schedule" placeholder="Eg. Mon–Fri 7pm, Sat–Sun flexible. 45–60 min per session."></textarea>
+        </div>
+
+        <button class="form-submit" type="submit">Submit Intake</button>
+        <div class="form-ok"  id="ok">Got it — Maddy will reach out on WhatsApp shortly.</div>
+        <div class="form-err" id="err">Something went wrong. Please try again or WhatsApp us.</div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  const leadId = params.get('lead');
+  const form = document.getElementById('intake-form');
+  const ok  = document.getElementById('ok');
+  const err = document.getElementById('err');
+
+  // Simple market detection from phone on client side (for the payload)
+  function market(phone) {
+    const p = (phone || '').replace(/[^\d+]/g, '');
+    if (p.startsWith('+91')  || p.startsWith('91'))  return 'IN';
+    if (p.startsWith('+971') || p.startsWith('971')) return 'UAE';
+    if (p.startsWith('+44')  || p.startsWith('44'))  return 'UK';
+    return 'GLOBAL';
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    ok.classList.remove('show'); err.classList.remove('show');
+    const btn = form.querySelector('button[type=submit]');
+    btn.disabled = true;
+
+    const data = Object.fromEntries(new FormData(form).entries());
+    ['age','height_cm','weight_kg'].forEach(k => { if (data[k]) data[k] = Number(data[k]); });
+    if (leadId) data.lead_id = leadId;
+    data.market = market(data.phone);
+
+    try {
+      const r = await fetch('/api/lead-intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!r.ok) throw new Error('bad status');
+      ok.classList.add('show');
+      form.reset();
+    } catch (_) {
+      err.classList.add('show');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>

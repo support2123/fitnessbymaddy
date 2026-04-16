@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session · Fitness by Maddy</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+  <div class="form-page">
+    <div class="form-shell">
+      <p class="section-eyebrow">Missed a Session?</p>
+      <h1>Let's <em>Reschedule</em></h1>
+      <p class="subhead">No stress — consistency matters more than perfection. Pick a new slot below and Maddy will confirm on WhatsApp.</p>
+
+      <form class="form-card" id="reschedule-form" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Full name</label>
+            <input class="form-input" name="name" required autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">WhatsApp number</label>
+            <input class="form-input" name="phone" required placeholder="+91…" autocomplete="tel">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Which session did you miss?</label>
+          <input class="form-input" name="missed_session" placeholder="Eg. Tuesday 7pm strength">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Preferred new date</label>
+            <input class="form-input" type="date" name="new_date" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Preferred time</label>
+            <input class="form-input" type="time" name="new_time" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Reason / note (optional)</label>
+          <textarea class="form-textarea" name="note" placeholder="Anything Maddy should know…"></textarea>
+        </div>
+
+        <button class="form-submit" type="submit">Request Reschedule</button>
+        <div class="form-ok"  id="ok">Logged. Maddy will confirm on WhatsApp within 24 hrs.</div>
+        <div class="form-err" id="err">Something glitched — please WhatsApp us directly.</div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+(function () {
+  const form = document.getElementById('reschedule-form');
+  const ok  = document.getElementById('ok');
+  const err = document.getElementById('err');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    ok.classList.remove('show'); err.classList.remove('show');
+    const btn = form.querySelector('button[type=submit]');
+    btn.disabled = true;
+
+    const data = Object.fromEntries(new FormData(form).entries());
+    // Reschedule piggy-backs on the messages audit trail — no dedicated table
+    // is needed per the brief. Maddy reviews these in the dashboard.
+    const payload = {
+      phone: data.phone, name: data.name,
+      template: 'reschedule_request',
+      body: `Reschedule requested — missed: ${data.missed_session || '?'}; new slot: ${data.new_date} ${data.new_time}; note: ${data.note || '—'}`
+    };
+
+    try {
+      const r = await fetch('/api/lead-intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: data.phone, name: data.name,
+          goal: 'reschedule',
+          injuries: '',
+          schedule: `Reschedule: ${data.missed_session || ''} → ${data.new_date} ${data.new_time}. ${data.note || ''}`
+        })
+      });
+      if (!r.ok) throw new Error('bad status');
+      ok.classList.add('show');
+      form.reset();
+    } catch (_) {
+      err.classList.add('show');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>

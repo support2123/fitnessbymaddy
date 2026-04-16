@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In · Fitness by Maddy</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+  <div class="form-page">
+    <div class="form-shell">
+      <p class="section-eyebrow">Weekly Check-In</p>
+      <h1 id="hdr">Week <em>—</em> Check-In</h1>
+      <p class="subhead">Numbers + a few photos. This is how next week's plan gets smarter.</p>
+
+      <form class="form-card" id="checkin-form" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Weight (kg)</label>
+            <input class="form-input" type="number" step="0.1" name="weight" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Waist (cm)</label>
+            <input class="form-input" type="number" step="0.1" name="waist">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Compliance this week (1–10)</label>
+            <input class="form-input" type="number" min="1" max="10" name="compliance_score" required>
+            <div class="form-help">How well did you stick to workouts + nutrition?</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Energy level (1–10)</label>
+            <input class="form-input" type="number" min="1" max="10" name="energy" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Any issues, aches, cravings, stress?</label>
+          <textarea class="form-textarea" name="issues" placeholder="Be honest. Maddy adjusts the plan based on this."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Progress photos (3)</label>
+          <div class="photo-row">
+            <label class="photo-slot"><span>Front</span><input type="file" accept="image/*" data-slot="0"></label>
+            <label class="photo-slot"><span>Side</span><input type="file" accept="image/*" data-slot="1"></label>
+            <label class="photo-slot"><span>Back</span><input type="file" accept="image/*" data-slot="2"></label>
+          </div>
+          <div class="form-help">Same lighting + pose each week = cleanest comparison.</div>
+        </div>
+
+        <button class="form-submit" type="submit">Submit Check-In</button>
+        <div class="form-ok"  id="ok">Submitted. Next week's plan will hit your WhatsApp.</div>
+        <div class="form-err" id="err">Couldn't save. Try again in a moment.</div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  const clientId = params.get('c');
+  const weekNo = Number(params.get('w'));
+  const form = document.getElementById('checkin-form');
+  const ok  = document.getElementById('ok');
+  const err = document.getElementById('err');
+
+  if (!clientId || !weekNo) {
+    err.textContent = "This link looks incomplete — please use the link Maddy WhatsApped you.";
+    err.classList.add('show');
+    form.querySelector('button').disabled = true;
+  } else {
+    document.getElementById('hdr').innerHTML = `Week <em>${weekNo}</em> Check-In`;
+  }
+
+  // Photo preview
+  form.querySelectorAll('input[type=file]').forEach(input => {
+    input.addEventListener('change', () => {
+      const f = input.files?.[0]; if (!f) return;
+      const slot = input.closest('.photo-slot');
+      const existing = slot.querySelector('img'); if (existing) existing.remove();
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      slot.appendChild(img);
+    });
+  });
+
+  // Upload photos to Supabase Storage via a signed public URL path is out of
+  // scope here — for now, the form stores the file NAMES and the backend picks
+  // them up from a future uploader. Simplest MVP: skip photo uploads and just
+  // record the metadata.
+  async function uploadPhotos() { return []; }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    ok.classList.remove('show'); err.classList.remove('show');
+    const btn = form.querySelector('button[type=submit]');
+    btn.disabled = true;
+
+    const data = Object.fromEntries(new FormData(form).entries());
+    ['weight','waist','compliance_score','energy'].forEach(k => { if (data[k]) data[k] = Number(data[k]); });
+    data.client_id = clientId;
+    data.week_no = weekNo;
+    try { data.photos_urls = await uploadPhotos(); } catch { data.photos_urls = []; }
+
+    try {
+      const r = await fetch('/api/checkin-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!r.ok) throw new Error('bad status');
+      ok.classList.add('show');
+      form.reset();
+      form.querySelectorAll('.photo-slot img').forEach(i => i.remove());
+    } catch (_) {
+      err.classList.add('show');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>
