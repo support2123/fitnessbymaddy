@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Reschedule · Fitness by Maddy</title>
+<link rel="stylesheet" href="/css/forms.css">
+</head>
+<body>
+<main class="form-shell">
+  <div class="form-brand">Fitness by Maddy</div>
+  <div class="form-eyebrow">Reschedule</div>
+  <h1 class="form-title">Missed a <em>Session?</em></h1>
+  <p class="form-sub">Life happens. Pick a slot that works and we'll shift it — no stress.</p>
+
+  <div id="msg"></div>
+  <form id="form" novalidate>
+    <div class="form-group">
+      <label class="form-label" for="name">Your name</label>
+      <input class="form-input" id="name" name="name" required autocomplete="name">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="phone">WhatsApp number</label>
+      <input class="form-input" id="phone" name="phone" required autocomplete="tel" placeholder="+91…">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="session_type">Session type</label>
+      <select class="form-select" id="session_type" name="session_type" required>
+        <option value="">Select…</option>
+        <option>Weekly check-in</option>
+        <option>Zoom 1-on-1</option>
+        <option>Onboarding call</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="preferred_date">Preferred date</label>
+        <input class="form-input" id="preferred_date" name="preferred_date" type="date" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="preferred_time">Preferred time</label>
+        <select class="form-select" id="preferred_time" name="preferred_time" required>
+          <option value="">Select…</option>
+          <option>Morning (7–10 am IST)</option>
+          <option>Afternoon (12–3 pm IST)</option>
+          <option>Evening (5–8 pm IST)</option>
+          <option>Late (8–10 pm IST)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="reason">What came up? (optional)</label>
+      <textarea class="form-textarea" id="reason" name="reason"></textarea>
+    </div>
+    <button class="form-submit" type="submit" id="submitBtn">Request reschedule</button>
+  </form>
+  <p class="form-note">Maddy's team will confirm on WhatsApp within 24 hours.</p>
+</main>
+
+<script>
+(function () {
+  const form = document.getElementById('form');
+  const btn = document.getElementById('submitBtn');
+  const msg = document.getElementById('msg');
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    msg.innerHTML = '';
+    btn.disabled = true; btn.textContent = 'Sending…';
+    const payload = {
+      name: form.name.value.trim(),
+      phone: form.phone.value.trim(),
+      session_type: form.session_type.value,
+      preferred_date: form.preferred_date.value,
+      preferred_time: form.preferred_time.value,
+      reason: form.reason.value.trim(),
+      kind: 'reschedule',
+    };
+    try {
+      const r = await fetch('/api/lead-intake', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, goal: 'reschedule', notes: JSON.stringify(payload) }),
+      });
+      const data = await r.json();
+      if (!r.ok || !data.ok) throw new Error(data.error || 'failed');
+      msg.innerHTML = '<div class="form-success">Got it 🙌 We\'ll confirm on WhatsApp soon.</div>';
+      form.reset();
+      btn.textContent = 'Sent'; btn.disabled = true;
+    } catch (e) {
+      msg.innerHTML = '<div class="form-error">Something went wrong. WhatsApp us at +91 70824 78374.</div>';
+      btn.disabled = false; btn.textContent = 'Request reschedule';
+    }
+  });
+})();
+</script>
+</body>
+</html>

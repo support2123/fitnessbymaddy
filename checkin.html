@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Weekly Check-in · Fitness by Maddy</title>
+<link rel="stylesheet" href="/css/forms.css">
+</head>
+<body>
+<main class="form-shell">
+  <div class="form-brand">Fitness by Maddy</div>
+  <div class="form-eyebrow" id="weekLabel">Weekly check-in</div>
+  <h1 class="form-title">Let's <em>Check In</em></h1>
+  <p class="form-sub">3 minutes. These numbers shape your plan next week.</p>
+
+  <div id="msg"></div>
+  <form id="form" novalidate>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="weight">Weight (kg)</label>
+        <input class="form-input" id="weight" name="weight" type="number" step="0.1" inputmode="decimal" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="waist">Waist (cm)</label>
+        <input class="form-input" id="waist" name="waist" type="number" step="0.5" inputmode="decimal">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Compliance (plan followed)</label>
+      <div class="form-scale" data-scale="compliance" id="scale-compliance"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Energy level this week</label>
+      <div class="form-scale" data-scale="energy" id="scale-energy"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="issues">Anything bothering you? (soreness, pain, cravings, mood, sleep)</label>
+      <textarea class="form-textarea" id="issues" name="issues"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="next_focus">One thing you want to improve next week</label>
+      <input class="form-input" id="next_focus" name="next_focus" type="text">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Progress photos (front / side / back)</label>
+      <label class="photo-input-wrap">
+        Tap to upload up to 3 photos
+        <input type="file" id="photos" accept="image/*" multiple>
+      </label>
+      <div class="photo-preview" id="photoPreview"></div>
+    </div>
+
+    <button class="form-submit" type="submit" id="submitBtn">Submit check-in</button>
+  </form>
+  <p class="form-note">Submitted securely. Maddy reviews every check-in.</p>
+</main>
+
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  const clientId = params.get('c');
+  const weekNo = parseInt(params.get('w'), 10);
+  const token = params.get('t') || '';
+  if (clientId && weekNo) document.getElementById('weekLabel').textContent = `Week ${weekNo} check-in`;
+
+  const state = { compliance: null, energy: null };
+  for (const key of ['compliance', 'energy']) {
+    const el = document.getElementById('scale-' + key);
+    for (let i = 1; i <= 10; i++) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = i;
+      b.addEventListener('click', () => {
+        state[key] = i;
+        el.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', 'false'));
+        b.setAttribute('aria-pressed', 'true');
+      });
+      el.appendChild(b);
+    }
+  }
+
+  const photos = [];
+  const photoInput = document.getElementById('photos');
+  const preview = document.getElementById('photoPreview');
+  photoInput.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []).slice(0, 3);
+    photos.length = 0; preview.innerHTML = '';
+    for (const f of files) {
+      const dataUrl = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); });
+      photos.push({ name: f.name, type: f.type, data: dataUrl });
+      const img = document.createElement('img'); img.src = dataUrl; preview.appendChild(img);
+    }
+  });
+
+  const form = document.getElementById('form');
+  const btn = document.getElementById('submitBtn');
+  const msg = document.getElementById('msg');
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    msg.innerHTML = '';
+    if (!clientId || !weekNo) { msg.innerHTML = '<div class="form-error">This link looks invalid. Please use the link Maddy sent you.</div>'; return; }
+    btn.disabled = true; btn.textContent = 'Submitting…';
+    const payload = {
+      client: clientId, week: weekNo, token,
+      weight: form.weight.value, waist: form.waist.value,
+      compliance: state.compliance, energy: state.energy,
+      issues: form.issues.value.trim(), next_focus: form.next_focus.value.trim(),
+      photos,
+    };
+    try {
+      const r = await fetch('/api/checkin-submit', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await r.json();
+      if (!r.ok || !data.ok) throw new Error(data.error || 'failed');
+      msg.innerHTML = data.duplicate
+        ? '<div class="form-success">Already submitted — all good 💛</div>'
+        : '<div class="form-success">Submitted 🙌 Your Week ' + (weekNo + 1) + ' plan will land on WhatsApp soon.</div>';
+      form.reset();
+      btn.textContent = 'Done'; btn.disabled = true;
+    } catch (e) {
+      msg.innerHTML = '<div class="form-error">Something went wrong. Please try again.</div>';
+      btn.disabled = false; btn.textContent = 'Submit check-in';
+    }
+  });
+})();
+</script>
+</body>
+</html>
