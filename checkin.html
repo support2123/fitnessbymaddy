@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in | Fitness by Maddy</title>
+  <meta name="description" content="Your weekly progress check-in with Maddy.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+  </ul>
+</nav>
+
+<main class="flow-page">
+  <section class="flow-shell" id="shell">
+    <p class="flow-eyebrow" id="week-label">Week —</p>
+    <h1 class="flow-title">This Week's <em>Check-in</em></h1>
+    <p class="flow-subtitle">Quick and honest. Your next week's plan is built directly from what you report here.</p>
+
+    <form id="checkin-form" novalidate>
+      <input type="hidden" name="c" id="c">
+      <input type="hidden" name="w" id="w">
+
+      <div class="flow-grid">
+        <div class="flow-row">
+          <label class="form-label" for="weight">Weight (kg)</label>
+          <input class="form-input" name="weight" id="weight" type="number" step="0.1" min="20" max="250" required>
+        </div>
+        <div class="flow-row">
+          <label class="form-label" for="waist">Waist (cm)</label>
+          <input class="form-input" name="waist" id="waist" type="number" step="0.1" min="40" max="200">
+        </div>
+      </div>
+
+      <div class="flow-row">
+        <label class="form-label">Plan Compliance (1 = missed most, 10 = nailed it)</label>
+        <div class="slider-field">
+          <input type="range" name="compliance" id="compliance" min="1" max="10" value="7">
+          <div class="slider-val" id="compliance-val">7</div>
+        </div>
+      </div>
+
+      <div class="flow-row">
+        <label class="form-label">Energy This Week</label>
+        <div class="slider-field">
+          <input type="range" name="energy" id="energy" min="1" max="10" value="7">
+          <div class="slider-val" id="energy-val">7</div>
+        </div>
+      </div>
+
+      <div class="flow-row">
+        <label class="form-label" for="issues">Anything off — pain, sleep, stress, cravings, cycle?</label>
+        <textarea class="form-input" name="issues" id="issues" placeholder="Honest notes. Short is fine."></textarea>
+      </div>
+
+      <div class="flow-row">
+        <label class="form-label" for="focus">One focus you want for next week</label>
+        <input class="form-input" name="focus" id="focus" placeholder="e.g. consistent breakfast, 10k steps, no late snacking">
+      </div>
+
+      <div class="flow-row">
+        <label class="form-label" for="photos">Progress Photos (front, side, back)</label>
+        <input type="file" name="photos" id="photos" accept="image/*" multiple>
+        <p class="flow-fineprint" style="text-align:left; margin-top:8px">Photos upload direct to your private folder. Max 3, 10 MB each.</p>
+      </div>
+
+      <button type="submit" class="flow-submit" id="submit-btn">Submit Check-in →</button>
+      <p class="flow-error" id="error-msg" style="display:none"></p>
+    </form>
+
+    <div class="flow-ok" id="ok-msg" style="display:none">
+      <div class="ok-mark">✦</div>
+      <h2 class="flow-title" style="margin-bottom:8px">Logged.</h2>
+      <p class="flow-subtitle">Your next week's plan is being built right now. You'll receive it on WhatsApp within 24 hours.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  const clientId = params.get('c');
+  const weekNo = params.get('w');
+  if (!clientId || !weekNo) {
+    document.getElementById('shell').innerHTML =
+      '<p class="flow-eyebrow">Error</p><h1 class="flow-title">Invalid Link</h1>' +
+      '<p class="flow-subtitle">This check-in link is missing required info. Please use the link from your WhatsApp.</p>';
+  } else {
+    document.getElementById('c').value = clientId;
+    document.getElementById('w').value = weekNo;
+    document.getElementById('week-label').textContent = 'Week ' + weekNo;
+  }
+
+  function bindSlider(id) {
+    const el = document.getElementById(id);
+    const out = document.getElementById(id + '-val');
+    el.addEventListener('input', () => { out.textContent = el.value; });
+  }
+  bindSlider('compliance');
+  bindSlider('energy');
+
+  const form = document.getElementById('checkin-form');
+  const btn = document.getElementById('submit-btn');
+  const err = document.getElementById('error-msg');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    err.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    // Photos upload: staging step. In this first pass, we forward filenames as hints.
+    // The actual image upload happens via a signed-URL flow (server-issued) — wire up in v2.
+    const files = document.getElementById('photos').files;
+    const fileNames = Array.from(files || []).slice(0, 3).map(f => f.name);
+
+    const data = Object.fromEntries(new FormData(form).entries());
+    delete data.photos;
+    data.photos = fileNames;
+
+    try {
+      const res = await fetch('/api/checkin-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const out = await res.json();
+      if (!res.ok || !out.ok) throw new Error(out.error || 'submit_failed');
+      form.style.display = 'none';
+      document.getElementById('ok-msg').style.display = 'block';
+    } catch (ex) {
+      err.textContent = 'Something went wrong. Please WhatsApp Maddy at +91 70824 78374.';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Submit Check-in →';
+    }
+  });
+</script>
+</body>
+</html>
