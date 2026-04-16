@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in · Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body class="form-page">
+  <main class="form-shell">
+    <div class="form-eyebrow" id="weekLabel">Week · Check-in</div>
+    <h1 class="form-title">How did<br>this week go?</h1>
+    <p class="form-sub">Numbers + photos + a one-liner. Takes 2 minutes. Shapes your next week's plan.</p>
+
+    <form id="checkinForm" novalidate>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="weight">Weight (kg)</label>
+          <input id="weight" name="weight" type="number" step="0.1" min="30" max="200" required>
+        </div>
+        <div class="form-field">
+          <label for="waist">Waist (cm)</label>
+          <input id="waist" name="waist" type="number" step="0.1" min="40" max="150">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="compliance">Compliance (1–10)</label>
+          <input id="compliance" name="compliance" type="number" min="1" max="10" required>
+          <div class="form-hint">How closely did you follow the plan?</div>
+        </div>
+        <div class="form-field">
+          <label for="energy">Energy (1–10)</label>
+          <input id="energy" name="energy" type="number" min="1" max="10" required>
+        </div>
+      </div>
+      <div class="form-field">
+        <label for="issues">Pain, fatigue, injury, stress</label>
+        <textarea id="issues" name="issues" placeholder="Anything off? Flag it here and Maddy will see it."></textarea>
+      </div>
+      <div class="form-field">
+        <label for="photos">Progress photos (3 — front / side / back)</label>
+        <input id="photos" name="photos" type="file" accept="image/*" multiple>
+        <div class="form-hint">Uploaded privately to your coaching folder.</div>
+      </div>
+
+      <button class="btn-submit" type="submit" id="submitBtn">Submit check-in</button>
+      <div id="status" class="form-status" role="status" aria-live="polite"></div>
+    </form>
+  </main>
+
+  <script type="module">
+    // Upload photos to Supabase Storage via a presigned endpoint would be
+    // ideal; for MVP we send file names only. Photos handled via WhatsApp.
+    const params = new URLSearchParams(location.search);
+    const clientId = params.get('c');
+    const weekNo   = params.get('w');
+    if (weekNo) document.getElementById('weekLabel').textContent = `Week ${weekNo} · Check-in`;
+
+    const form = document.getElementById('checkinForm');
+    const btn  = document.getElementById('submitBtn');
+    const st   = document.getElementById('status');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      st.textContent = ''; st.className = 'form-status';
+      if (!clientId || !weekNo) {
+        st.className = 'form-status err';
+        st.textContent = 'Missing client or week. Use the link Maddy sent you.';
+        return;
+      }
+      const fd = new FormData(form);
+      const photosInput = document.getElementById('photos');
+      const photoNames = Array.from(photosInput.files || []).map((f) => f.name);
+      const payload = {
+        client_id: clientId,
+        week_no: Number(weekNo),
+        weight: fd.get('weight'),
+        waist: fd.get('waist'),
+        compliance: fd.get('compliance'),
+        energy: fd.get('energy'),
+        issues: fd.get('issues'),
+        photos_urls: photoNames
+      };
+      btn.disabled = true;
+      try {
+        const r = await fetch('/api/checkin-submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!r.ok) throw new Error((await r.json()).error || 'Failed');
+        st.className = 'form-status ok';
+        st.textContent = 'Logged. Your next-week plan is on the way.';
+        form.reset();
+      } catch (err) {
+        st.className = 'form-status err';
+        st.textContent = 'Something broke: ' + err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
