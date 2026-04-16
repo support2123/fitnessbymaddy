@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+</nav>
+
+<div class="page-wrap">
+  <section class="form-hero">
+    <div class="form-container">
+      <p class="section-eyebrow">Zoom Session</p>
+      <h1 class="form-title">Reschedule <em>your session</em></h1>
+      <p class="form-sub">Pick a new slot — Maddy's team will confirm on WhatsApp within an hour.</p>
+
+      <form id="rescheduleForm" class="app-form" novalidate>
+        <div class="form-group">
+          <label class="form-label">Your WhatsApp number *</label>
+          <input class="form-input" name="phone" required placeholder="+91 …">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Original slot</label>
+          <input class="form-input" name="original_slot" placeholder="e.g. Wed 7 PM IST">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Preferred new slot *</label>
+          <input class="form-input" name="new_slot" required placeholder="Day + time">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reason (optional)</label>
+          <textarea class="form-input" name="reason" rows="3"></textarea>
+        </div>
+        <button class="btn-primary form-submit" type="submit">Request Reschedule</button>
+        <p class="form-status" id="rescheduleStatus"></p>
+      </form>
+    </div>
+  </section>
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+(function () {
+  const form = document.getElementById('rescheduleForm');
+  const status = document.getElementById('rescheduleStatus');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    status.textContent = 'Sending…';
+    const fd = new FormData(form);
+    const payload = Object.fromEntries(fd.entries());
+    // Lightweight: route through lead-intake endpoint as notes (escalates to Maddy).
+    payload.name = 'Reschedule request';
+    payload.goal = 'reschedule';
+    payload.notes = `RESCHEDULE: ${payload.original_slot || ''} → ${payload.new_slot}. Reason: ${payload.reason || ''}`;
+    try {
+      const r = await fetch('/api/lead-intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!r.ok) throw new Error('Failed');
+      status.textContent = "Thanks. Maddy's team will confirm on WhatsApp shortly.";
+      form.reset();
+    } catch {
+      status.textContent = 'Something went wrong. WhatsApp us directly.';
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

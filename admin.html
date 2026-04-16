@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ops Dashboard | Fitness by Maddy</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Site</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+  <section class="admin-wrap">
+    <div class="admin-head">
+      <div>
+        <p class="section-eyebrow">Internal</p>
+        <h1 class="form-title">Ops <em>Dashboard</em></h1>
+      </div>
+      <div class="admin-auth">
+        <input id="tokenInput" class="form-input" placeholder="Admin token" type="password">
+        <button class="btn-primary" onclick="refresh()">Load</button>
+      </div>
+    </div>
+
+    <div id="stats" class="stat-grid"></div>
+    <p id="err" class="form-status"></p>
+  </section>
+</div>
+
+<script>
+function refresh() {
+  const token = document.getElementById('tokenInput').value.trim();
+  if (!token) return;
+  localStorage.setItem('fbm_admin_token', token);
+  document.getElementById('err').textContent = '';
+  fetch('/api/admin-stats', { headers: { 'x-admin-token': token } })
+    .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e)))
+    .then(render)
+    .catch(err => {
+      document.getElementById('err').textContent = 'Error: ' + (err.error || JSON.stringify(err));
+    });
+}
+
+function card(label, value, sub = '') {
+  return `<div class="stat-card"><div class="stat-card-label">${label}</div>
+    <div class="stat-card-value">${value}</div>
+    ${sub ? `<div class="stat-card-sub">${sub}</div>` : ''}</div>`;
+}
+
+function render(s) {
+  const mix = Object.entries(s.program_mix || {})
+    .map(([k, v]) => `${k}: ${v}`).join(' · ') || '—';
+  const cr = (s.conversion_rate * 100).toFixed(1) + '%';
+  document.getElementById('stats').innerHTML = [
+    card('New leads today',    s.leads_today),
+    card('New leads (7d)',     s.leads_week),
+    card('Conversion rate',    cr, 'leads → paid'),
+    card('Active clients',     s.active_clients, mix),
+    card('Pending check-ins',  s.pending_checkins),
+    card('Programs this week', s.programs_this_week),
+    card('Escalations',        s.open_escalations, 'needs Maddy'),
+  ].join('');
+}
+
+const saved = localStorage.getItem('fbm_admin_token');
+if (saved) { document.getElementById('tokenInput').value = saved; refresh(); }
+</script>
+
+</body>
+</html>

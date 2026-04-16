@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in | Fitness by Maddy</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+</nav>
+
+<div class="page-wrap">
+  <section class="form-hero">
+    <div class="form-container">
+      <p class="section-eyebrow"><span id="weekLabel">Week —</span> · Check-in</p>
+      <h1 class="form-title">How was <em>this week?</em></h1>
+      <p class="form-sub">2 minutes. Tell Maddy the truth — your next plan depends on it.</p>
+
+      <form id="checkinForm" class="app-form" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Weight (kg)</label>
+            <input class="form-input" name="weight" type="number" step="0.1" min="30" max="250">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Waist (cm)</label>
+            <input class="form-input" name="waist" type="number" step="0.1" min="40" max="200">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Compliance (1–10) *</label>
+            <input class="form-input" name="compliance_score" type="number" min="1" max="10" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Energy (1–10) *</label>
+            <input class="form-input" name="energy" type="number" min="1" max="10" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Any issues? (pain, stress, schedule, hunger)</label>
+          <textarea class="form-input" name="issues" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">What do you want to focus on next week?</label>
+          <textarea class="form-input" name="next_week_focus" rows="2"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Progress photos (front / side / back)</label>
+          <input class="form-input" name="photos" type="file" accept="image/*" multiple>
+          <p class="form-hint">Optional. Uploaded privately to your client folder.</p>
+        </div>
+
+        <button class="btn-primary form-submit" type="submit">Submit Check-in</button>
+        <p class="form-status" id="checkinStatus"></p>
+      </form>
+    </div>
+  </section>
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  const clientId = params.get('c');
+  const weekNo = Number(params.get('w') || 0);
+  document.getElementById('weekLabel').textContent = weekNo ? `Week ${weekNo}` : 'Week —';
+
+  const form = document.getElementById('checkinForm');
+  const status = document.getElementById('checkinStatus');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!clientId || !weekNo) { status.textContent = 'Link missing client / week.'; return; }
+    status.textContent = 'Uploading…';
+
+    // Upload photos first (direct POST to Supabase Storage signed URL would need a helper endpoint;
+    // for now we send URLs empty and let Maddy upload if she chooses, or extend later)
+    const fd = new FormData(form);
+    const photos_urls = [];
+
+    const payload = {
+      client_id: clientId,
+      week_no: weekNo,
+      weight: Number(fd.get('weight')) || null,
+      waist: Number(fd.get('waist')) || null,
+      compliance_score: Number(fd.get('compliance_score')) || null,
+      energy: Number(fd.get('energy')) || null,
+      issues: fd.get('issues') || '',
+      next_week_focus: fd.get('next_week_focus') || '',
+      photos_urls
+    };
+
+    try {
+      const r = await fetch('/api/checkin-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Failed');
+      status.textContent = 'Got it 💪 Your next plan lands shortly.';
+      form.reset();
+    } catch (err) {
+      status.textContent = 'Something went wrong. Please try again or WhatsApp us.';
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
