@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · Fitness by Maddy</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="../index.html">Fitness by Maddy · Admin</a>
+</nav>
+
+<!-- LOGIN -->
+<div id="login" class="admin-login form-card" style="display:none;">
+  <div class="form-header" style="margin-bottom:24px; text-align:center;">
+    <p class="section-eyebrow">Admin</p>
+    <h1 style="font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:300; color:var(--charcoal);">Sign <em>In</em></h1>
+    <p style="color:var(--mid-grey); font-size:13px; margin-top:8px;">A magic link will be emailed to you.</p>
+  </div>
+  <div class="form-group">
+    <label class="form-label" for="email">Email</label>
+    <input id="email" class="form-input" type="email" placeholder="you@fitnessbymaddy.com">
+  </div>
+  <button id="send-magic" class="form-submit">Send magic link →</button>
+  <div id="login-msg" style="margin-top:16px; font-size:13px; color:var(--mid-grey); text-align:center;"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dash" class="admin-shell" style="display:none;">
+  <h1>Daily <em>Pulse</em></h1>
+
+  <div class="kpi-grid" id="kpi-grid">
+    <div class="kpi"><div class="kpi-label">New leads today</div><div class="kpi-value" id="kpi-leads-today">—</div></div>
+    <div class="kpi"><div class="kpi-label">New leads · week</div><div class="kpi-value" id="kpi-leads-week">—</div></div>
+    <div class="kpi"><div class="kpi-label">Conversion rate</div><div class="kpi-value" id="kpi-conv">—</div><div class="kpi-sub" id="kpi-conv-sub">lead → paid</div></div>
+    <div class="kpi"><div class="kpi-label">Programs · week</div><div class="kpi-value" id="kpi-programs">—</div></div>
+    <div class="kpi"><div class="kpi-label">Pending check-ins</div><div class="kpi-value" id="kpi-pending">—</div></div>
+    <div class="kpi"><div class="kpi-label">Open escalations</div><div class="kpi-value" id="kpi-escalations">—</div></div>
+  </div>
+
+  <div class="admin-section">
+    <h2>Active clients by program</h2>
+    <table class="admin-table" id="programs-table">
+      <thead><tr><th>Program</th><th>Active</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="admin-section">
+    <h2>Open escalations</h2>
+    <table class="admin-table" id="escalations-table">
+      <thead><tr><th>When</th><th>Trigger</th><th>Phone</th><th>Context</th></tr></thead>
+      <tbody><tr><td colspan="4" style="color:var(--mid-grey)">Loading…</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="admin-section">
+    <h2>Recent leads</h2>
+    <table class="admin-table" id="leads-table">
+      <thead><tr><th>When</th><th>Phone</th><th>Status</th><th>Interest</th><th>Market</th></tr></thead>
+      <tbody><tr><td colspan="5" style="color:var(--mid-grey)">Loading…</td></tr></tbody>
+    </table>
+  </div>
+
+  <p style="text-align:center; color:var(--mid-grey); font-size:12px;">
+    <a href="#" id="signout" style="color:var(--gold)">Sign out</a>
+  </p>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+// Supabase URL + anon key are public.
+const SUPABASE_URL = window.SUPABASE_URL || '__SUPABASE_URL__';
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || '__SUPABASE_ANON_KEY__';
+
+const supa = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const loginEl = document.getElementById('login');
+const dashEl  = document.getElementById('dash');
+
+async function bootstrap() {
+  const { data: { session } } = await supa.auth.getSession();
+  if (!session) { loginEl.style.display = 'block'; return; }
+  dashEl.style.display = 'block';
+  loadDashboard(session.access_token);
+}
+
+document.getElementById('send-magic').addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim();
+  const msg = document.getElementById('login-msg');
+  if (!email) return (msg.textContent = 'Enter your email.');
+  msg.textContent = 'Sending…';
+  const { error } = await supa.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href } });
+  msg.textContent = error ? error.message : 'Check your inbox for the link.';
+});
+
+document.getElementById('signout').addEventListener('click', async (e) => {
+  e.preventDefault(); await supa.auth.signOut(); location.reload();
+});
+
+supa.auth.onAuthStateChange((_e, session) => {
+  if (session) location.reload();
+});
+
+async function loadDashboard(token) {
+  const r = await fetch('/api/admin-stats', { headers: { authorization: `Bearer ${token}` } });
+  if (!r.ok) {
+    document.querySelector('#dash h1').insertAdjacentHTML('afterend',
+      `<p style="color:#a00">Not authorized. Ask Maddy to add ${(await supa.auth.getUser()).data.user.email} to ADMIN_ALLOWED_EMAILS.</p>`);
+    return;
+  }
+  const s = await r.json();
+  set('kpi-leads-today', s.leads_today);
+  set('kpi-leads-week',  s.leads_this_week);
+  set('kpi-conv',        s.conversion_rate_pct + '%');
+  set('kpi-conv-sub',    `${s.converted_total}/${s.leads_total}`);
+  set('kpi-programs',    s.programs_generated_this_week);
+  set('kpi-pending',     s.pending_checkins);
+  set('kpi-escalations', s.open_escalations);
+
+  const ptbody = document.querySelector('#programs-table tbody');
+  ptbody.innerHTML = Object.entries(s.active_clients_by_program || {})
+    .map(([p, n]) => `<tr><td>${p}</td><td>${n}</td></tr>`).join('') || '<tr><td colspan="2">No active clients.</td></tr>';
+
+  loadEscalations(token);
+  loadRecentLeads(token);
+}
+
+async function loadEscalations(token) {
+  const { data, error } = await supa.from('escalations')
+    .select('created_at,trigger,phone,context').eq('resolved', false)
+    .order('created_at', { ascending: false }).limit(15);
+  const tb = document.querySelector('#escalations-table tbody');
+  if (error) { tb.innerHTML = `<tr><td colspan="4">${error.message}</td></tr>`; return; }
+  tb.innerHTML = (data || []).map(r => `<tr>
+    <td>${new Date(r.created_at).toLocaleString()}</td>
+    <td>${escapeHtml(r.trigger)}</td>
+    <td>${maskPhone(r.phone)}</td>
+    <td style="color:var(--mid-grey)">${escapeHtml((r.context || '').slice(0, 100))}</td>
+  </tr>`).join('') || '<tr><td colspan="4" style="color:var(--mid-grey)">All clear.</td></tr>';
+}
+
+async function loadRecentLeads(token) {
+  const { data, error } = await supa.from('leads')
+    .select('created_at,phone,status,program_interest,market')
+    .order('created_at', { ascending: false }).limit(15);
+  const tb = document.querySelector('#leads-table tbody');
+  if (error) { tb.innerHTML = `<tr><td colspan="5">${error.message}</td></tr>`; return; }
+  tb.innerHTML = (data || []).map(r => `<tr>
+    <td>${new Date(r.created_at).toLocaleString()}</td>
+    <td>${maskPhone(r.phone)}</td>
+    <td>${r.status}</td>
+    <td>${escapeHtml(r.program_interest || '—')}</td>
+    <td>${r.market}</td>
+  </tr>`).join('') || '<tr><td colspan="5" style="color:var(--mid-grey)">No leads yet.</td></tr>';
+}
+
+function set(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+function maskPhone(p) {
+  if (!p) return '';
+  const s = String(p); return s.slice(0, 3) + 'XXX...' + s.slice(-3);
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+bootstrap();
+</script>
+
+<script>
+// Replace placeholders with build-time env values.
+// In production, set these in /admin/env.js or via a Vercel build hook.
+</script>
+<script src="env.js" onerror="this.remove();"></script>
+
+</body>
+</html>

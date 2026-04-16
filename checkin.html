@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in | Fitness by Maddy</title>
+  <meta name="description" content="Submit your weekly progress so Maddy can adjust your program.">
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+</nav>
+
+<div class="form-page">
+  <div class="form-header">
+    <p class="section-eyebrow">Week <span id="week-num">—</span> · Check-in</p>
+    <h1>Honest <em>Numbers</em><br>Win Weeks</h1>
+    <p>Two minutes. Real numbers. Next week's plan adjusts off this.</p>
+  </div>
+
+  <form id="checkin-form" class="form-card" novalidate>
+    <input type="hidden" name="client_id" id="client_id">
+    <input type="hidden" name="week_no"   id="week_no">
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="weight">Weight (kg)</label>
+        <input class="form-input" id="weight" name="weight" type="number" step="0.1" min="30" max="250" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="waist">Waist (cm)</label>
+        <input class="form-input" id="waist" name="waist" type="number" step="0.1" min="40" max="200">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Plan compliance (1 = none, 10 = perfect)</label>
+      <div class="scale-row" id="compliance-scale"></div>
+      <input type="hidden" name="compliance" id="compliance" required>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Energy this week</label>
+      <div class="scale-row" id="energy-scale"></div>
+      <input type="hidden" name="energy" id="energy" required>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="issues">Issues, soreness, or anything Maddy should know</label>
+      <textarea class="form-input" id="issues" name="issues" placeholder="Pain, sleep, hunger, period, travel, work stress…"></textarea>
+    </div>
+
+    <button class="form-submit" type="submit">Submit check-in →</button>
+  </form>
+
+  <div id="success" class="form-success" style="display:none; margin-top:24px;">
+    <h2>Logged.</h2>
+    <p>Your next week's plan will land in WhatsApp shortly.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  const clientId = params.get('c') || '';
+  const weekNo = parseInt(params.get('w') || '1', 10);
+  document.getElementById('client_id').value = clientId;
+  document.getElementById('week_no').value = weekNo;
+  document.getElementById('week-num').textContent = weekNo;
+
+  function buildScale(rootId, hiddenId) {
+    const root = document.getElementById(rootId);
+    const hidden = document.getElementById(hiddenId);
+    for (let i = 1; i <= 10; i++) {
+      const label = document.createElement('label');
+      label.innerHTML = `<input type="radio" name="${hiddenId}_r" value="${i}"><span>${i}</span>`;
+      label.querySelector('input').addEventListener('change', () => {
+        hidden.value = i;
+        [...root.querySelectorAll('label')].forEach(l => l.style.background = '');
+        [...root.querySelectorAll('label')].forEach(l => l.style.color = '');
+        label.style.background = 'var(--charcoal)';
+        label.style.color = 'white';
+      });
+      root.appendChild(label);
+    }
+  }
+  buildScale('compliance-scale', 'compliance');
+  buildScale('energy-scale', 'energy');
+
+  const form = document.getElementById('checkin-form');
+  const success = document.getElementById('success');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button[type=submit]');
+    if (!document.getElementById('compliance').value || !document.getElementById('energy').value) {
+      alert('Please rate compliance and energy.'); return;
+    }
+    btn.disabled = true; btn.textContent = 'Submitting…';
+    const payload = Object.fromEntries(new FormData(form).entries());
+    payload.photos = [];
+    try {
+      const r = await fetch('/api/checkin-submit', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!r.ok) throw new Error((await r.json()).error || 'Submit failed');
+      form.style.display = 'none';
+      success.style.display = 'block';
+    } catch (err) {
+      btn.disabled = false; btn.textContent = 'Try again';
+      alert('Something went wrong: ' + err.message);
+    }
+  });
+})();
+</script>
+</body>
+</html>

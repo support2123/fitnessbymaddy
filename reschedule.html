@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule a Session | Fitness by Maddy</title>
+  <meta name="description" content="Missed your session? Pick a new time.">
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+</nav>
+
+<div class="form-page">
+  <div class="form-header">
+    <p class="section-eyebrow">Reschedule</p>
+    <h1>Pick a <em>New</em><br>Time</h1>
+    <p>No drama. Just tell us when works.</p>
+  </div>
+
+  <form id="rs-form" class="form-card" novalidate>
+    <input type="hidden" name="client_id" id="client_id">
+
+    <div class="form-group">
+      <label class="form-label" for="reason">What happened?</label>
+      <select class="form-select" id="reason" name="reason">
+        <option value="travel">Travel</option>
+        <option value="work">Work</option>
+        <option value="illness">Illness</option>
+        <option value="family">Family</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="new_date">Preferred date</label>
+        <input class="form-input" id="new_date" name="new_date" type="date" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="new_time">Preferred time (IST)</label>
+        <input class="form-input" id="new_time" name="new_time" type="time" required>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="notes">Notes</label>
+      <textarea class="form-input" id="notes" name="notes" placeholder="Anything else?"></textarea>
+    </div>
+
+    <button class="form-submit" type="submit">Submit reschedule →</button>
+  </form>
+
+  <div id="success" class="form-success" style="display:none; margin-top:24px;">
+    <h2>Got it.</h2>
+    <p>Maddy's team will WhatsApp you to confirm the new slot.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  document.getElementById('client_id').value = params.get('c') || '';
+
+  document.getElementById('rs-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const btn = form.querySelector('button[type=submit]');
+    btn.disabled = true; btn.textContent = 'Submitting…';
+    const payload = Object.fromEntries(new FormData(form).entries());
+
+    try {
+      const r = await fetch('/api/reschedule-submit', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!r.ok) throw new Error((await r.json()).error || 'Submit failed');
+      form.style.display = 'none';
+      document.getElementById('success').style.display = 'block';
+    } catch (err) {
+      btn.disabled = false; btn.textContent = 'Try again';
+      alert('Something went wrong: ' + err.message);
+    }
+  });
+})();
+</script>
+</body>
+</html>
