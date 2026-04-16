@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ops Dashboard | Fitness by Maddy</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="#" id="logout">Sign Out</a></li>
+  </ul>
+</nav>
+
+<main style="background: var(--cream); min-height: 100vh; padding-top: 72px">
+
+  <section class="admin-login" id="login-shell">
+    <p class="flow-eyebrow">Restricted</p>
+    <h1 class="flow-title">Ops <em>Dashboard</em></h1>
+    <p class="flow-subtitle">Enter your admin token to continue.</p>
+    <div class="flow-row">
+      <label class="form-label" for="token">Admin Token</label>
+      <input class="form-input" id="token" type="password" autocomplete="off">
+    </div>
+    <button class="flow-submit" id="login-btn">Sign In →</button>
+    <p class="flow-error" id="login-err" style="display:none"></p>
+  </section>
+
+  <section class="admin-wrap" id="app-shell" style="display:none">
+    <h1 class="admin-title">Daily <em>Ops</em></h1>
+    <p class="admin-sub" id="generated-at">Loading…</p>
+
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">New Leads · Today</div><div class="kpi-value" id="leads-today">—</div><div class="kpi-sub" id="leads-week">—</div></div>
+      <div class="kpi"><div class="kpi-label">Conversion · 7d</div><div class="kpi-value" id="conv-rate">—</div><div class="kpi-sub">Lead → Paid</div></div>
+      <div class="kpi"><div class="kpi-label">Active Clients</div><div class="kpi-value" id="active-total">—</div><div class="kpi-sub" id="active-breakdown">—</div></div>
+      <div class="kpi"><div class="kpi-label">Pending Check-ins</div><div class="kpi-value" id="pending">—</div><div class="kpi-sub">This week</div></div>
+      <div class="kpi"><div class="kpi-label">Programs · 7d</div><div class="kpi-value" id="programs">—</div><div class="kpi-sub" id="programs-flagged">—</div></div>
+      <div class="kpi alert"><div class="kpi-label">Escalations Open</div><div class="kpi-value" id="escalations">—</div><div class="kpi-sub">Awaiting Maddy</div></div>
+    </div>
+
+    <div class="admin-panel">
+      <h3>Active Clients by Program</h3>
+      <table class="admin-table" id="program-table">
+        <thead><tr><th>Program</th><th>Active Clients</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="admin-panel">
+      <h3>System</h3>
+      <p class="flow-subtitle" style="margin-bottom:0">Crons: weekly check-in Sun 09:00 IST · check-in nudge daily 11:00 IST · dropped-lead nudge daily 10:00 IST · 12-week program generator on check-in submit.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+  const TOKEN_KEY = 'fbm_admin_token';
+  const loginShell = document.getElementById('login-shell');
+  const appShell = document.getElementById('app-shell');
+  const loginBtn = document.getElementById('login-btn');
+  const loginErr = document.getElementById('login-err');
+
+  async function load(token) {
+    const res = await fetch('/api/admin/stats', {
+      headers: { 'authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) throw new Error('unauthorized');
+    return res.json();
+  }
+
+  function render(data) {
+    document.getElementById('leads-today').textContent = data.leads.today;
+    document.getElementById('leads-week').textContent = data.leads.this_week + ' this week';
+    document.getElementById('conv-rate').textContent = (data.conversion_rate_7d * 100).toFixed(1) + '%';
+
+    const active = data.active_clients || {};
+    const total = Object.values(active).reduce((a, b) => a + b, 0);
+    document.getElementById('active-total').textContent = total;
+    document.getElementById('active-breakdown').textContent = Object.keys(active).length + ' programs';
+
+    document.getElementById('pending').textContent = data.pending_checkins;
+    document.getElementById('programs').textContent = data.programs_this_week;
+    document.getElementById('programs-flagged').textContent = (data.programs_flagged || 0) + ' flagged';
+    document.getElementById('escalations').textContent = data.escalations_open;
+    document.getElementById('generated-at').textContent =
+      'Updated ' + new Date(data.generated_at).toLocaleString();
+
+    const tbody = document.querySelector('#program-table tbody');
+    tbody.innerHTML = '';
+    Object.entries(active).forEach(([prog, n]) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + prog + '</td><td>' + n + '</td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function boot(token) {
+    try {
+      const data = await load(token);
+      loginShell.style.display = 'none';
+      appShell.style.display = 'block';
+      render(data);
+    } catch (e) {
+      loginErr.textContent = 'Invalid token or network error.';
+      loginErr.style.display = 'block';
+      localStorage.removeItem(TOKEN_KEY);
+    }
+  }
+
+  loginBtn.addEventListener('click', () => {
+    const token = document.getElementById('token').value.trim();
+    if (!token) return;
+    localStorage.setItem(TOKEN_KEY, token);
+    boot(token);
+  });
+
+  document.getElementById('logout').addEventListener('click', (e) => {
+    e.preventDefault();
+    localStorage.removeItem(TOKEN_KEY);
+    location.reload();
+  });
+
+  const saved = localStorage.getItem(TOKEN_KEY);
+  if (saved) boot(saved);
+</script>
+</body>
+</html>
