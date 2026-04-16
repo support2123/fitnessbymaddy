@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Admin · Fitness by Maddy</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { background: var(--cream); min-height: 100vh; }
+    .admin-shell { max-width: 1200px; margin: 0 auto; padding: 32px 24px 64px; }
+    .admin-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 32px; flex-wrap: wrap; gap: 12px;
+    }
+    .admin-title { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: var(--charcoal); }
+    .admin-title em { font-style: italic; color: var(--gold); }
+    .admin-meta { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--mid-grey); }
+
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px; margin-bottom: 36px;
+    }
+    .kpi-card {
+      background: white; padding: 22px; border-radius: 4px;
+      border-top: 3px solid var(--gold);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    .kpi-label { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .kpi-val { font-family: 'Cormorant Garamond', serif; font-size: 44px; font-weight: 600; color: var(--charcoal); line-height: 1; }
+    .kpi-sub { font-size: 11px; color: var(--mid-grey); margin-top: 4px; }
+
+    .panel {
+      background: white; border-radius: 4px; padding: 24px;
+      margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    .panel h2 {
+      font-family: 'Cormorant Garamond', serif; font-size: 24px;
+      font-weight: 400; color: var(--charcoal); margin-bottom: 16px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      text-align: left; font-size: 10px; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--mid-grey);
+      padding: 10px 12px; border-bottom: 1px solid var(--light-grey);
+    }
+    td { padding: 12px; border-bottom: 1px solid var(--light-grey); color: var(--charcoal); }
+    .pill {
+      display: inline-block; padding: 3px 10px; font-size: 10px;
+      letter-spacing: 1px; text-transform: uppercase; border-radius: 2px;
+    }
+    .pill.new { background: #F0EAE0; color: var(--charcoal); }
+    .pill.qualified { background: #D4AF7A; color: white; }
+    .pill.converted { background: var(--gold); color: white; }
+    .pill.dropped { background: #E8E3DC; color: var(--mid-grey); }
+    .pill.active { background: #2C2C2C; color: white; }
+    .pill.flagged { background: #A0342C; color: white; }
+
+    .btn-resolve {
+      background: var(--charcoal); color: white; border: none;
+      padding: 6px 14px; font-size: 10px; letter-spacing: 1.5px;
+      text-transform: uppercase; border-radius: 2px; cursor: pointer;
+    }
+    .btn-resolve:hover { background: var(--gold); }
+
+    .login-card {
+      max-width: 380px; margin: 100px auto; background: white;
+      border-radius: 4px; padding: 40px 32px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.08); border-top: 3px solid var(--gold);
+    }
+    .login-card h1 { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300; text-align: center; color: var(--charcoal); margin-bottom: 16px; }
+    .login-card input {
+      width: 100%; padding: 12px 14px; border: 1.5px solid var(--light-grey);
+      border-radius: 2px; font-size: 14px; margin-bottom: 12px; background: var(--cream);
+    }
+    .login-card button {
+      width: 100%; padding: 12px; background: var(--charcoal); color: white;
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      border: none; border-radius: 2px; cursor: pointer;
+    }
+
+    .muted { color: var(--mid-grey); }
+    .empty { padding: 24px; text-align: center; color: var(--mid-grey); font-size: 13px; }
+    .overflow { overflow-x: auto; }
+    @media (max-width: 640px) {
+      .kpi-val { font-size: 36px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="login" style="display:none">
+    <div class="login-card">
+      <h1>Admin Sign-in</h1>
+      <input id="email" type="email" placeholder="Email" autocomplete="email">
+      <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+      <button id="sign-in">Sign in</button>
+      <div id="login-err" class="muted" style="text-align:center; font-size:12px; margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <div id="app" class="admin-shell" style="display:none">
+    <div class="admin-head">
+      <div>
+        <h1 class="admin-title">Daily <em>Ops</em></h1>
+        <div class="admin-meta" id="meta-line">Loading…</div>
+      </div>
+      <button class="btn-resolve" id="sign-out">Sign out</button>
+    </div>
+
+    <div class="kpi-grid" id="kpi-grid"></div>
+
+    <div class="panel" id="escalations">
+      <h2>Open Escalations</h2>
+      <div class="overflow"><table>
+        <thead><tr><th>When</th><th>Reason</th><th>Phone</th><th>Snippet</th><th></th></tr></thead>
+        <tbody id="esc-body"></tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Recent Leads</h2>
+      <div class="overflow"><table>
+        <thead><tr><th>Created</th><th>Phone</th><th>Market</th><th>Status</th><th>Interest</th></tr></thead>
+        <tbody id="leads-body"></tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Active Clients</h2>
+      <div class="overflow"><table>
+        <thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Ends</th><th>Status</th></tr></thead>
+        <tbody id="clients-body"></tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Pending Check-ins</h2>
+      <div class="overflow"><table>
+        <thead><tr><th>Client</th><th>Week</th><th>Sent</th><th>Nudges</th></tr></thead>
+        <tbody id="checkins-body"></tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Programs (last 7 days)</h2>
+      <div class="overflow"><table>
+        <thead><tr><th>Client</th><th>Week</th><th>Generated</th><th>Sent</th><th>Status</th></tr></thead>
+        <tbody id="programs-body"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>

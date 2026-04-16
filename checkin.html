@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Weekly Check-in · Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body class="form-page">
+  <main class="form-wrap">
+    <div class="form-brand">Fitness by Maddy</div>
+    <div class="form-eyebrow" id="week-label">Week check-in</div>
+    <h1 class="form-title">How did <em>this week</em> go?</h1>
+    <p class="form-sub">2 minutes. Be honest — that's where the plan improves.</p>
+
+    <div id="err" class="form-error"></div>
+
+    <form id="checkin-form" novalidate>
+      <div class="form-section-label">Measurements</div>
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="field" for="weight">Weight (kg)</label>
+          <input id="weight" name="weight" type="number" step="0.1" min="30" max="200" required>
+        </div>
+        <div class="form-row">
+          <label class="field" for="waist">Waist (cm)</label>
+          <input id="waist" name="waist" type="number" step="0.1" min="40" max="200" required>
+        </div>
+      </div>
+
+      <div class="form-section-label">How you felt</div>
+
+      <div class="form-row">
+        <label class="field" for="compliance">Plan compliance</label>
+        <div class="slider-row">
+          <input id="compliance" name="compliance" type="range" min="1" max="10" value="8">
+          <span class="slider-val" id="compliance-val">8</span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="field" for="energy">Energy level</label>
+        <div class="slider-row">
+          <input id="energy" name="energy" type="range" min="1" max="10" value="7">
+          <span class="slider-val" id="energy-val">7</span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="field" for="issues">Anything off? (pain, sleep, cravings…)</label>
+        <textarea id="issues" name="issues" placeholder="Optional but helpful"></textarea>
+      </div>
+
+      <div class="form-row">
+        <label class="field" for="next_week_focus">What do you want to focus on next week?</label>
+        <textarea id="next_week_focus" name="next_week_focus" placeholder="One line"></textarea>
+      </div>
+
+      <div class="form-section-label">Progress photos</div>
+      <div class="file-row">
+        <label class="file-slot"><span>Front</span><input type="file" accept="image/*" data-slot="front"></label>
+        <label class="file-slot"><span>Side</span><input  type="file" accept="image/*" data-slot="side"></label>
+        <label class="file-slot"><span>Back</span><input  type="file" accept="image/*" data-slot="back"></label>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submit">Submit check-in</button>
+      <div class="form-footer-note">Every submission feeds next week's plan.</div>
+    </form>
+
+    <div id="success" class="form-success" style="display:none">
+      <div class="check">✓</div>
+      <h2 class="form-title">Logged <em>in</em></h2>
+      <p class="form-sub" id="success-msg">Your next program is being built. WhatsApp incoming.</p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { qp, wireFileSlot, wireSlider, postJson } from '/js/form-shared.js';
+
+    const token = qp('t');
+    const week  = qp('w');
+    if (week) document.getElementById('week-label').textContent = `Week ${week} check-in`;
+
+    wireSlider(document.getElementById('compliance'), document.getElementById('compliance-val'));
+    wireSlider(document.getElementById('energy'),     document.getElementById('energy-val'));
+
+    const photos = { front: null, side: null, back: null };
+    document.querySelectorAll('.file-slot').forEach(slot => {
+      const input = slot.querySelector('input');
+      wireFileSlot(slot, f => { photos[input.dataset.slot] = f; });
+    });
+
+    const form = document.getElementById('checkin-form');
+    const err  = document.getElementById('err');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      err.classList.remove('show');
+      const btn = document.getElementById('submit');
+      btn.disabled = true; btn.textContent = 'Submitting…';
+
+      if (!token) {
+        err.textContent = 'Missing check-in token. Please use the link from WhatsApp.';
+        err.classList.add('show');
+        btn.disabled = false; btn.textContent = 'Submit check-in';
+        return;
+      }
+
+      try {
+        const body = Object.fromEntries(new FormData(form).entries());
+        body.token = token;
+        body.photos_urls = Object.entries(photos)
+          .filter(([, f]) => f)
+          .map(([k, f]) => `pending:${k}:${f.name}`);
+        await postJson('/api/checkin-submit', body);
+
+        document.getElementById('checkin-form').style.display = 'none';
+        document.getElementById('success').style.display = 'block';
+      } catch (ex) {
+        err.textContent = 'Submission failed. Please try again or WhatsApp us.';
+        err.classList.add('show');
+        btn.disabled = false; btn.textContent = 'Submit check-in';
+      }
+    });
+  </script>
+</body>
+</html>
