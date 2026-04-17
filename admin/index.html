@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --gold: #B8965A; --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C; --mid-grey: #6B6B6B; --light-grey: #E8E3DC;
+      --sand: #F0EAE0; --white: #FFFFFF;
+      --green: #27ae60; --red: #c0392b; --blue: #2980b9;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); }
+
+    .dash-header {
+      background: var(--charcoal); padding: 20px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dash-logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 4px; color: var(--gold); }
+    .dash-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; color: rgba(255,255,255,0.6); }
+    .dash-login { display: flex; gap: 12px; align-items: center; }
+    .dash-login input {
+      padding: 8px 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05);
+      color: var(--white); font-size: 13px; border-radius: 4px; outline: none;
+    }
+    .dash-login button {
+      padding: 8px 20px; background: var(--gold); color: var(--charcoal);
+      font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 2px;
+      border: none; border-radius: 4px; cursor: pointer;
+    }
+
+    .dash-content { display: none; padding: 32px; max-width: 1200px; margin: 0 auto; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card {
+      background: var(--white); padding: 24px; border-radius: 8px;
+      border-left: 4px solid var(--gold);
+    }
+    .stat-card .label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); }
+    .stat-card .value { font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: var(--charcoal); line-height: 1.2; margin-top: 4px; }
+    .stat-card .sub { font-size: 12px; color: var(--mid-grey); margin-top: 2px; }
+
+    .section-card {
+      background: var(--white); border-radius: 8px; padding: 24px; margin-bottom: 24px;
+    }
+    .section-card h2 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px;
+      color: var(--gold); margin-bottom: 16px;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--mid-grey); padding: 10px 12px;
+      border-bottom: 2px solid var(--light-grey);
+    }
+    td { padding: 12px; font-size: 13px; border-bottom: 1px solid var(--light-grey); }
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 12px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+    }
+    .badge-new { background: #eaf2ff; color: var(--blue); }
+    .badge-qualified { background: #fef3e2; color: #e67e22; }
+    .badge-converted { background: #e8f8e8; color: var(--green); }
+    .badge-dropped { background: #fde8e8; color: var(--red); }
+    .badge-active { background: #e8f8e8; color: var(--green); }
+    .badge-paused { background: #fef3e2; color: #e67e22; }
+
+    .escalation-item {
+      padding: 12px; border-left: 3px solid var(--red);
+      background: #fef5f5; margin-bottom: 8px; border-radius: 0 4px 4px 0;
+    }
+    .escalation-item .esc-title { font-weight: 600; font-size: 13px; }
+    .escalation-item .esc-detail { font-size: 12px; color: var(--mid-grey); margin-top: 4px; }
+
+    .empty { text-align: center; padding: 32px; color: var(--mid-grey); font-size: 14px; }
+    .loading { text-align: center; padding: 20px; color: var(--mid-grey); }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .dash-content { padding: 16px; }
+      table { font-size: 12px; }
+      td, th { padding: 8px 6px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="dash-header">
+    <div>
+      <div class="dash-logo">Fitness by Maddy</div>
+      <div class="dash-title">Operations Dashboard</div>
+    </div>
+    <div class="dash-login" id="loginSection">
+      <input type="email" id="loginEmail" placeholder="Email">
+      <input type="password" id="loginPass" placeholder="Password">
+      <button onclick="login()">Login</button>
+    </div>
+  </div>
+
+  <div class="dash-content" id="dashContent">
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card"><div class="label">Leads Today</div><div class="value" id="leadsToday">-</div><div class="sub" id="leadsWeek">this week: -</div></div>
+      <div class="stat-card"><div class="label">Conversion Rate</div><div class="value" id="conversionRate">-</div><div class="sub">lead to paid</div></div>
+      <div class="stat-card"><div class="label">Active Clients</div><div class="value" id="activeClients">-</div><div class="sub" id="clientsByProgram"></div></div>
+      <div class="stat-card"><div class="label">Pending Check-ins</div><div class="value" id="pendingCheckins">-</div><div class="sub">awaiting submission</div></div>
+      <div class="stat-card"><div class="label">Programs Generated</div><div class="value" id="programsGenerated">-</div><div class="sub">this week</div></div>
+      <div class="stat-card" style="border-left-color: var(--red);"><div class="label">Escalations</div><div class="value" id="escalationCount">-</div><div class="sub">awaiting Maddy</div></div>
+    </div>
+
+    <div class="section-card">
+      <h2>Recent Leads</h2>
+      <table>
+        <thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Interest</th><th>Market</th><th>When</th></tr></thead>
+        <tbody id="leadsTable"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section-card">
+      <h2>Active Clients</h2>
+      <table>
+        <thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Ends</th><th>Status</th><th>Last Check-in</th></tr></thead>
+        <tbody id="clientsTable"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section-card">
+      <h2>Pending Check-ins</h2>
+      <div id="pendingList"><div class="loading">Loading...</div></div>
+    </div>
+
+    <div class="section-card">
+      <h2>Escalations</h2>
+      <div id="escalationList"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <script>
+    var supabaseUrl = '';
+    var supabaseKey = '';
+    var session = null;
+
+    function login() {
+      var email = document.getElementById('loginEmail').value;
+      var pass = document.getElementById('loginPass').value;
+      if (!email || !pass) return;
+
+      fetch(supabaseUrl + '/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': supabaseKey },
+        body: JSON.stringify({ email: email, password: pass })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.access_token) {
+          session = data.access_token;
+          document.getElementById('loginSection').style.display = 'none';
+          document.getElementById('dashContent').style.display = 'block';
+          loadDashboard();
+        } else {
+          alert('Login failed. Check credentials.');
+        }
+      })
+      .catch(function() { alert('Connection error.'); });
+    }
+
+    function dbFetch(table, params) {
+      var url = supabaseUrl + '/rest/v1/' + table;
+      if (params) url += '?' + params;
+      return fetch(url, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': 'Bearer ' + session,
+          'Content-Type': 'application/json'
+        }
+      }).then(function(r) { return r.json(); });
+    }
+
+    function maskPhone(p) {
+      if (!p || p.length < 6) return '***';
+      return p.slice(0, 4) + 'XXX...' + p.slice(-3);
+    }
+
+    function fmtDate(d) {
+      if (!d) return '-';
+      return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    }
+
+    function loadDashboard() {
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      var todayISO = today.toISOString();
+      var weekAgo = new Date(today.getTime() - 7 * 86400000).toISOString();
+
+      // Load all data
+      Promise.all([
+        dbFetch('leads', 'select=*&order=created_at.desc&limit=50'),
+        dbFetch('clients', 'select=*&order=created_at.desc'),
+        dbFetch('checkins', 'select=*&order=created_at.desc&limit=50'),
+        dbFetch('programs', 'select=*&created_at=gte.' + weekAgo),
+        dbFetch('messages', 'select=*&body=ilike.*ESCALATION*&order=sent_at.desc&limit=20')
+      ]).then(function(results) {
+        var leads = results[0] || [];
+        var clients = results[1] || [];
+        var checkins = results[2] || [];
+        var programs = results[3] || [];
+        var escalations = results[4] || [];
+
+        // Stats
+        var leadsToday = leads.filter(function(l) { return l.created_at >= todayISO; }).length;
+        var leadsThisWeek = leads.filter(function(l) { return l.created_at >= weekAgo; }).length;
+        var converted = leads.filter(function(l) { return l.status === 'converted'; }).length;
+        var totalLeads = leads.length;
+        var convRate = totalLeads > 0 ? Math.round((converted / totalLeads) * 100) : 0;
+        var active = clients.filter(function(c) { return c.status === 'active'; });
+
+        document.getElementById('leadsToday').textContent = leadsToday;
+        document.getElementById('leadsWeek').textContent = 'this week: ' + leadsThisWeek;
+        document.getElementById('conversionRate').textContent = convRate + '%';
+        document.getElementById('activeClients').textContent = active.length;
+        document.getElementById('programsGenerated').textContent = programs.length;
+        document.getElementById('escalationCount').textContent = escalations.length;
+
+        // Program breakdown
+        var breakdown = {};
+        active.forEach(function(c) {
+          breakdown[c.program] = (breakdown[c.program] || 0) + 1;
+        });
+        var parts = [];
+        for (var p in breakdown) parts.push(p + ': ' + breakdown[p]);
+        document.getElementById('clientsByProgram').textContent = parts.join(' | ') || 'none';
+
+        // Leads table
+        var leadsHtml = '';
+        leads.slice(0, 20).forEach(function(l) {
+          leadsHtml += '<tr><td>' + (l.name || '-') + '</td><td>' + maskPhone(l.phone) +
+            '</td><td><span class="badge badge-' + l.status + '">' + l.status + '</span></td>' +
+            '<td>' + (l.program_interest || '-') + '</td><td>' + (l.market || '-') +
+            '</td><td>' + fmtDate(l.created_at) + '</td></tr>';
+        });
+        document.getElementById('leadsTable').innerHTML = leadsHtml || '<tr><td colspan="6" class="empty">No leads yet</td></tr>';
+
+        // Clients table
+        var clientsHtml = '';
+        clients.forEach(function(c) {
+          var lastCheckin = checkins.find(function(ch) { return ch.client_id === c.id; });
+          clientsHtml += '<tr><td>' + (c.name || '-') + '</td><td>' + (c.program || '-') +
+            '</td><td>' + fmtDate(c.program_started_at) + '</td><td>' + fmtDate(c.program_ends_at) +
+            '</td><td><span class="badge badge-' + c.status + '">' + c.status + '</span></td>' +
+            '<td>' + (lastCheckin ? 'Wk ' + lastCheckin.week_no + ' (' + fmtDate(lastCheckin.form_submitted_at) + ')' : 'None') + '</td></tr>';
+        });
+        document.getElementById('clientsTable').innerHTML = clientsHtml || '<tr><td colspan="6" class="empty">No clients yet</td></tr>';
+
+        // Pending check-ins
+        var pendingHtml = '';
+        var pendingCount = 0;
+        active.forEach(function(c) {
+          var start = new Date(c.program_started_at);
+          var days = Math.floor((Date.now() - start) / 86400000);
+          var wk = Math.ceil(days / 7);
+          var hasCheckin = checkins.some(function(ch) { return ch.client_id === c.id && ch.week_no === wk; });
+          if (!hasCheckin && wk >= 1) {
+            pendingCount++;
+            pendingHtml += '<div style="padding:8px 0; border-bottom:1px solid var(--light-grey); font-size:13px;">' +
+              '<strong>' + (c.name || maskPhone(c.phone)) + '</strong> — Week ' + wk + ' check-in pending (' + c.program + ')</div>';
+          }
+        });
+        document.getElementById('pendingCheckins').textContent = pendingCount;
+        document.getElementById('pendingList').innerHTML = pendingHtml || '<div class="empty">All check-ins submitted!</div>';
+
+        // Escalations
+        var escHtml = '';
+        escalations.forEach(function(e) {
+          escHtml += '<div class="escalation-item"><div class="esc-title">' + maskPhone(e.phone) +
+            '</div><div class="esc-detail">' + (e.body || '').slice(0, 200) +
+            '</div><div class="esc-detail" style="margin-top:4px; color:var(--gold);">' + fmtDate(e.sent_at) + '</div></div>';
+        });
+        document.getElementById('escalationList').innerHTML = escHtml || '<div class="empty">No escalations</div>';
+      }).catch(function(err) {
+        console.error('Dashboard load error:', err);
+      });
+    }
+
+    // Auto-detect Supabase config from meta or prompt
+    (function() {
+      // These will be injected at deploy time or configured manually
+      supabaseUrl = window.__SUPABASE_URL__ || prompt('Enter Supabase URL:') || '';
+      supabaseKey = window.__SUPABASE_KEY__ || prompt('Enter Supabase anon key:') || '';
+      if (!supabaseUrl || !supabaseKey) {
+        document.body.innerHTML = '<div style="text-align:center;padding:60px;font-family:DM Sans,sans-serif;color:#6B6B6B;">Dashboard requires Supabase configuration. Set window.__SUPABASE_URL__ and window.__SUPABASE_KEY__.</div>';
+      }
+    })();
+  </script>
+</body>
+</html>
