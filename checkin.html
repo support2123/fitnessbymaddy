@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Check-In — FitnessByMaddy</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: #1a1a1a; color: #f0f0f0; min-height: 100vh; }
+  .container { max-width: 500px; margin: 0 auto; padding: 1.5rem; }
+  .header { text-align: center; padding: 2rem 0 1.5rem; }
+  .header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; color: #B8965A; letter-spacing: 3px; }
+  .header .week-badge { display: inline-block; background: #B8965A; color: #1a1a1a; padding: 0.3rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.85rem; margin-top: 0.5rem; }
+  .header p { color: #999; font-size: 0.9rem; margin-top: 0.75rem; }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.8rem; font-weight: 500; color: #B8965A; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.4rem; }
+  .form-group input, .form-group textarea {
+    width: 100%; padding: 0.75rem 1rem; background: #222; border: 1px solid #333;
+    border-radius: 6px; color: #f0f0f0; font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #B8965A; }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .slider-group { margin-bottom: 1.5rem; }
+  .slider-group label { display: block; font-size: 0.8rem; font-weight: 500; color: #B8965A; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.6rem; }
+  .slider-wrap { display: flex; align-items: center; gap: 1rem; }
+  .slider-wrap input[type="range"] { flex: 1; accent-color: #B8965A; height: 6px; }
+  .slider-value { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: #B8965A; min-width: 40px; text-align: center; }
+  .slider-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: #666; margin-top: 0.2rem; }
+  .submit-btn {
+    width: 100%; padding: 1rem; background: #B8965A; color: #1a1a1a; border: none;
+    border-radius: 6px; font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem;
+    letter-spacing: 2px; cursor: pointer; transition: background 0.2s; margin-top: 0.5rem;
+  }
+  .submit-btn:hover { background: #D4AF7A; }
+  .submit-btn:disabled { background: #555; cursor: not-allowed; }
+  .success-msg { text-align: center; padding: 3rem 1rem; }
+  .success-msg h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: #B8965A; margin-bottom: 1rem; }
+  .success-msg p { color: #ccc; }
+  .error-msg { background: #3a1a1a; border: 1px solid #6b2a2a; color: #ff8888; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; display: none; }
+  .photo-upload { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .photo-upload label {
+    width: 100px; height: 100px; background: #222; border: 2px dashed #444; border-radius: 8px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;
+    color: #666; font-size: 0.75rem; transition: border-color 0.2s; gap: 0.3rem;
+  }
+  .photo-upload label:hover { border-color: #B8965A; }
+  .photo-upload label .plus { font-size: 1.5rem; color: #B8965A; }
+  .photo-upload input { display: none; }
+  .photo-preview { width: 100px; height: 100px; border-radius: 8px; object-fit: cover; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Weekly Check-In</h1>
+    <div class="week-badge" id="weekBadge">Week 1</div>
+    <p>Track your progress and let's adjust your plan</p>
+  </div>
+
+  <div id="error" class="error-msg"></div>
+
+  <form id="checkinForm" novalidate>
+    <input type="hidden" id="client_id" name="client_id">
+    <input type="hidden" id="week_no" name="week_no">
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Current Weight (kg)</label>
+        <input type="number" id="weight" name="weight" placeholder="64.5" step="0.1">
+      </div>
+      <div class="form-group">
+        <label>Waist (cm)</label>
+        <input type="number" id="waist" name="waist" placeholder="76" step="0.1">
+      </div>
+    </div>
+
+    <div class="slider-group">
+      <label>Program Compliance (how well did you follow the plan?)</label>
+      <div class="slider-wrap">
+        <input type="range" id="compliance" name="compliance_score" min="1" max="10" value="7" oninput="document.getElementById('compVal').textContent=this.value">
+        <div class="slider-value" id="compVal">7</div>
+      </div>
+      <div class="slider-labels"><span>Barely followed</span><span>Perfectly followed</span></div>
+    </div>
+
+    <div class="slider-group">
+      <label>Energy Level This Week</label>
+      <div class="slider-wrap">
+        <input type="range" id="energy" name="energy" min="1" max="10" value="6" oninput="document.getElementById('energyVal').textContent=this.value">
+        <div class="slider-value" id="energyVal">6</div>
+      </div>
+      <div class="slider-labels"><span>Very low</span><span>Highest ever</span></div>
+    </div>
+
+    <div class="form-group">
+      <label>Issues, Struggles, or Feedback</label>
+      <textarea id="issues" name="issues" placeholder="Any challenges this week? Soreness, schedule issues, diet struggles, mood..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Progress Photos (front, side, back)</label>
+      <div class="photo-upload" id="photoUpload">
+        <label for="photoFront">
+          <span class="plus">+</span>
+          <span>Front</span>
+        </label>
+        <input type="file" id="photoFront" accept="image/*" onchange="previewPhoto(this, 'Front')">
+        <label for="photoSide">
+          <span class="plus">+</span>
+          <span>Side</span>
+        </label>
+        <input type="file" id="photoSide" accept="image/*" onchange="previewPhoto(this, 'Side')">
+        <label for="photoBack">
+          <span class="plus">+</span>
+          <span>Back</span>
+        </label>
+        <input type="file" id="photoBack" accept="image/*" onchange="previewPhoto(this, 'Back')">
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submitBtn">Submit Check-In</button>
+  </form>
+
+  <div id="successMsg" class="success-msg" style="display:none;">
+    <h2>Check-In Received!</h2>
+    <p>Great job staying consistent. Your coach will review this and your updated plan will be sent to you on WhatsApp.</p>
+    <p style="margin-top:1rem;color:#B8965A;">Keep crushing it!</p>
+  </div>
+</div>
+
+<script>
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w') || '1';
+
+  if (clientId) document.getElementById('client_id').value = clientId;
+  document.getElementById('week_no').value = weekNo;
+  document.getElementById('weekBadge').textContent = 'Week ' + weekNo;
+
+  function previewPhoto(input, label) {
+    if (input.files && input.files[0]) {
+      var reader = new FileReader();
+      var labelEl = input.previousElementSibling;
+      reader.onload = function(e) {
+        var img = document.createElement('img');
+        img.src = e.target.result;
+        img.className = 'photo-preview';
+        labelEl.innerHTML = '';
+        labelEl.appendChild(img);
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  async function fileToBase64(file) {
+    return new Promise(function(resolve) {
+      var reader = new FileReader();
+      reader.onload = function() {
+        var base64 = reader.result.split(',')[1];
+        resolve({ base64: base64, filename: file.name, contentType: file.type });
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  document.getElementById('checkinForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('submitBtn');
+    var errDiv = document.getElementById('error');
+    btn.disabled = true;
+    btn.textContent = 'SUBMITTING...';
+    errDiv.style.display = 'none';
+
+    var photos = [];
+    var photoInputs = ['photoFront', 'photoSide', 'photoBack'];
+    for (var i = 0; i < photoInputs.length; i++) {
+      var input = document.getElementById(photoInputs[i]);
+      if (input.files && input.files[0]) {
+        var photoData = await fileToBase64(input.files[0]);
+        photos.push(photoData);
+      }
+    }
+
+    var formData = {
+      client_id: document.getElementById('client_id').value,
+      week_no: document.getElementById('week_no').value,
+      weight: document.getElementById('weight').value,
+      waist: document.getElementById('waist').value,
+      compliance_score: document.getElementById('compliance').value,
+      energy: document.getElementById('energy').value,
+      issues: document.getElementById('issues').value.trim(),
+      photos: photos,
+    };
+
+    if (!formData.client_id) {
+      errDiv.textContent = 'Invalid check-in link. Please use the link sent to your WhatsApp.';
+      errDiv.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT CHECK-IN';
+      return;
+    }
+
+    try {
+      var res = await fetch('/api/checkin-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (res.ok) {
+        document.getElementById('checkinForm').style.display = 'none';
+        document.getElementById('successMsg').style.display = 'block';
+      } else {
+        var data = await res.json();
+        errDiv.textContent = data.error || 'Something went wrong. Please try again.';
+        errDiv.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'SUBMIT CHECK-IN';
+      }
+    } catch (err) {
+      errDiv.textContent = 'Network error. Please check your connection and try again.';
+      errDiv.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT CHECK-IN';
+    }
+  });
+</script>
+</body>
+</html>
