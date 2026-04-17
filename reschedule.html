@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session — Fitness by Maddy</title>
+  <link rel="stylesheet" href="/css/forms.css">
+</head>
+<body>
+  <div class="form-page">
+    <div class="form-header">
+      <div class="form-logo">Fitness by Maddy</div>
+      <h1 class="form-title">RESCHEDULE SESSION</h1>
+      <p class="form-subtitle">Life happens — let's find a better time for your session.</p>
+    </div>
+
+    <div id="alert" class="alert"></div>
+
+    <form id="rescheduleForm" class="form-card" novalidate>
+      <input type="hidden" id="client_id" name="client_id">
+
+      <div class="field">
+        <label>Your Name <span class="required">*</span></label>
+        <input type="text" name="name" required placeholder="Your name">
+      </div>
+
+      <div class="field">
+        <label>WhatsApp Number <span class="required">*</span></label>
+        <input type="tel" name="phone" required placeholder="+91 70824 78374">
+      </div>
+
+      <div class="field">
+        <label>Original Session Date</label>
+        <input type="date" name="original_date">
+      </div>
+
+      <div class="field">
+        <label>Preferred New Date <span class="required">*</span></label>
+        <input type="date" name="new_date" required>
+      </div>
+
+      <div class="field">
+        <label>Preferred Time Slot <span class="required">*</span></label>
+        <select name="time_slot" required>
+          <option value="">Select a time</option>
+          <option value="6am">6:00 AM</option>
+          <option value="7am">7:00 AM</option>
+          <option value="8am">8:00 AM</option>
+          <option value="9am">9:00 AM</option>
+          <option value="10am">10:00 AM</option>
+          <option value="11am">11:00 AM</option>
+          <option value="4pm">4:00 PM</option>
+          <option value="5pm">5:00 PM</option>
+          <option value="6pm">6:00 PM</option>
+          <option value="7pm">7:00 PM</option>
+          <option value="8pm">8:00 PM</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Reason for Rescheduling</label>
+        <select name="reason">
+          <option value="">Select reason</option>
+          <option value="schedule_conflict">Schedule conflict</option>
+          <option value="feeling_unwell">Feeling unwell</option>
+          <option value="travel">Travelling</option>
+          <option value="personal">Personal emergency</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Additional Notes</label>
+        <textarea name="notes" placeholder="Anything else we should know..."></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">REQUEST RESCHEDULE</button>
+    </form>
+
+    <div id="successScreen" class="success-screen">
+      <div class="success-icon">📅</div>
+      <h2 class="success-title">REQUEST RECEIVED</h2>
+      <p class="success-text">We'll confirm your new slot on WhatsApp within a few hours. Check your messages!</p>
+    </div>
+
+    <div class="form-footer">
+      <p>Reschedule requests are subject to trainer availability.</p>
+      <p style="margin-top:8px">fitnessbymaddy.com</p>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var clientId = params.get('c');
+      if (clientId) document.getElementById('client_id').value = clientId;
+
+      var form = document.getElementById('rescheduleForm');
+      var alertEl = document.getElementById('alert');
+      var submitBtn = document.getElementById('submitBtn');
+      var successScreen = document.getElementById('successScreen');
+
+      var today = new Date().toISOString().split('T')[0];
+      var newDateInput = form.querySelector('[name="new_date"]');
+      newDateInput.min = today;
+
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        alertEl.style.display = 'none';
+
+        var name = form.querySelector('[name="name"]').value;
+        var phone = form.querySelector('[name="phone"]').value;
+        var newDate = form.querySelector('[name="new_date"]').value;
+        var timeSlot = form.querySelector('[name="time_slot"]').value;
+
+        if (!name || !phone || !newDate || !timeSlot) {
+          showAlert('Please fill in all required fields.', 'error');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'SUBMITTING...';
+
+        var formData = new FormData(form);
+        var data = {};
+        formData.forEach(function(value, key) { data[key] = value; });
+
+        fetch('/api/send-whatsapp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer internal'
+          },
+          body: JSON.stringify({
+            phone: '917082478374',
+            text: 'RESCHEDULE REQUEST:\nClient: ' + name + '\nPhone: ' + phone +
+                  '\nNew date: ' + newDate + ' at ' + timeSlot +
+                  '\nReason: ' + (data.reason || 'N/A') +
+                  '\nNotes: ' + (data.notes || 'N/A'),
+            bypass_rate_limit: true
+          })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function() {
+          form.style.display = 'none';
+          successScreen.style.display = 'block';
+        })
+        .catch(function() {
+          showAlert('Network error. Please try again or message us on WhatsApp.', 'error');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'REQUEST RESCHEDULE';
+        });
+      });
+
+      function showAlert(msg, type) {
+        alertEl.textContent = msg;
+        alertEl.className = 'alert alert-' + type;
+        alertEl.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    })();
+  </script>
+</body>
+</html>
