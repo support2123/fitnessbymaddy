@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in — Fitness by Maddy</title>
+  <link rel="stylesheet" href="/css/forms.css">
+</head>
+<body>
+  <div class="form-page">
+    <div class="form-header">
+      <div class="form-logo">Fitness by Maddy</div>
+      <h1 class="form-title">WEEKLY CHECK-IN</h1>
+      <p class="form-subtitle" id="weekLabel">Let's see how your week went — quick and honest.</p>
+    </div>
+
+    <div id="alert" class="alert"></div>
+
+    <form id="checkinForm" class="form-card" novalidate>
+      <input type="hidden" id="client_id" name="client_id">
+      <input type="hidden" id="week_no" name="week_no">
+
+      <div class="form-section-label">MEASUREMENTS</div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Weight (kg) <span class="required">*</span></label>
+          <input type="number" name="weight" required step="0.1" placeholder="64.5">
+        </div>
+        <div class="field">
+          <label>Waist (inches)</label>
+          <input type="number" name="waist" step="0.1" placeholder="30">
+        </div>
+      </div>
+
+      <div class="form-section-label" style="margin-top:32px">HOW DID IT GO?</div>
+
+      <div class="field">
+        <label>Compliance — How closely did you follow the plan?</label>
+        <div class="slider-field">
+          <span style="font-size:12px;color:var(--mid-grey)">Low</span>
+          <input type="range" name="compliance_score" min="1" max="10" value="7" id="complianceSlider">
+          <span style="font-size:12px;color:var(--mid-grey)">High</span>
+          <span class="slider-value" id="complianceValue">7</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Energy Level — How did you feel this week?</label>
+        <div class="slider-field">
+          <span style="font-size:12px;color:var(--mid-grey)">Low</span>
+          <input type="range" name="energy" min="1" max="10" value="7" id="energySlider">
+          <span style="font-size:12px;color:var(--mid-grey)">High</span>
+          <span class="slider-value" id="energyValue">7</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Issues or Concerns</label>
+        <textarea name="issues" placeholder="Any pain, discomfort, schedule issues, food struggles, or anything else..."></textarea>
+      </div>
+
+      <div class="form-section-label" style="margin-top:32px">PROGRESS PHOTOS</div>
+
+      <div class="field">
+        <label>Upload 3 photos (front, side, back)</label>
+        <div class="photo-upload" id="photoUpload">
+          <div class="photo-upload-icon">📸</div>
+          <div class="photo-upload-text">Tap to select photos</div>
+          <div class="photo-upload-hint">Max 3 photos, 5MB each</div>
+        </div>
+        <input type="file" id="photoInput" accept="image/*" multiple style="display:none">
+        <div class="photo-previews" id="photoPreviews"></div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">SUBMIT CHECK-IN</button>
+    </form>
+
+    <div id="successScreen" class="success-screen">
+      <div class="success-icon">💪</div>
+      <h2 class="success-title">CHECK-IN COMPLETE</h2>
+      <p class="success-text">Your update has been received. Your next week's program will be ready soon — watch WhatsApp for the PDF!</p>
+    </div>
+
+    <div class="form-footer">
+      <p>Consistency > perfection. Honest data = better results.</p>
+      <p style="margin-top:8px">fitnessbymaddy.com</p>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var clientId = params.get('c');
+      var weekNo = params.get('w');
+
+      if (clientId) document.getElementById('client_id').value = clientId;
+      if (weekNo) {
+        document.getElementById('week_no').value = weekNo;
+        document.getElementById('weekLabel').textContent = 'Week ' + weekNo + ' — let\'s see how it went.';
+      }
+
+      var complianceSlider = document.getElementById('complianceSlider');
+      var complianceValue = document.getElementById('complianceValue');
+      complianceSlider.addEventListener('input', function() {
+        complianceValue.textContent = this.value;
+      });
+
+      var energySlider = document.getElementById('energySlider');
+      var energyValue = document.getElementById('energyValue');
+      energySlider.addEventListener('input', function() {
+        energyValue.textContent = this.value;
+      });
+
+      var photoUpload = document.getElementById('photoUpload');
+      var photoInput = document.getElementById('photoInput');
+      var photoPreviews = document.getElementById('photoPreviews');
+      var selectedFiles = [];
+
+      photoUpload.addEventListener('click', function() { photoInput.click(); });
+
+      photoInput.addEventListener('change', function() {
+        var files = Array.from(this.files).slice(0, 3);
+        selectedFiles = files;
+        photoPreviews.innerHTML = '';
+
+        files.forEach(function(file) {
+          var reader = new FileReader();
+          reader.onload = function(e) {
+            var img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'photo-preview';
+            photoPreviews.appendChild(img);
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      var form = document.getElementById('checkinForm');
+      var alertEl = document.getElementById('alert');
+      var submitBtn = document.getElementById('submitBtn');
+      var successScreen = document.getElementById('successScreen');
+
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        alertEl.style.display = 'none';
+
+        var weight = form.weight.value;
+        if (!weight) {
+          showAlert('Please enter your weight.', 'error');
+          return;
+        }
+
+        if (!clientId) {
+          showAlert('Missing client ID. Please use the link sent to your WhatsApp.', 'error');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'SUBMITTING...';
+
+        var data = {
+          client_id: clientId,
+          week_no: weekNo,
+          weight: parseFloat(weight),
+          waist: form.waist.value ? parseFloat(form.waist.value) : null,
+          compliance_score: parseInt(complianceSlider.value),
+          energy: parseInt(energySlider.value),
+          issues: form.issues.value || null,
+          photos_urls: []
+        };
+
+        fetch('/api/checkin-submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(result) {
+          if (result.success) {
+            form.style.display = 'none';
+            successScreen.style.display = 'block';
+          } else {
+            showAlert(result.error || 'Something went wrong. Please try again.', 'error');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'SUBMIT CHECK-IN';
+          }
+        })
+        .catch(function() {
+          showAlert('Network error. Please check your connection and try again.', 'error');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'SUBMIT CHECK-IN';
+        });
+      });
+
+      function showAlert(msg, type) {
+        alertEl.textContent = msg;
+        alertEl.className = 'alert alert-' + type;
+        alertEl.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    })();
+  </script>
+</body>
+</html>
