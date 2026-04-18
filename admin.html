@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    :root { --dash-bg: #f5f3ef; }
+    .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .login-card { background: white; padding: 48px 40px; border-radius: 4px; box-shadow: 0 8px 40px rgba(0,0,0,0.08); width: 100%; max-width: 400px; text-align: center; }
+    .login-card h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 8px; }
+    .login-card p { font-size: 13px; color: var(--mid-grey); margin-bottom: 32px; }
+    .login-input { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--charcoal); background: var(--cream); outline: none; margin-bottom: 12px; }
+    .login-input:focus { border-color: var(--gold); }
+    .login-btn { width: 100%; padding: 14px; background: var(--charcoal); color: white; border: none; cursor: pointer; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; font-family: 'DM Sans', sans-serif; border-radius: 2px; transition: background 0.3s; }
+    .login-btn:hover { background: var(--gold); }
+    .login-error { color: #c0392b; font-size: 12px; margin-top: 12px; display: none; }
+
+    .dash { display: none; min-height: 100vh; background: var(--dash-bg); }
+    .dash-nav { background: var(--charcoal); padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .dash-nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: white; letter-spacing: 2px; text-transform: uppercase; }
+    .dash-nav-right { display: flex; align-items: center; gap: 16px; }
+    .dash-nav-right span { font-size: 12px; color: rgba(255,255,255,0.6); }
+    .dash-logout { background: none; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 6px 16px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: 2px; font-family: 'DM Sans', sans-serif; }
+    .dash-logout:hover { border-color: var(--gold); color: var(--gold); }
+
+    .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 32px; }
+    .stat-card { background: white; padding: 28px 24px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .stat-card-label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card-value { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 600; color: var(--charcoal); line-height: 1; }
+    .stat-card-sub { font-size: 12px; color: var(--mid-grey); margin-top: 4px; }
+
+    .dash-section { padding: 0 32px 32px; }
+    .dash-section-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--charcoal); margin-bottom: 16px; }
+    .dash-table { width: 100%; background: white; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); overflow-x: auto; }
+    .dash-table table { width: 100%; border-collapse: collapse; }
+    .dash-table th { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--light-grey); background: var(--cream); }
+    .dash-table td { font-size: 13px; color: var(--charcoal); padding: 12px 16px; border-bottom: 1px solid var(--light-grey); }
+    .dash-table tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-new { background: #e8f5e9; color: #2e7d32; }
+    .badge-qualified { background: #fff3e0; color: #e65100; }
+    .badge-converted { background: #e3f2fd; color: #1565c0; }
+    .badge-dropped { background: #fce4ec; color: #c62828; }
+    .badge-active { background: #e8f5e9; color: #2e7d32; }
+    .badge-paused { background: #fff3e0; color: #e65100; }
+    .badge-escalation { background: #fce4ec; color: #c62828; }
+    .empty-state { text-align: center; padding: 40px; color: var(--mid-grey); font-size: 13px; }
+    .refresh-btn { background: none; border: 1px solid var(--light-grey); color: var(--mid-grey); padding: 6px 16px; font-size: 11px; letter-spacing: 1px; cursor: pointer; border-radius: 2px; font-family: 'DM Sans', sans-serif; float: right; }
+    .refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    @media (max-width: 768px) {
+      .dash-grid { grid-template-columns: repeat(2, 1fr); padding: 16px; }
+      .dash-section { padding: 0 16px 16px; }
+      .dash-nav { padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-page" id="loginPage">
+  <div class="login-card">
+    <p class="hero-eyebrow" style="margin-bottom:16px">Admin Access</p>
+    <h2>Fitness by Maddy</h2>
+    <p>Enter your credentials to access the dashboard.</p>
+    <input class="login-input" type="email" id="loginEmail" placeholder="Email address">
+    <input class="login-input" type="password" id="loginPassword" placeholder="Password">
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <p class="login-error" id="loginError">Invalid credentials. Please try again.</p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dash" id="dashboard">
+  <div class="dash-nav">
+    <div class="dash-nav-logo">Maddy Admin</div>
+    <div class="dash-nav-right">
+      <span id="userEmail"></span>
+      <button class="dash-logout" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="dash-grid" id="statsGrid">
+    <div class="stat-card">
+      <div class="stat-card-label">New Leads Today</div>
+      <div class="stat-card-value" id="leadsToday">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Leads This Week</div>
+      <div class="stat-card-value" id="leadsWeek">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Conversion Rate</div>
+      <div class="stat-card-value" id="convRate">--</div>
+      <div class="stat-card-sub">lead → paid</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Active Clients</div>
+      <div class="stat-card-value" id="activeClients">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Pending Check-Ins</div>
+      <div class="stat-card-value" id="pendingCheckins">--</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Programs Generated</div>
+      <div class="stat-card-value" id="programsGenerated">--</div>
+      <div class="stat-card-sub">this week</div>
+    </div>
+  </div>
+
+  <div class="dash-section">
+    <div class="dash-section-title">Escalations Awaiting Review <button class="refresh-btn" onclick="loadDashboard()">Refresh</button></div>
+    <div class="dash-table">
+      <table>
+        <thead><tr><th>Time</th><th>Phone</th><th>Message</th><th>Status</th></tr></thead>
+        <tbody id="escalationsBody"><tr><td colspan="4" class="empty-state">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="dash-section">
+    <div class="dash-section-title">Recent Leads</div>
+    <div class="dash-table">
+      <table>
+        <thead><tr><th>Name</th><th>Phone</th><th>Source</th><th>Interest</th><th>Status</th><th>When</th></tr></thead>
+        <tbody id="leadsBody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="dash-section">
+    <div class="dash-section-title">Active Clients by Program</div>
+    <div class="dash-table">
+      <table>
+        <thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Ends</th><th>Status</th></tr></thead>
+        <tbody id="clientsBody"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = window.__SUPABASE_URL || '';
+  const SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY || '';
+
+  let sbToken = null;
+  let sbClient = null;
+
+  function initSupabase() {
+    if (typeof window.supabase !== 'undefined') return;
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+    script.onload = () => { checkSession(); };
+    document.head.appendChild(script);
+  }
+
+  function getClient() {
+    if (!sbClient && window.supabase) {
+      sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+    return sbClient;
+  }
+
+  async function checkSession() {
+    const client = getClient();
+    if (!client) return;
+    const { data: { session } } = await client.auth.getSession();
+    if (session) {
+      sbToken = session.access_token;
+      showDashboard(session.user.email);
+    }
+  }
+
+  async function doLogin() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const errEl = document.getElementById('loginError');
+    errEl.style.display = 'none';
+
+    const client = getClient();
+    if (!client) {
+      errEl.textContent = 'Dashboard not configured. Set SUPABASE_URL and ANON_KEY.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+    if (error) {
+      errEl.textContent = error.message;
+      errEl.style.display = 'block';
+      return;
+    }
+
+    sbToken = data.session.access_token;
+    showDashboard(email);
+  }
+
+  async function doLogout() {
+    const client = getClient();
+    if (client) await client.auth.signOut();
+    sbToken = null;
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('loginPage').style.display = 'flex';
+  }
+
+  function showDashboard(email) {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('userEmail').textContent = email;
+    loadDashboard();
+  }
+
+  async function loadDashboard() {
+    const client = getClient();
+    if (!client) return;
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const [leadsRes, clientsRes, programsRes, messagesRes] = await Promise.all([
+      client.from('leads').select('*').order('created_at', { ascending: false }).limit(50),
+      client.from('clients').select('*').order('created_at', { ascending: false }),
+      client.from('programs').select('id, generated_at').gte('generated_at', weekStart),
+      client.from('messages').select('phone, body, sent_at').eq('template_name', 'escalation_alert').order('sent_at', { ascending: false }).limit(10),
+    ]);
+
+    const leads = leadsRes.data || [];
+    const clients = clientsRes.data || [];
+    const programs = programsRes.data || [];
+    const escalations = messagesRes.data || [];
+
+    const leadsToday = leads.filter(l => l.created_at >= todayStart).length;
+    const leadsWeek = leads.filter(l => l.created_at >= weekStart).length;
+    const totalLeads = leads.length || 1;
+    const converted = leads.filter(l => l.status === 'converted').length;
+    const activeClients = clients.filter(c => c.status === 'active').length;
+
+    document.getElementById('leadsToday').textContent = leadsToday;
+    document.getElementById('leadsWeek').textContent = leadsWeek;
+    document.getElementById('convRate').textContent = Math.round((converted / totalLeads) * 100) + '%';
+    document.getElementById('activeClients').textContent = activeClients;
+    document.getElementById('pendingCheckins').textContent = '--';
+    document.getElementById('programsGenerated').textContent = programs.length;
+
+    const escalationsBody = document.getElementById('escalationsBody');
+    if (escalations.length === 0) {
+      escalationsBody.innerHTML = '<tr><td colspan="4" class="empty-state">No escalations pending</td></tr>';
+    } else {
+      escalationsBody.innerHTML = escalations.map(e => `
+        <tr>
+          <td>${new Date(e.sent_at).toLocaleString()}</td>
+          <td>${maskPhone(e.phone)}</td>
+          <td>${escHtml(e.body || '')}</td>
+          <td><span class="badge badge-escalation">Review</span></td>
+        </tr>
+      `).join('');
+    }
+
+    const leadsBody = document.getElementById('leadsBody');
+    const recentLeads = leads.slice(0, 20);
+    if (recentLeads.length === 0) {
+      leadsBody.innerHTML = '<tr><td colspan="6" class="empty-state">No leads yet</td></tr>';
+    } else {
+      leadsBody.innerHTML = recentLeads.map(l => `
+        <tr>
+          <td>${escHtml(l.name || '—')}</td>
+          <td>${maskPhone(l.phone)}</td>
+          <td>${escHtml(l.source || '—')}</td>
+          <td>${escHtml(l.program_interest || '—')}</td>
+          <td><span class="badge badge-${l.status}">${l.status}</span></td>
+          <td>${timeAgo(l.created_at)}</td>
+        </tr>
+      `).join('');
+    }
+
+    const clientsBody = document.getElementById('clientsBody');
+    if (clients.length === 0) {
+      clientsBody.innerHTML = '<tr><td colspan="5" class="empty-state">No clients yet</td></tr>';
+    } else {
+      clientsBody.innerHTML = clients.map(c => `
+        <tr>
+          <td>${escHtml(c.name || '—')}</td>
+          <td>${escHtml(c.program || '—')}</td>
+          <td>${c.program_started_at ? new Date(c.program_started_at).toLocaleDateString() : '—'}</td>
+          <td>${c.program_ends_at ? new Date(c.program_ends_at).toLocaleDateString() : '—'}</td>
+          <td><span class="badge badge-${c.status}">${c.status}</span></td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  function maskPhone(phone) {
+    if (!phone || phone.length < 6) return '***';
+    return phone.slice(0, 3) + 'XXX...' + phone.slice(-3);
+  }
+
+  function escHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function timeAgo(dateStr) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return mins + 'm ago';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    return Math.floor(hrs / 24) + 'd ago';
+  }
+
+  initSupabase();
+</script>
+</body>
+</html>
