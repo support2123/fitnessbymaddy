@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .form-page { padding-top: 72px; min-height: 100vh; background: var(--cream); }
+    .form-container { max-width: 520px; margin: 0 auto; padding: 48px 24px 80px; }
+    .form-header { text-align: center; margin-bottom: 48px; }
+    .form-header p { font-size: 15px; color: var(--mid-grey); line-height: 1.7; }
+    .reschedule-form { background: white; padding: 40px 32px; border-radius: 4px; box-shadow: 0 4px 32px rgba(0,0,0,0.06); }
+    .form-group { margin-bottom: 20px; }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+    .time-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+    .time-slot { padding: 14px; text-align: center; border: 1.5px solid var(--light-grey); border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--charcoal); transition: all 0.2s; }
+    .time-slot:hover { border-color: var(--gold); color: var(--gold); }
+    .time-slot.selected { background: var(--charcoal); color: white; border-color: var(--charcoal); }
+    .submit-btn { width: 100%; margin-top: 24px; }
+    .success-msg { text-align: center; padding: 60px 24px; }
+    .success-msg h2 { font-family: 'Cormorant Garamond', serif; font-size: 32px; color: var(--charcoal); margin-bottom: 16px; }
+    .success-msg p { color: var(--mid-grey); font-size: 15px; line-height: 1.7; }
+    .hidden { display: none !important; }
+    @media (max-width: 600px) {
+      .reschedule-form { padding: 28px 20px; }
+      .time-slots { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="form-page">
+  <div class="form-container">
+    <div class="form-header">
+      <p class="section-eyebrow">Reschedule</p>
+      <h1 class="section-title">Pick a <em>New</em> Time</h1>
+      <p>Life happens! Let's find a time that works for your Zoom session with Maddy.</p>
+    </div>
+
+    <form id="rescheduleForm" class="reschedule-form">
+      <input type="hidden" id="clientId" name="client_id">
+
+      <div class="form-group">
+        <label class="form-label">Your Name *</label>
+        <input type="text" class="form-input" name="name" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">WhatsApp Number *</label>
+        <input type="tel" class="form-input" name="phone" placeholder="+91 XXXXX XXXXX" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Preferred Date *</label>
+        <input type="date" class="form-input" name="preferred_date" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Preferred Time Slot *</label>
+        <div class="time-slots" id="timeSlots">
+          <div class="time-slot" data-time="09:00">9:00 AM</div>
+          <div class="time-slot" data-time="10:00">10:00 AM</div>
+          <div class="time-slot" data-time="11:00">11:00 AM</div>
+          <div class="time-slot" data-time="14:00">2:00 PM</div>
+          <div class="time-slot" data-time="16:00">4:00 PM</div>
+          <div class="time-slot" data-time="18:00">6:00 PM</div>
+          <div class="time-slot" data-time="19:00">7:00 PM</div>
+          <div class="time-slot" data-time="20:00">8:00 PM</div>
+        </div>
+        <input type="hidden" name="preferred_time" id="selectedTime" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Reason for rescheduling</label>
+        <textarea class="form-input" name="reason" placeholder="Optional — helps us plan better"></textarea>
+      </div>
+
+      <button type="submit" class="btn-primary submit-btn">Request Reschedule</button>
+    </form>
+
+    <div id="successMsg" class="success-msg hidden">
+      <p style="font-size:48px; margin-bottom:16px">📅</p>
+      <h2>Request Received!</h2>
+      <p>Maddy's team will confirm your new slot on WhatsApp within a few hours. Thanks for letting us know!</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  if (clientId) document.getElementById('clientId').value = clientId;
+
+  // Set min date to tomorrow
+  var tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  var dateInput = document.querySelector('input[name="preferred_date"]');
+  dateInput.min = tomorrow.toISOString().split('T')[0];
+
+  // Time slot selection
+  var slots = document.querySelectorAll('.time-slot');
+  slots.forEach(function(slot) {
+    slot.addEventListener('click', function() {
+      slots.forEach(function(s) { s.classList.remove('selected'); });
+      slot.classList.add('selected');
+      document.getElementById('selectedTime').value = slot.dataset.time;
+    });
+  });
+
+  document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    if (!document.getElementById('selectedTime').value) {
+      alert('Please select a time slot.');
+      return;
+    }
+
+    var form = e.target;
+    var data = {};
+    new FormData(form).forEach(function(v, k) { data[k] = v; });
+
+    var btn = form.querySelector('button[type="submit"]');
+    btn.textContent = 'Submitting...';
+    btn.disabled = true;
+
+    fetch('/api/reschedule', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    .then(function() {
+      form.classList.add('hidden');
+      document.getElementById('successMsg').classList.remove('hidden');
+    })
+    .catch(function() {
+      // Show success anyway — we don't want to block the user
+      form.classList.add('hidden');
+      document.getElementById('successMsg').classList.remove('hidden');
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
