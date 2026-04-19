@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="form-page">
+  <div class="form-container">
+    <div class="form-header">
+      <p class="section-eyebrow">Reschedule</p>
+      <h1 class="section-title">Missed a <em>Session?</em></h1>
+      <p>Life happens. Let us know your availability and we'll get you back on track.</p>
+    </div>
+
+    <div class="form-card">
+      <div id="formError" class="form-error"></div>
+      <form id="rescheduleForm" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="name">Your Name</label>
+          <input class="form-input" type="text" id="name" name="name" required placeholder="Full name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="phone">WhatsApp Number</label>
+          <input class="form-input" type="tel" id="phone" name="phone" required placeholder="+91 98765 43210">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reason">Reason for Missing</label>
+          <select class="form-select" id="reason" name="reason">
+            <option value="">Select</option>
+            <option value="sick">Sick / Not feeling well</option>
+            <option value="travel">Travel / Out of town</option>
+            <option value="work">Work conflict</option>
+            <option value="family">Family emergency</option>
+            <option value="forgot">Forgot</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="preferred_date">Preferred Reschedule Date</label>
+          <input class="form-input" type="date" id="preferred_date" name="preferred_date" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="preferred_time">Preferred Time Slot</label>
+          <select class="form-select" id="preferred_time" name="preferred_time">
+            <option value="">Select</option>
+            <option value="morning">Morning (7am — 10am IST)</option>
+            <option value="midday">Midday (11am — 1pm IST)</option>
+            <option value="afternoon">Afternoon (2pm — 5pm IST)</option>
+            <option value="evening">Evening (6pm — 9pm IST)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="notes">Additional Notes</label>
+          <textarea class="form-textarea" id="notes" name="notes" placeholder="Anything else we should know?"></textarea>
+        </div>
+
+        <button type="submit" class="form-submit" id="submitBtn">Request Reschedule</button>
+      </form>
+
+      <div id="formSuccess" class="form-success">
+        <div class="check-icon">✓</div>
+        <h3>Request Sent!</h3>
+        <p>Maddy's team will confirm your new session time on WhatsApp within a few hours.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var dateInput = document.getElementById('preferred_date');
+  var today = new Date().toISOString().split('T')[0];
+  dateInput.setAttribute('min', today);
+
+  document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('submitBtn');
+    var errorEl = document.getElementById('formError');
+    errorEl.classList.remove('visible');
+
+    var name = document.getElementById('name').value.trim();
+    var phone = document.getElementById('phone').value.trim();
+    var date = document.getElementById('preferred_date').value;
+
+    if (!name || !phone || !date) {
+      errorEl.textContent = 'Please fill in your name, phone, and preferred date.';
+      errorEl.classList.add('visible');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'SENDING...';
+
+    var formData = {
+      phone: phone,
+      template: 'reschedule_request',
+      params: {
+        name: name,
+        templateParams: [
+          name,
+          document.getElementById('reason').value || 'not specified',
+          date,
+          document.getElementById('preferred_time').value || 'flexible',
+          document.getElementById('notes').value.trim(),
+        ],
+      },
+    };
+
+    fetch('/api/send-whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function() {
+      document.getElementById('rescheduleForm').style.display = 'none';
+      document.getElementById('formSuccess').classList.add('visible');
+    })
+    .catch(function(err) {
+      errorEl.textContent = 'Something went wrong. Please message us on WhatsApp instead.';
+      errorEl.classList.add('visible');
+      btn.disabled = false;
+      btn.textContent = 'REQUEST RESCHEDULE';
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

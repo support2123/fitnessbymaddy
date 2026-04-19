@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="form-page">
+  <div class="form-container">
+    <div class="form-header">
+      <p class="section-eyebrow">Weekly Check-in</p>
+      <h1 class="section-title" id="weekTitle">Week <em id="weekNum">1</em> Check-in</h1>
+      <p>Track your progress so Maddy can fine-tune your next week's plan. Takes 2 minutes.</p>
+    </div>
+
+    <div class="form-card">
+      <div id="formError" class="form-error"></div>
+      <form id="checkinForm" novalidate>
+        <input type="hidden" id="clientId" name="client_id">
+        <input type="hidden" id="weekNo" name="week_no">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="weight">Current Weight (kg)</label>
+            <input class="form-input" type="number" id="weight" name="weight" step="0.1" required placeholder="70.5">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="waist">Waist (cm)</label>
+            <input class="form-input" type="number" id="waist" name="waist" step="0.1" placeholder="78">
+          </div>
+        </div>
+
+        <div class="form-slider-group">
+          <div class="form-slider-label">
+            <label class="form-label" style="margin-bottom:0">Compliance (how well did you follow the plan?)</label>
+            <span class="form-slider-value" id="complianceVal">7</span>
+          </div>
+          <input type="range" class="form-slider" id="compliance" name="compliance_score" min="1" max="10" value="7">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mid-grey);margin-top:4px">
+            <span>Barely</span><span>Perfectly</span>
+          </div>
+        </div>
+
+        <div class="form-slider-group">
+          <div class="form-slider-label">
+            <label class="form-label" style="margin-bottom:0">Energy Level</label>
+            <span class="form-slider-value" id="energyVal">7</span>
+          </div>
+          <input type="range" class="form-slider" id="energy" name="energy" min="1" max="10" value="7">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mid-grey);margin-top:4px">
+            <span>Exhausted</span><span>Energized</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="mood">How Are You Feeling?</label>
+          <select class="form-select" id="mood" name="mood">
+            <option value="great">Great — crushing it</option>
+            <option value="good" selected>Good — on track</option>
+            <option value="ok">OK — could be better</option>
+            <option value="struggling">Struggling — need help</option>
+            <option value="bad">Bad — something's wrong</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="issues">Anything We Should Know?</label>
+          <textarea class="form-textarea" id="issues" name="issues" placeholder="Pain, soreness, schedule issues, diet struggles, wins, questions — anything goes"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Progress Photos (front, side, back)</label>
+          <div class="photo-upload-area" id="photoUpload">
+            <div class="upload-icon">📷</div>
+            <p>Tap to upload up to 3 photos</p>
+            <input type="file" id="photos" name="photos" accept="image/*" multiple hidden>
+          </div>
+          <div class="photo-preview" id="photoPreview"></div>
+        </div>
+
+        <button type="submit" class="form-submit" id="submitBtn">Submit Check-in</button>
+      </form>
+
+      <div id="formSuccess" class="form-success">
+        <div class="check-icon">✓</div>
+        <h3>Check-in Received!</h3>
+        <p>Your updated program will be sent to your WhatsApp within 24 hours. Keep pushing — you're doing amazing.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w') || '1';
+
+  if (clientId) document.getElementById('clientId').value = clientId;
+  document.getElementById('weekNo').value = weekNo;
+  document.getElementById('weekNum').textContent = weekNo;
+
+  document.getElementById('compliance').addEventListener('input', function() {
+    document.getElementById('complianceVal').textContent = this.value;
+  });
+  document.getElementById('energy').addEventListener('input', function() {
+    document.getElementById('energyVal').textContent = this.value;
+  });
+
+  var photoUpload = document.getElementById('photoUpload');
+  var photoInput = document.getElementById('photos');
+  var photoPreview = document.getElementById('photoPreview');
+
+  photoUpload.addEventListener('click', function() { photoInput.click(); });
+  photoInput.addEventListener('change', function() {
+    photoPreview.innerHTML = '';
+    var files = Array.from(photoInput.files).slice(0, 3);
+    files.forEach(function(file) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = document.createElement('img');
+        img.src = e.target.result;
+        photoPreview.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  document.getElementById('checkinForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('submitBtn');
+    var errorEl = document.getElementById('formError');
+    errorEl.classList.remove('visible');
+
+    if (!clientId) {
+      errorEl.textContent = 'Invalid check-in link. Please use the link from your WhatsApp message.';
+      errorEl.classList.add('visible');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'SUBMITTING...';
+
+    var formData = {
+      client_id: clientId,
+      week_no: parseInt(weekNo),
+      weight: document.getElementById('weight').value,
+      waist: document.getElementById('waist').value,
+      compliance_score: document.getElementById('compliance').value,
+      energy: document.getElementById('energy').value,
+      issues: document.getElementById('issues').value.trim(),
+      photos_urls: [],
+    };
+
+    fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        document.getElementById('checkinForm').style.display = 'none';
+        document.getElementById('formSuccess').classList.add('visible');
+      } else {
+        throw new Error(data.error || 'Submission failed');
+      }
+    })
+    .catch(function(err) {
+      errorEl.textContent = err.message || 'Something went wrong. Please try again.';
+      errorEl.classList.add('visible');
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT CHECK-IN';
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
