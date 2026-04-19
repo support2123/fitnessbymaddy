@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session — Fitness by Maddy</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    .form-page { padding-top: 72px; min-height: 100vh; background: var(--cream); }
+    .form-hero { background: var(--charcoal); padding: 60px 80px; text-align: center; }
+    .form-hero-title {
+      font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 5vw, 56px);
+      color: var(--gold); letter-spacing: 3px; margin-bottom: 8px;
+    }
+    .form-hero-sub { font-size: 14px; color: rgba(255,255,255,0.6); letter-spacing: 1px; }
+    .form-container {
+      max-width: 540px; margin: -40px auto 60px; padding: 48px;
+      background: white; border-radius: 4px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.08); position: relative; z-index: 2;
+    }
+    .form-section-title {
+      font-family: 'Bebas Neue', sans-serif; font-size: 22px;
+      color: var(--charcoal); letter-spacing: 2px;
+      padding-bottom: 12px; border-bottom: 2px solid var(--gold);
+      margin: 0 0 20px;
+    }
+    .slot-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      margin-bottom: 24px;
+    }
+    .slot-option {
+      padding: 16px 12px; border: 1.5px solid var(--light-grey);
+      border-radius: 2px; text-align: center; cursor: pointer;
+      transition: all 0.3s; background: white;
+    }
+    .slot-option:hover { border-color: var(--gold); }
+    .slot-option.selected {
+      border-color: var(--gold); background: var(--gold);
+      color: white;
+    }
+    .slot-day {
+      font-family: 'Bebas Neue', sans-serif; font-size: 16px;
+      letter-spacing: 1px; margin-bottom: 4px;
+    }
+    .slot-time { font-size: 12px; color: var(--mid-grey); }
+    .slot-option.selected .slot-time { color: rgba(255,255,255,0.8); }
+    textarea.form-input { min-height: 80px; resize: vertical; }
+    .form-submit {
+      margin-top: 24px; width: 100%; padding: 18px;
+      background: var(--charcoal); color: white; border: none;
+      font-family: 'Bebas Neue', sans-serif; font-size: 18px;
+      letter-spacing: 3px; cursor: pointer; transition: background 0.3s;
+      border-radius: 2px;
+    }
+    .form-submit:hover { background: var(--gold); }
+    .form-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .form-success {
+      display: none; text-align: center; padding: 60px 32px;
+    }
+    .form-success h2 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 32px;
+      color: var(--gold); letter-spacing: 2px; margin-bottom: 12px;
+    }
+    .form-success p { color: var(--mid-grey); font-size: 15px; line-height: 1.7; }
+    @media (max-width: 900px) {
+      .form-hero { padding: 40px 24px; }
+      .form-container { margin: -24px 16px 40px; padding: 32px 20px; }
+      .slot-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/" class="nav-logo">Fitness by Maddy</a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/shred.html">6-Week Shred</a></li>
+      <li><a href="/custom.html">12-Week Custom</a></li>
+      <li><a href="/vip.html" class="nav-cta">Apply Now</a></li>
+    </ul>
+  </nav>
+
+  <div class="form-page">
+    <div class="form-hero">
+      <h1 class="form-hero-title">RESCHEDULE SESSION</h1>
+      <p class="form-hero-sub">Life happens — pick a new slot below</p>
+    </div>
+
+    <div class="form-container">
+      <form id="rescheduleForm">
+        <div class="form-section-title">PICK A NEW SLOT</div>
+        <div class="slot-grid" id="slotGrid"></div>
+
+        <div class="form-group">
+          <label class="form-label">Reason for Rescheduling</label>
+          <textarea name="reason" class="form-input" placeholder="Optional — helps us plan better"></textarea>
+        </div>
+
+        <input type="hidden" name="selected_slot" id="selectedSlot">
+        <button type="submit" class="form-submit" id="submitBtn">CONFIRM NEW SLOT</button>
+      </form>
+
+      <div class="form-success" id="successMsg">
+        <h2>SESSION RESCHEDULED</h2>
+        <p>Your new session is confirmed. You'll receive a reminder on WhatsApp 1 hour before. See you there!</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var params = new URLSearchParams(window.location.search);
+    var clientId = params.get('c');
+
+    function generateSlots() {
+      var grid = document.getElementById('slotGrid');
+      var now = new Date();
+      var slots = [];
+
+      for (var i = 1; i <= 7; i++) {
+        var date = new Date(now);
+        date.setDate(date.getDate() + i);
+        if (date.getDay() === 0) continue;
+
+        var times = ['09:00 AM', '11:00 AM', '04:00 PM', '06:00 PM'];
+        var dayName = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+        times.forEach(function(time) {
+          slots.push({ day: dayName, time: time, value: date.toISOString().split('T')[0] + ' ' + time });
+        });
+      }
+
+      slots.slice(0, 8).forEach(function(slot) {
+        var div = document.createElement('div');
+        div.className = 'slot-option';
+        div.innerHTML = '<div class="slot-day">' + slot.day + '</div><div class="slot-time">' + slot.time + '</div>';
+        div.addEventListener('click', function() {
+          document.querySelectorAll('.slot-option').forEach(function(el) { el.classList.remove('selected'); });
+          div.classList.add('selected');
+          document.getElementById('selectedSlot').value = slot.value;
+        });
+        grid.appendChild(div);
+      });
+    }
+
+    generateSlots();
+
+    var form = document.getElementById('rescheduleForm');
+    var btn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var slot = document.getElementById('selectedSlot').value;
+      if (!slot) {
+        alert('Please select a time slot.');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'CONFIRMING...';
+
+      var data = {
+        client_id: clientId,
+        new_slot: slot,
+        reason: form.reason.value
+      };
+
+      fetch('/api/send-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: clientId,
+          body: 'Session rescheduled to: ' + slot + (data.reason ? '. Reason: ' + data.reason : ''),
+          bypass_rate_limit: true
+        })
+      })
+      .then(function() {
+        form.style.display = 'none';
+        document.getElementById('successMsg').style.display = 'block';
+      })
+      .catch(function() {
+        btn.disabled = false;
+        btn.textContent = 'CONFIRM NEW SLOT';
+        alert('Something went wrong. Please try again.');
+      });
+    });
+  </script>
+</body>
+</html>
