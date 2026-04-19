@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    :root { --green: #27ae60; --red: #c0392b; --yellow: #f39c12; --blue: #2980b9; }
+    body { background: #f5f3ef; }
+    .admin-wrap { padding-top: 72px; min-height: 100vh; }
+    .login-page { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 72px); padding: 24px; }
+    .login-box { background: white; padding: 48px; border-radius: 4px; box-shadow: 0 8px 40px rgba(0,0,0,0.08); max-width: 400px; width: 100%; text-align: center; }
+    .login-box h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 8px; color: var(--charcoal); }
+    .login-box p { font-size: 13px; color: var(--mid-grey); margin-bottom: 24px; }
+    .login-box .form-group { text-align: left; }
+    .login-box .btn-primary { width: 100%; margin-top: 16px; }
+    .login-error { color: var(--red); font-size: 13px; margin-top: 8px; display: none; }
+
+    .dashboard { display: none; padding: 32px; max-width: 1200px; margin: 0 auto; }
+    .dashboard.active { display: block; }
+    .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    .dash-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 32px; color: var(--charcoal); }
+    .dash-logout { font-size: 12px; color: var(--mid-grey); cursor: pointer; letter-spacing: 1px; text-transform: uppercase; border: 1px solid var(--light-grey); padding: 8px 16px; border-radius: 2px; background: white; }
+    .dash-logout:hover { border-color: var(--gold); color: var(--gold); }
+
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+    .metric-card { background: white; padding: 24px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .metric-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .metric-value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--charcoal); }
+    .metric-sub { font-size: 12px; color: var(--mid-grey); margin-top: 4px; }
+
+    .tabs { display: flex; gap: 0; border-bottom: 2px solid var(--light-grey); margin-bottom: 24px; }
+    .tab { padding: 12px 24px; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; background: none; border-top: none; border-left: none; border-right: none; }
+    .tab:hover { color: var(--charcoal); }
+    .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .data-table { width: 100%; background: white; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border-collapse: collapse; }
+    .data-table th { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--mid-grey); padding: 14px 16px; text-align: left; border-bottom: 2px solid var(--light-grey); background: #faf9f7; }
+    .data-table td { font-size: 13px; padding: 12px 16px; border-bottom: 1px solid var(--light-grey); color: var(--charcoal); }
+    .data-table tr:hover td { background: #faf9f7; }
+
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-new { background: #eaf2ff; color: var(--blue); }
+    .badge-qualified { background: #fef9e7; color: var(--yellow); }
+    .badge-converted { background: #eafaf1; color: var(--green); }
+    .badge-dropped { background: #fdecea; color: var(--red); }
+    .badge-active { background: #eafaf1; color: var(--green); }
+    .badge-paused { background: #fef9e7; color: var(--yellow); }
+    .badge-completed { background: #f0f0f0; color: #666; }
+
+    .empty-state { text-align: center; padding: 60px 24px; color: var(--mid-grey); }
+    .empty-state p { font-size: 14px; }
+
+    @media (max-width: 900px) {
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .dashboard { padding: 16px; }
+      .data-table { font-size: 12px; display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="../index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="../index.html">Website</a></li>
+    <li><a href="#" class="active">Dashboard</a></li>
+  </ul>
+</nav>
+
+<div class="admin-wrap">
+  <!-- LOGIN -->
+  <div class="login-page" id="loginPage">
+    <div class="login-box">
+      <h2>Admin Login</h2>
+      <p>Access the FitnessByMaddy operations dashboard</p>
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="loginEmail">Email</label>
+          <input class="form-input" type="email" id="loginEmail" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="loginPassword">Password</label>
+          <input class="form-input" type="password" id="loginPassword" required>
+        </div>
+        <div class="login-error" id="loginError"></div>
+        <button type="submit" class="btn-primary">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard" id="dashboard">
+    <div class="dash-header">
+      <h1>Operations Dashboard</h1>
+      <button class="dash-logout" id="logoutBtn">Sign Out</button>
+    </div>
+
+    <div class="metrics" id="metricsGrid"></div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="leads">Leads</button>
+      <button class="tab" data-tab="clients">Clients</button>
+      <button class="tab" data-tab="checkins">Check-Ins</button>
+      <button class="tab" data-tab="programs">Programs</button>
+      <button class="tab" data-tab="messages">Messages</button>
+    </div>
+
+    <div class="tab-content active" id="tab-leads">
+      <table class="data-table" id="leadsTable">
+        <thead><tr><th>Phone</th><th>Name</th><th>Source</th><th>Interest</th><th>Market</th><th>Status</th><th>Created</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="tab-content" id="tab-clients">
+      <table class="data-table" id="clientsTable">
+        <thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Ends</th><th>Paid</th><th>Status</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="tab-content" id="tab-checkins">
+      <table class="data-table" id="checkinsTable">
+        <thead><tr><th>Client</th><th>Week</th><th>Weight</th><th>Compliance</th><th>Energy</th><th>Issues</th><th>Submitted</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="tab-content" id="tab-programs">
+      <table class="data-table" id="programsTable">
+        <thead><tr><th>Client</th><th>Week</th><th>Generated</th><th>Sent</th><th>PDF</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="tab-content" id="tab-messages">
+      <table class="data-table" id="messagesTable">
+        <thead><tr><th>Phone</th><th>Dir</th><th>Body</th><th>Template</th><th>Status</th><th>Time</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
