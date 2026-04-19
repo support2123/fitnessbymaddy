@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .form-page { padding-top: 72px; min-height: 100vh; background: var(--cream); }
+    .form-container { max-width: 540px; margin: 0 auto; padding: 60px 24px 80px; }
+    .form-header { text-align: center; margin-bottom: 48px; }
+    .form-textarea { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--charcoal); background: var(--cream); transition: border-color 0.3s; outline: none; resize: vertical; min-height: 80px; }
+    .form-textarea:focus { border-color: var(--gold); }
+    .form-submit { width: 100%; margin-top: 32px; }
+    .form-success { display: none; text-align: center; padding: 60px 24px; }
+    .form-success.active { display: block; }
+    .form-success h2 { font-family: 'Cormorant Garamond', serif; font-size: 36px; color: var(--charcoal); margin-bottom: 16px; }
+    .form-success p { color: var(--mid-grey); font-size: 16px; line-height: 1.7; }
+    .form-error { color: #c0392b; font-size: 13px; margin-top: 8px; display: none; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="form-page">
+  <div class="form-container">
+    <div class="form-header">
+      <p class="section-eyebrow">Reschedule</p>
+      <h1 class="section-title">Missed a <em>Session?</em></h1>
+      <p class="section-body" style="margin:0 auto">No worries — life happens. Let's get you rebooked.</p>
+    </div>
+
+    <form id="rescheduleForm">
+      <input type="hidden" id="client_id" name="client_id">
+
+      <div class="form-group">
+        <label class="form-label" for="reason">Reason for Missing *</label>
+        <select class="form-select" id="reason" name="reason" required>
+          <option value="">Select a reason</option>
+          <option value="travel">Travel / Out of town</option>
+          <option value="illness">Illness / Not feeling well</option>
+          <option value="schedule">Schedule conflict</option>
+          <option value="personal">Personal / Family emergency</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="preferred_date">Preferred Reschedule Date *</label>
+        <input class="form-input" type="date" id="preferred_date" name="preferred_date" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="preferred_time">Preferred Time Slot *</label>
+        <select class="form-select" id="preferred_time" name="preferred_time" required>
+          <option value="">Select a time</option>
+          <option value="morning">Morning (7am - 11am)</option>
+          <option value="afternoon">Afternoon (12pm - 4pm)</option>
+          <option value="evening">Evening (5pm - 9pm)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="notes">Additional Notes</label>
+        <textarea class="form-textarea" id="notes" name="notes" placeholder="Anything Maddy should know..."></textarea>
+      </div>
+
+      <div class="form-error" id="formError"></div>
+      <button type="submit" class="btn-primary form-submit">Request Reschedule</button>
+    </form>
+
+    <div class="form-success" id="formSuccess">
+      <h2>Request Sent!</h2>
+      <p>Maddy will confirm your rescheduled session on WhatsApp within a few hours.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  if (clientId) document.getElementById('client_id').value = clientId;
+
+  var dateInput = document.getElementById('preferred_date');
+  var tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  dateInput.min = tomorrow.toISOString().split('T')[0];
+  var maxDate = new Date();
+  maxDate.setDate(maxDate.getDate() + 14);
+  dateInput.max = maxDate.toISOString().split('T')[0];
+
+  document.getElementById('rescheduleForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var form = e.target;
+    var btn = form.querySelector('button[type="submit"]');
+    var errorEl = document.getElementById('formError');
+
+    btn.disabled = true;
+    btn.textContent = 'SENDING...';
+    errorEl.style.display = 'none';
+
+    var data = {
+      client_id: clientId,
+      reason: form.reason.value,
+      preferred_date: form.preferred_date.value,
+      preferred_time: form.preferred_time.value,
+      notes: form.notes.value,
+      type: 'reschedule',
+    };
+
+    try {
+      var res = await fetch('/api/lead-intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      form.style.display = 'none';
+      document.getElementById('formSuccess').classList.add('active');
+    } catch (err) {
+      errorEl.textContent = 'Something went wrong. Please try again or message us on WhatsApp.';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'REQUEST RESCHEDULE';
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
