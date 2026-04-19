@@ -1,0 +1,105 @@
+-- FitnessByMaddy Database Schema
+-- Run this in Supabase SQL Editor to create all tables
+
+-- Leads table
+CREATE TABLE IF NOT EXISTS leads (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  phone text NOT NULL,
+  name text,
+  source text DEFAULT 'whatsapp',
+  status text DEFAULT 'new' CHECK (status IN ('new', 'qualified', 'converted', 'dropped')),
+  first_msg text,
+  last_msg_at timestamptz,
+  program_interest text,
+  market text DEFAULT 'IN' CHECK (market IN ('IN', 'UAE', 'UK', 'GLOBAL')),
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(phone)
+);
+
+-- Clients table
+CREATE TABLE IF NOT EXISTS clients (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  lead_id uuid REFERENCES leads(id),
+  phone text NOT NULL,
+  name text,
+  email text,
+  program text CHECK (program IN ('6wk_gym', '6wk_home', '12wk', 'pcos', '40plus', 'zoom_trial', 'zoom_pack')),
+  program_started_at timestamptz DEFAULT now(),
+  program_ends_at timestamptz,
+  paid_amount integer,
+  checkout_id text,
+  folder_url text,
+  status text DEFAULT 'active' CHECK (status IN ('active', 'paused', 'completed', 'refunded')),
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(phone)
+);
+
+-- Weekly check-ins
+CREATE TABLE IF NOT EXISTS checkins (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  client_id uuid REFERENCES clients(id) NOT NULL,
+  week_no integer NOT NULL,
+  form_submitted_at timestamptz DEFAULT now(),
+  weight numeric,
+  waist numeric,
+  compliance_score integer CHECK (compliance_score >= 1 AND compliance_score <= 10),
+  energy integer CHECK (energy >= 1 AND energy <= 10),
+  issues text,
+  photos_urls text[] DEFAULT '{}',
+  next_week_focus text,
+  token text UNIQUE,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Generated programs
+CREATE TABLE IF NOT EXISTS programs (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  client_id uuid REFERENCES clients(id) NOT NULL,
+  week_no integer NOT NULL,
+  generated_at timestamptz DEFAULT now(),
+  pdf_url text,
+  whatsapp_sent_at timestamptz,
+  workout_plan jsonb,
+  nutrition_plan jsonb,
+  notes text,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Message audit trail
+CREATE TABLE IF NOT EXISTS messages (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  phone text NOT NULL,
+  direction text NOT NULL CHECK (direction IN ('in', 'out')),
+  body text,
+  template_name text,
+  sent_at timestamptz DEFAULT now(),
+  status text DEFAULT 'sent'
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_leads_phone ON leads(phone);
+CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
+CREATE INDEX IF NOT EXISTS idx_clients_phone ON clients(phone);
+CREATE INDEX IF NOT EXISTS idx_clients_status ON clients(status);
+CREATE INDEX IF NOT EXISTS idx_checkins_client ON checkins(client_id);
+CREATE INDEX IF NOT EXISTS idx_checkins_token ON checkins(token);
+CREATE INDEX IF NOT EXISTS idx_messages_phone ON messages(phone);
+CREATE INDEX IF NOT EXISTS idx_programs_client ON programs(client_id);
+
+-- Enable Row Level Security
+ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE checkins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE programs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+-- Service role policies (API uses service key, full access)
+CREATE POLICY "service_all_leads" ON leads FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "service_all_clients" ON clients FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "service_all_checkins" ON checkins FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "service_all_programs" ON programs FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "service_all_messages" ON messages FOR ALL USING (true) WITH CHECK (true);
+
+-- Storage bucket for client files
+INSERT INTO storage.buckets (id, name, public) VALUES ('clients', 'clients', false)
+ON CONFLICT (id) DO NOTHING;
