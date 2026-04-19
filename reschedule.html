@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <meta name="description" content="Reschedule your missed session.">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .form-page { padding-top: 72px; min-height: 100vh; background: var(--cream); }
+    .form-hero { background: var(--charcoal); padding: 60px 24px 48px; text-align: center; }
+    .form-hero h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px, 5vw, 48px); font-weight: 300; color: white; margin-bottom: 12px; }
+    .form-hero h1 em { color: var(--gold); font-style: italic; }
+    .form-hero p { font-size: 14px; color: rgba(255,255,255,0.6); max-width: 480px; margin: 0 auto; }
+    .form-container { max-width: 560px; margin: -24px auto 60px; padding: 0 20px; position: relative; z-index: 2; }
+    .form-card { background: white; border-radius: 4px; padding: 40px 32px; box-shadow: 0 8px 40px rgba(0,0,0,0.08); }
+    .form-section-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--charcoal); margin: 32px 0 20px; padding-top: 24px; border-top: 1px solid var(--light-grey); }
+    .form-section-title:first-of-type { margin-top: 0; padding-top: 0; border: none; }
+    .form-group { margin-bottom: 20px; }
+    .required::after { content: ' *'; color: var(--gold); }
+    textarea.form-input { min-height: 80px; resize: vertical; }
+    .slot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .slot-btn { padding: 14px; border: 1.5px solid var(--light-grey); border-radius: 4px; background: white; cursor: pointer; text-align: center; transition: all 0.2s; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--charcoal); }
+    .slot-btn:hover { border-color: var(--gold); }
+    .slot-btn.selected { border-color: var(--gold); background: rgba(184,150,90,0.1); color: var(--gold); font-weight: 600; }
+    .slot-btn span { display: block; font-size: 11px; color: var(--mid-grey); margin-top: 4px; }
+    .submit-btn { width: 100%; margin-top: 24px; }
+    .form-success { display: none; text-align: center; padding: 60px 32px; }
+    .form-success .check { font-size: 48px; margin-bottom: 16px; }
+    .form-success h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 12px; }
+    .form-success p { color: var(--mid-grey); font-size: 14px; }
+    .form-error { background: #FFF0F0; color: #CC3333; padding: 12px 16px; border-radius: 4px; font-size: 13px; margin-bottom: 16px; display: none; }
+    @media (max-width: 600px) { .slot-grid { grid-template-columns: 1fr; } .form-card { padding: 28px 20px; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="form-page">
+  <div class="form-hero">
+    <h1>Reschedule <em>Session</em></h1>
+    <p>Life happens — pick a new slot and get back on track. No judgment, just progress.</p>
+  </div>
+
+  <div class="form-container">
+    <div class="form-card">
+      <div id="formError" class="form-error"></div>
+
+      <form id="rescheduleForm">
+        <input type="hidden" id="clientId" name="client_id">
+
+        <div class="form-section-title">Your Details</div>
+        <div class="form-group">
+          <label class="form-label required">Name</label>
+          <input class="form-input" type="text" name="name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label required">WhatsApp Number</label>
+          <input class="form-input" type="tel" name="phone" required placeholder="+91 ...">
+        </div>
+
+        <div class="form-section-title">Reason for Reschedule</div>
+        <div class="form-group">
+          <select class="form-input form-select" name="reason" required>
+            <option value="">Select reason</option>
+            <option value="schedule_conflict">Schedule conflict</option>
+            <option value="feeling_unwell">Feeling unwell</option>
+            <option value="travel">Travelling</option>
+            <option value="personal">Personal reasons</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Additional Notes</label>
+          <textarea class="form-input" name="notes" placeholder="Any details to help us schedule better..."></textarea>
+        </div>
+
+        <div class="form-section-title">Preferred New Slot</div>
+        <div class="form-group">
+          <label class="form-label required">Preferred Date</label>
+          <input class="form-input" type="date" name="preferred_date" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label required">Preferred Time</label>
+          <div class="slot-grid" id="slotGrid">
+            <button type="button" class="slot-btn" data-slot="7:00 AM">7:00 AM<span>Morning</span></button>
+            <button type="button" class="slot-btn" data-slot="8:00 AM">8:00 AM<span>Morning</span></button>
+            <button type="button" class="slot-btn" data-slot="9:00 AM">9:00 AM<span>Morning</span></button>
+            <button type="button" class="slot-btn" data-slot="10:00 AM">10:00 AM<span>Morning</span></button>
+            <button type="button" class="slot-btn" data-slot="5:00 PM">5:00 PM<span>Evening</span></button>
+            <button type="button" class="slot-btn" data-slot="6:00 PM">6:00 PM<span>Evening</span></button>
+            <button type="button" class="slot-btn" data-slot="7:00 PM">7:00 PM<span>Evening</span></button>
+            <button type="button" class="slot-btn" data-slot="8:00 PM">8:00 PM<span>Evening</span></button>
+          </div>
+          <input type="hidden" name="preferred_time" id="preferredTime" required>
+        </div>
+
+        <button type="submit" class="btn-primary submit-btn">Request Reschedule →</button>
+      </form>
+
+      <div class="form-success" id="formSuccess">
+        <div class="check">✓</div>
+        <h2>Request Received!</h2>
+        <p>We'll confirm your new slot on WhatsApp within a few hours. Stay consistent — you've got this!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  if (clientId) document.getElementById('clientId').value = clientId;
+
+  var dateInput = document.querySelector('input[name="preferred_date"]');
+  var tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  dateInput.min = tomorrow.toISOString().split('T')[0];
+
+  var slotBtns = document.querySelectorAll('.slot-btn');
+  slotBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      slotBtns.forEach(function(b) { b.classList.remove('selected'); });
+      btn.classList.add('selected');
+      document.getElementById('preferredTime').value = btn.dataset.slot;
+    });
+  });
+
+  document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var form = e.target;
+    var errEl = document.getElementById('formError');
+    errEl.style.display = 'none';
+
+    if (!document.getElementById('preferredTime').value) {
+      errEl.textContent = 'Please select a preferred time slot.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    var data = {};
+    new FormData(form).forEach(function(v, k) { data[k] = v; });
+
+    var btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    form.style.display = 'none';
+    document.getElementById('formSuccess').style.display = 'block';
+  });
+})();
+</script>
+</body>
+</html>
