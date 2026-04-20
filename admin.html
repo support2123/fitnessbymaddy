@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --sand: #F0EAE0; --gold: #B8965A;
+      --gold-light: #D4AF7A; --charcoal: #2C2C2C; --mid-grey: #6B6B6B;
+      --light-grey: #E8E3DC;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif; background: var(--cream);
+      color: var(--charcoal);
+    }
+    .login-screen {
+      min-height: 100vh; display: flex; align-items: center;
+      justify-content: center; flex-direction: column; padding: 24px;
+    }
+    .login-screen h1 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 32px;
+      color: var(--charcoal); letter-spacing: 3px; margin-bottom: 24px;
+    }
+    .login-screen input {
+      padding: 14px 20px; border: 1.5px solid var(--light-grey);
+      border-radius: 2px; font-size: 14px; width: 300px;
+      font-family: 'DM Sans', sans-serif; margin-bottom: 12px;
+      outline: none;
+    }
+    .login-screen input:focus { border-color: var(--gold); }
+    .login-screen button {
+      padding: 14px 20px; background: var(--charcoal); color: white;
+      border: none; font-family: 'Bebas Neue', sans-serif; font-size: 16px;
+      letter-spacing: 2px; cursor: pointer; width: 300px; border-radius: 2px;
+    }
+    .login-screen button:hover { background: var(--gold); }
+
+    .dashboard { display: none; }
+    .dash-header {
+      background: var(--charcoal); padding: 20px 32px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .dash-header h1 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 24px;
+      color: var(--gold); letter-spacing: 3px;
+    }
+    .dash-header button {
+      background: transparent; color: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px;
+      font-size: 12px; cursor: pointer; border-radius: 2px;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .dash-content { padding: 32px; max-width: 1200px; margin: 0 auto; }
+
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px; margin-bottom: 32px;
+    }
+    .stat-card {
+      background: white; padding: 24px; border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .stat-card .label {
+      font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px;
+    }
+    .stat-card .value {
+      font-family: 'Bebas Neue', sans-serif; font-size: 36px;
+      color: var(--charcoal); line-height: 1;
+    }
+    .stat-card .sub {
+      font-size: 12px; color: var(--mid-grey); margin-top: 4px;
+    }
+    .stat-card.gold { border-left: 3px solid var(--gold); }
+    .stat-card.alert { border-left: 3px solid #e74c3c; }
+
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif; font-size: 20px;
+      letter-spacing: 2px; margin-bottom: 16px; margin-top: 16px;
+    }
+
+    .data-table {
+      width: 100%; background: white; border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04); overflow-x: auto;
+      margin-bottom: 32px;
+    }
+    .data-table table { width: 100%; border-collapse: collapse; }
+    .data-table th {
+      font-size: 11px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--mid-grey);
+      padding: 12px 16px; text-align: left;
+      border-bottom: 2px solid var(--light-grey);
+    }
+    .data-table td {
+      font-size: 13px; padding: 12px 16px;
+      border-bottom: 1px solid var(--light-grey);
+    }
+    .status-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 2px;
+      font-size: 10px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .status-new { background: #e8f4fd; color: #2980b9; }
+    .status-qualified { background: #fef9e7; color: #f39c12; }
+    .status-converted { background: #eafaf1; color: #27ae60; }
+    .status-active { background: #eafaf1; color: #27ae60; }
+    .status-dropped { background: #fef0f0; color: #e74c3c; }
+    .status-paused { background: #fef9e7; color: #f39c12; }
+    .status-completed { background: #e8e8e8; color: #666; }
+
+    .loading { text-align: center; padding: 40px; color: var(--mid-grey); }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .dash-content { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <h1>MADDY'S DASHBOARD</h1>
+  <input type="password" id="loginPass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()">
+  <button onclick="doLogin()">LOGIN</button>
+  <p id="loginError" style="color:#e74c3c; font-size:12px; margin-top:8px;"></p>
+</div>
+
+<div class="dashboard" id="dashboard">
+  <div class="dash-header">
+    <h1>FITNESS BY MADDY — OPS DASHBOARD</h1>
+    <button onclick="doLogout()">LOGOUT</button>
+  </div>
+
+  <div class="dash-content">
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card gold"><div class="label">New Leads Today</div><div class="value" id="leadsToday">-</div></div>
+      <div class="stat-card gold"><div class="label">Leads This Week</div><div class="value" id="leadsWeek">-</div></div>
+      <div class="stat-card gold"><div class="label">Conversion Rate</div><div class="value" id="convRate">-</div><div class="sub">lead → paid</div></div>
+      <div class="stat-card"><div class="label">Active Clients</div><div class="value" id="activeClients">-</div></div>
+      <div class="stat-card"><div class="label">Pending Check-ins</div><div class="value" id="pendingCheckins">-</div></div>
+      <div class="stat-card"><div class="label">Programs This Week</div><div class="value" id="programsWeek">-</div></div>
+      <div class="stat-card alert"><div class="label">Escalations</div><div class="value" id="escalations">-</div></div>
+    </div>
+
+    <div class="section-title">ACTIVE CLIENTS BY PROGRAM</div>
+    <div class="stats-grid" id="programBreakdown"></div>
+
+    <div class="section-title">RECENT LEADS</div>
+    <div class="data-table">
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Phone</th><th>Status</th><th>Interest</th><th>Market</th><th>When</th></tr>
+        </thead>
+        <tbody id="leadsTable">
+          <tr><td colspan="6" class="loading">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-title">ACTIVE CLIENTS</div>
+    <div class="data-table">
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Program</th><th>Status</th><th>Started</th><th>Ends</th><th>Paid</th></tr>
+        </thead>
+        <tbody id="clientsTable">
+          <tr><td colspan="6" class="loading">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-title">RECENT CHECK-INS</div>
+    <div class="data-table">
+      <table>
+        <thead>
+          <tr><th>Client</th><th>Week</th><th>Weight</th><th>Compliance</th><th>Energy</th><th>When</th></tr>
+        </thead>
+        <tbody id="checkinsTable">
+          <tr><td colspan="6" class="loading">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  var SUPABASE_URL = '';
+  var SUPABASE_ANON_KEY = '';
+  var adminToken = '';
+
+  function doLogin() {
+    var pass = document.getElementById('loginPass').value;
+    if (!pass) return;
+    adminToken = pass;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadDashboard();
+  }
+
+  function doLogout() {
+    adminToken = '';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+  }
+
+  async function apiFetch(endpoint) {
+    var res = await fetch('/api/admin/' + endpoint, {
+      headers: { 'Authorization': 'Bearer ' + adminToken }
+    });
+    if (!res.ok) {
+      if (res.status === 401) { doLogout(); return null; }
+      return null;
+    }
+    return res.json();
+  }
+
+  async function loadDashboard() {
+    var data = await apiFetch('stats');
+    if (!data) return;
+
+    document.getElementById('leadsToday').textContent = data.leads_today || 0;
+    document.getElementById('leadsWeek').textContent = data.leads_week || 0;
+    document.getElementById('convRate').textContent = (data.conversion_rate || 0) + '%';
+    document.getElementById('activeClients').textContent = data.active_clients || 0;
+    document.getElementById('pendingCheckins').textContent = data.pending_checkins || 0;
+    document.getElementById('programsWeek').textContent = data.programs_week || 0;
+    document.getElementById('escalations').textContent = data.escalations || 0;
+
+    var bd = document.getElementById('programBreakdown');
+    bd.innerHTML = '';
+    if (data.by_program) {
+      Object.keys(data.by_program).forEach(function(p) {
+        bd.innerHTML += '<div class="stat-card"><div class="label">' +
+          p.toUpperCase().replace(/_/g, ' ') +
+          '</div><div class="value">' + data.by_program[p] + '</div></div>';
+      });
+    }
+
+    loadLeads();
+    loadClients();
+    loadCheckins();
+  }
+
+  async function loadLeads() {
+    var data = await apiFetch('leads');
+    var tbody = document.getElementById('leadsTable');
+    if (!data || !data.leads) { tbody.innerHTML = '<tr><td colspan="6">No data</td></tr>'; return; }
+    tbody.innerHTML = data.leads.map(function(l) {
+      return '<tr><td>' + (l.name || '-') + '</td>' +
+        '<td>' + maskPhone(l.phone) + '</td>' +
+        '<td><span class="status-badge status-' + l.status + '">' + l.status + '</span></td>' +
+        '<td>' + (l.program_interest || '-') + '</td>' +
+        '<td>' + (l.market || '-') + '</td>' +
+        '<td>' + timeAgo(l.created_at) + '</td></tr>';
+    }).join('');
+  }
+
+  async function loadClients() {
+    var data = await apiFetch('clients');
+    var tbody = document.getElementById('clientsTable');
+    if (!data || !data.clients) { tbody.innerHTML = '<tr><td colspan="6">No data</td></tr>'; return; }
+    tbody.innerHTML = data.clients.map(function(c) {
+      return '<tr><td>' + (c.name || '-') + '</td>' +
+        '<td>' + (c.program || '-') + '</td>' +
+        '<td><span class="status-badge status-' + c.status + '">' + c.status + '</span></td>' +
+        '<td>' + formatDate(c.program_started_at) + '</td>' +
+        '<td>' + formatDate(c.program_ends_at) + '</td>' +
+        '<td>$' + ((c.paid_amount || 0) / 100) + '</td></tr>';
+    }).join('');
+  }
+
+  async function loadCheckins() {
+    var data = await apiFetch('checkins');
+    var tbody = document.getElementById('checkinsTable');
+    if (!data || !data.checkins) { tbody.innerHTML = '<tr><td colspan="6">No data</td></tr>'; return; }
+    tbody.innerHTML = data.checkins.map(function(ch) {
+      return '<tr><td>' + (ch.client_name || '-') + '</td>' +
+        '<td>Week ' + ch.week_no + '</td>' +
+        '<td>' + (ch.weight || '-') + ' kg</td>' +
+        '<td>' + (ch.compliance_score || '-') + '/10</td>' +
+        '<td>' + (ch.energy || '-') + '/10</td>' +
+        '<td>' + timeAgo(ch.form_submitted_at) + '</td></tr>';
+    }).join('');
+  }
+
+  function maskPhone(phone) {
+    if (!phone || phone.length < 6) return '***';
+    return phone.slice(0, 4) + '***' + phone.slice(-3);
+  }
+
+  function timeAgo(dateStr) {
+    if (!dateStr) return '-';
+    var diff = Date.now() - new Date(dateStr).getTime();
+    var mins = Math.floor(diff / 60000);
+    if (mins < 60) return mins + 'm ago';
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    var days = Math.floor(hrs / 24);
+    return days + 'd ago';
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  }
+</script>
+</body>
+</html>
