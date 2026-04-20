@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-page { padding-top: 72px; min-height: 100vh; background: var(--cream); }
+    .admin-container { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+    .admin-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 400; color: var(--charcoal); }
+    .admin-header h1 em { font-style: italic; color: var(--gold); }
+    .admin-date { font-size: 13px; color: var(--mid-grey); letter-spacing: 1px; }
+
+    /* Login */
+    .login-card { max-width: 400px; margin: 80px auto; background: white; padding: 48px 36px; border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); text-align: center; }
+    .login-card h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 8px; color: var(--charcoal); }
+    .login-card p { font-size: 13px; color: var(--mid-grey); margin-bottom: 24px; }
+    .login-card .form-group { text-align: left; }
+    .login-error { color: #c0392b; font-size: 13px; margin-top: 12px; display: none; }
+
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
+    .stat-card { background: white; padding: 24px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .stat-card .label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card .value { font-family: 'Cormorant Garamond', serif; font-size: 40px; font-weight: 600; color: var(--charcoal); line-height: 1; }
+    .stat-card .sub { font-size: 12px; color: var(--mid-grey); margin-top: 4px; }
+    .stat-card.gold { border-left: 3px solid var(--gold); }
+    .stat-card.alert { border-left: 3px solid #c0392b; }
+
+    /* Section */
+    .dash-section { margin-bottom: 32px; }
+    .dash-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .dash-section-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 400; color: var(--charcoal); }
+    .dash-badge { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 4px 12px; border-radius: 2px; }
+    .dash-badge.live { background: #d4edda; color: #155724; }
+    .dash-badge.warn { background: #fff3cd; color: #856404; }
+
+    /* Table */
+    .dash-table { width: 100%; background: white; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .dash-table table { width: 100%; border-collapse: collapse; }
+    .dash-table th { background: var(--charcoal); color: white; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 16px; text-align: left; }
+    .dash-table td { font-size: 13px; color: var(--charcoal); padding: 12px 16px; border-bottom: 1px solid var(--light-grey); }
+    .dash-table tr:last-child td { border-bottom: none; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    .status-dot.new { background: var(--gold); }
+    .status-dot.qualified { background: #3498db; }
+    .status-dot.converted { background: #27ae60; }
+    .status-dot.dropped { background: #95a5a6; }
+    .status-dot.active { background: #27ae60; }
+    .status-dot.paused { background: #f39c12; }
+
+    .empty-state { text-align: center; padding: 40px; color: var(--mid-grey); font-size: 14px; }
+    .refresh-btn { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); cursor: pointer; background: none; border: none; font-weight: 600; }
+    .refresh-btn:hover { color: var(--charcoal); }
+
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .admin-header { flex-direction: column; gap: 8px; align-items: flex-start; }
+      .dash-table { overflow-x: auto; }
+    }
+    @media (max-width: 500px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+    <li><a href="admin.html" class="nav-cta">Dashboard</a></li>
+  </ul>
+</nav>
+
+<div class="admin-page">
+
+  <!-- Login Gate -->
+  <div id="loginView">
+    <div class="login-card">
+      <h2>Coach Dashboard</h2>
+      <p>Enter your admin key to access the dashboard</p>
+      <div class="form-group">
+        <label class="form-label">Admin Key</label>
+        <input type="password" class="form-input" id="adminKey" placeholder="Enter key">
+      </div>
+      <button class="btn-primary" style="width:100%;margin-top:16px" onclick="login()">Access Dashboard</button>
+      <div class="login-error" id="loginError">Invalid key. Please try again.</div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashView" style="display:none">
+    <div class="admin-container">
+      <div class="admin-header">
+        <h1>Coach <em>Dashboard</em></h1>
+        <div>
+          <span class="admin-date" id="currentDate"></span>
+          <button class="refresh-btn" onclick="loadDashboard()" style="margin-left:16px">Refresh</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card gold">
+          <div class="label">New Leads Today</div>
+          <div class="value" id="leadsToday">—</div>
+          <div class="sub" id="leadsWeek">this week: —</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Conversion Rate</div>
+          <div class="value" id="convRate">—</div>
+          <div class="sub">lead &rarr; paid</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Active Clients</div>
+          <div class="value" id="activeClients">—</div>
+          <div class="sub" id="byProgram">—</div>
+        </div>
+        <div class="stat-card alert">
+          <div class="label">Escalations</div>
+          <div class="value" id="escalations">—</div>
+          <div class="sub">awaiting review</div>
+        </div>
+      </div>
+
+      <!-- Recent Leads -->
+      <div class="dash-section">
+        <div class="dash-section-header">
+          <div class="dash-section-title">Recent Leads</div>
+          <span class="dash-badge live">Live</span>
+        </div>
+        <div class="dash-table">
+          <table>
+            <thead>
+              <tr><th>Phone</th><th>Name</th><th>Status</th><th>Interest</th><th>Market</th><th>When</th></tr>
+            </thead>
+            <tbody id="leadsTable">
+              <tr><td colspan="6" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Active Clients -->
+      <div class="dash-section">
+        <div class="dash-section-header">
+          <div class="dash-section-title">Active Clients</div>
+        </div>
+        <div class="dash-table">
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Program</th><th>Started</th><th>Status</th><th>Last Check-in</th></tr>
+            </thead>
+            <tbody id="clientsTable">
+              <tr><td colspan="5" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pending Check-ins -->
+      <div class="dash-section">
+        <div class="dash-section-header">
+          <div class="dash-section-title">Pending Check-ins</div>
+          <span class="dash-badge warn" id="pendingBadge">—</span>
+        </div>
+        <div class="dash-table">
+          <table>
+            <thead>
+              <tr><th>Client</th><th>Program</th><th>Week</th><th>Due Since</th></tr>
+            </thead>
+            <tbody id="pendingTable">
+              <tr><td colspan="4" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Programs Generated -->
+      <div class="dash-section">
+        <div class="dash-section-header">
+          <div class="dash-section-title">Programs Generated This Week</div>
+        </div>
+        <div class="dash-table">
+          <table>
+            <thead>
+              <tr><th>Client</th><th>Week</th><th>Generated</th><th>Sent</th><th>Notes</th></tr>
+            </thead>
+            <tbody id="programsTable">
+              <tr><td colspan="5" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+var ADMIN_KEY = '';
+var API_BASE = '';
+
+function login() {
+  var key = document.getElementById('adminKey').value.trim();
+  if (!key) return;
+  ADMIN_KEY = key;
+  document.getElementById('loginView').style.display = 'none';
+  document.getElementById('dashView').style.display = 'block';
+  document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  loadDashboard();
+}
+
+function loadDashboard() {
+  fetchData('/api/admin/stats', function(stats) {
+    if (!stats) return;
+    document.getElementById('leadsToday').textContent = stats.leads_today || 0;
+    document.getElementById('leadsWeek').textContent = 'this week: ' + (stats.leads_week || 0);
+    document.getElementById('convRate').textContent = (stats.conversion_rate || 0) + '%';
+    document.getElementById('activeClients').textContent = stats.active_clients || 0;
+    document.getElementById('byProgram').textContent = stats.by_program || '—';
+    document.getElementById('escalations').textContent = stats.escalations || 0;
+  });
+
+  fetchData('/api/admin/leads', function(leads) {
+    var tbody = document.getElementById('leadsTable');
+    if (!leads || leads.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No leads yet</td></tr>';
+      return;
+    }
+    tbody.innerHTML = leads.map(function(l) {
+      return '<tr><td>' + maskPhone(l.phone) + '</td><td>' + (l.name || '—') + '</td><td><span class="status-dot ' + l.status + '"></span>' + l.status + '</td><td>' + (l.program_interest || '—') + '</td><td>' + (l.market || '—') + '</td><td>' + timeAgo(l.created_at) + '</td></tr>';
+    }).join('');
+  });
+
+  fetchData('/api/admin/clients', function(clients) {
+    var tbody = document.getElementById('clientsTable');
+    if (!clients || clients.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No active clients</td></tr>';
+      return;
+    }
+    tbody.innerHTML = clients.map(function(c) {
+      return '<tr><td>' + (c.name || maskPhone(c.phone)) + '</td><td>' + (c.program || '—') + '</td><td>' + formatDate(c.program_started_at) + '</td><td><span class="status-dot ' + c.status + '"></span>' + c.status + '</td><td>' + (c.last_checkin || '—') + '</td></tr>';
+    }).join('');
+  });
+
+  fetchData('/api/admin/pending', function(pending) {
+    var tbody = document.getElementById('pendingTable');
+    document.getElementById('pendingBadge').textContent = (pending ? pending.length : 0) + ' pending';
+    if (!pending || pending.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty-state">All caught up!</td></tr>';
+      return;
+    }
+    tbody.innerHTML = pending.map(function(p) {
+      return '<tr><td>' + (p.name || '—') + '</td><td>' + (p.program || '—') + '</td><td>Week ' + p.week_no + '</td><td>' + p.due_since + '</td></tr>';
+    }).join('');
+  });
+
+  fetchData('/api/admin/programs', function(programs) {
+    var tbody = document.getElementById('programsTable');
+    if (!programs || programs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No programs generated this week</td></tr>';
+      return;
+    }
+    tbody.innerHTML = programs.map(function(p) {
+      return '<tr><td>' + (p.client_name || '—') + '</td><td>Week ' + p.week_no + '</td><td>' + formatDate(p.generated_at) + '</td><td>' + (p.whatsapp_sent_at ? '&#10003;' : 'Pending') + '</td><td>' + (p.notes || '—') + '</td></tr>';
+    }).join('');
+  });
+}
+
+function fetchData(url, cb) {
+  fetch(url, {
+    headers: { 'Authorization': 'Bearer ' + ADMIN_KEY }
+  })
+  .then(function(r) {
+    if (r.status === 401) {
+      document.getElementById('dashView').style.display = 'none';
+      document.getElementById('loginView').style.display = 'block';
+      document.getElementById('loginError').style.display = 'block';
+      return null;
+    }
+    return r.json();
+  })
+  .then(cb)
+  .catch(function() { cb(null); });
+}
+
+function maskPhone(phone) {
+  if (!phone || phone.length < 6) return '***';
+  return phone.slice(0, 3) + 'XXX...' + phone.slice(-3);
+}
+
+function timeAgo(date) {
+  if (!date) return '—';
+  var diff = Date.now() - new Date(date).getTime();
+  var mins = Math.floor(diff / 60000);
+  if (mins < 60) return mins + 'm ago';
+  var hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  return Math.floor(hrs / 24) + 'd ago';
+}
+
+function formatDate(date) {
+  if (!date) return '—';
+  return new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+</script>
+</body>
+</html>
