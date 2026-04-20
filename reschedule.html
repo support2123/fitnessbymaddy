@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .form-page { padding-top: 72px; min-height: 100vh; background: var(--cream); }
+    .form-container { max-width: 500px; margin: 0 auto; padding: 40px 24px 80px; }
+    .form-header { text-align: center; margin-bottom: 48px; }
+    .form-header .section-eyebrow { margin-bottom: 12px; }
+    .form-header .section-title { font-size: 36px; margin-bottom: 12px; }
+    .form-header p { font-size: 14px; color: var(--mid-grey); line-height: 1.6; }
+    .form-card { background: white; padding: 40px; border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+    .form-group { margin-bottom: 24px; }
+    .time-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+    .time-slot { padding: 14px; border: 1.5px solid var(--light-grey); border-radius: 2px; text-align: center; font-size: 13px; font-weight: 500; color: var(--charcoal); cursor: pointer; transition: all 0.3s; }
+    .time-slot:hover { border-color: var(--gold); color: var(--gold); }
+    .time-slot.selected { background: var(--charcoal); color: white; border-color: var(--charcoal); }
+    .submit-btn { width: 100%; padding: 16px; background: var(--charcoal); color: white; border: none; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: background 0.3s; margin-top: 32px; }
+    .submit-btn:hover { background: var(--gold); }
+    .submit-btn:disabled { background: var(--taupe); cursor: not-allowed; }
+    .success-msg { text-align: center; padding: 60px 24px; }
+    .success-msg h2 { font-family: 'Cormorant Garamond', serif; font-size: 32px; color: var(--charcoal); margin-bottom: 16px; }
+    .success-msg p { font-size: 15px; color: var(--mid-grey); line-height: 1.7; }
+    .policy-note { font-size: 11px; color: var(--taupe); text-align: center; margin-top: 16px; line-height: 1.6; }
+    @media (max-width: 500px) { .form-card { padding: 24px; } .time-slots { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="form-page">
+  <div class="form-container">
+    <div class="form-header">
+      <p class="section-eyebrow">Session Management</p>
+      <h1 class="section-title">Reschedule <em>Session</em></h1>
+      <p>Need to move your Zoom session? Pick a new date and preferred time slot below.</p>
+    </div>
+
+    <div class="form-card" id="formCard">
+      <form id="rescheduleForm">
+        <input type="hidden" name="client_id" id="clientId">
+
+        <div class="form-group">
+          <label class="form-label">Your Name</label>
+          <input type="text" name="name" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Phone (WhatsApp number)</label>
+          <input type="tel" name="phone" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Preferred New Date *</label>
+          <input type="date" name="preferred_date" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Preferred Time Slot *</label>
+          <input type="hidden" name="preferred_time" id="selectedTime" required>
+          <div class="time-slots">
+            <div class="time-slot" data-time="09:00">9:00 AM</div>
+            <div class="time-slot" data-time="10:00">10:00 AM</div>
+            <div class="time-slot" data-time="11:00">11:00 AM</div>
+            <div class="time-slot" data-time="14:00">2:00 PM</div>
+            <div class="time-slot" data-time="16:00">4:00 PM</div>
+            <div class="time-slot" data-time="18:00">6:00 PM</div>
+            <div class="time-slot" data-time="19:00">7:00 PM</div>
+            <div class="time-slot" data-time="20:00">8:00 PM</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Reason (optional)</label>
+          <textarea name="reason" class="form-input" placeholder="Let us know why you need to reschedule..." style="min-height:80px;resize:vertical;"></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">Request Reschedule</button>
+        <p class="policy-note">Reschedule requests must be made at least 24 hours before your session. Same-day cancellations count as a used session.</p>
+      </form>
+    </div>
+
+    <div class="success-msg" id="successMsg" style="display:none">
+      <span style="font-size:48px">📅</span>
+      <h2>Reschedule Requested</h2>
+      <p>We've received your request. Maddy's team will confirm your new slot via WhatsApp within a few hours.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const clientId = params.get('c');
+  if (clientId) document.getElementById('clientId').value = clientId;
+
+  const dateInput = document.querySelector('input[name="preferred_date"]');
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  dateInput.min = tomorrow.toISOString().split('T')[0];
+
+  document.querySelectorAll('.time-slot').forEach(slot => {
+    slot.addEventListener('click', function() {
+      document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+      this.classList.add('selected');
+      document.getElementById('selectedTime').value = this.dataset.time;
+    });
+  });
+
+  document.getElementById('rescheduleForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    if (!document.getElementById('selectedTime').value) {
+      alert('Please select a preferred time slot.');
+      return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'SUBMITTING...';
+
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      const res = await fetch('/api/send-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: '917082478374',
+          body: `📅 RESCHEDULE REQUEST\nClient: ${data.name}\nPhone: ${data.phone}\nNew date: ${data.preferred_date}\nTime: ${data.preferred_time}\nReason: ${data.reason || 'Not specified'}`,
+        }),
+      });
+
+      document.getElementById('formCard').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    } catch (err) {
+      alert('Network error. Please try again or message us on WhatsApp.');
+      btn.disabled = false;
+      btn.textContent = 'REQUEST RESCHEDULE';
+    }
+  });
+</script>
+
+</body>
+</html>
