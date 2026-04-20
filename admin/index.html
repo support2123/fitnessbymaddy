@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #B8965A;
+      --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C;
+      --cream: #FAF8F4;
+      --sand: #F0EAE0;
+      --mid-grey: #6B6B6B;
+      --light-grey: #E8E3DC;
+      --white: #FFFFFF;
+      --error: #C0392B;
+      --success: #27AE60;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--charcoal);
+      min-height: 100vh;
+    }
+
+    /* Auth screen */
+    .auth-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .auth-screen h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      color: var(--charcoal);
+      letter-spacing: 3px;
+      margin-bottom: 8px;
+    }
+
+    .auth-screen p {
+      color: var(--mid-grey);
+      margin-bottom: 32px;
+    }
+
+    .auth-form {
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .auth-form input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--light-grey);
+      border-radius: 4px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      margin-bottom: 12px;
+    }
+
+    .auth-form input:focus { outline: none; border-color: var(--gold); }
+
+    .auth-form button {
+      width: 100%;
+      padding: 14px;
+      background: var(--charcoal);
+      color: var(--white);
+      border: none;
+      border-radius: 4px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 2px;
+      cursor: pointer;
+    }
+
+    .auth-form button:hover { background: var(--gold); }
+    .auth-error { color: var(--error); font-size: 13px; margin-top: 8px; display: none; }
+
+    /* Dashboard */
+    .dashboard { display: none; }
+
+    .dash-header {
+      background: var(--charcoal);
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dash-header h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      color: var(--gold);
+      letter-spacing: 3px;
+    }
+
+    .dash-header button {
+      background: none;
+      border: 1px solid var(--gold-light);
+      color: var(--gold-light);
+      padding: 8px 16px;
+      border-radius: 3px;
+      font-size: 12px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .dash-body { padding: 24px 30px; max-width: 1200px; margin: 0 auto; }
+
+    /* Stat cards */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--light-grey);
+      border-radius: 6px;
+      padding: 20px;
+    }
+
+    .stat-card .label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      margin-bottom: 8px;
+    }
+
+    .stat-card .value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      color: var(--charcoal);
+    }
+
+    .stat-card .sub {
+      font-size: 12px;
+      color: var(--mid-grey);
+      margin-top: 4px;
+    }
+
+    /* Tabs */
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--light-grey);
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      color: var(--gold);
+      border-bottom-color: var(--gold);
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--white);
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--light-grey);
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      background: var(--sand);
+      border-bottom: 1px solid var(--light-grey);
+    }
+
+    .data-table td {
+      padding: 12px 16px;
+      font-size: 14px;
+      border-bottom: 1px solid var(--light-grey);
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-new { background: #E8F5E9; color: #2E7D32; }
+    .badge-qualified { background: #FFF3E0; color: #E65100; }
+    .badge-converted { background: #E3F2FD; color: #1565C0; }
+    .badge-dropped { background: #FFEBEE; color: #C62828; }
+    .badge-active { background: #E8F5E9; color: #2E7D32; }
+    .badge-paused { background: #FFF3E0; color: #E65100; }
+    .badge-completed { background: #E3F2FD; color: #1565C0; }
+
+    .escalation-row { background: #FFF8E1; }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--mid-grey);
+      font-size: 14px;
+    }
+
+    .refresh-btn {
+      background: var(--sand);
+      border: 1px solid var(--light-grey);
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .refresh-btn:hover { border-color: var(--gold); }
+
+    @media (max-width: 768px) {
+      .dash-body { padding: 16px; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .data-table { font-size: 13px; }
+      .data-table th, .data-table td { padding: 8px 10px; }
+      .tab-btn { padding: 10px 14px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Auth Screen -->
+  <div class="auth-screen" id="authScreen">
+    <h1>MADDY'S DASHBOARD</h1>
+    <p>Sign in to manage your coaching pipeline</p>
+    <div class="auth-form">
+      <input type="email" id="authEmail" placeholder="Email">
+      <input type="password" id="authPassword" placeholder="Password">
+      <button id="authBtn" onclick="login()">SIGN IN</button>
+      <div class="auth-error" id="authError"></div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="dashboard" id="dashboard">
+    <div class="dash-header">
+      <h1>COACHING DASHBOARD</h1>
+      <button onclick="logout()">SIGN OUT</button>
+    </div>
+
+    <div class="dash-body">
+      <!-- Stats -->
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="label">New Leads Today</div>
+          <div class="value" id="statLeadsToday">—</div>
+          <div class="sub" id="statLeadsWeek">— this week</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Conversion Rate</div>
+          <div class="value" id="statConversion">—</div>
+          <div class="sub">lead → paid</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Active Clients</div>
+          <div class="value" id="statActiveClients">—</div>
+          <div class="sub" id="statByProgram">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Pending Check-ins</div>
+          <div class="value" id="statPendingCheckins">—</div>
+          <div class="sub">this week</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Programs Generated</div>
+          <div class="value" id="statProgramsGenerated">—</div>
+          <div class="sub">this week</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Escalations</div>
+          <div class="value" id="statEscalations">—</div>
+          <div class="sub">awaiting review</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('leads')">Leads</button>
+        <button class="tab-btn" onclick="switchTab('clients')">Clients</button>
+        <button class="tab-btn" onclick="switchTab('checkins')">Check-ins</button>
+        <button class="tab-btn" onclick="switchTab('programs')">Programs</button>
+        <button class="tab-btn" onclick="switchTab('escalations')">Escalations</button>
+      </div>
+
+      <button class="refresh-btn" onclick="loadDashboard()">↻ Refresh</button>
+
+      <!-- Leads Tab -->
+      <div class="tab-content active" id="tab-leads">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Phone</th>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Interest</th>
+              <th>Market</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody id="leadsBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Clients Tab -->
+      <div class="tab-content" id="tab-clients">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Program</th>
+              <th>Status</th>
+              <th>Started</th>
+              <th>Ends</th>
+              <th>Paid</th>
+            </tr>
+          </thead>
+          <tbody id="clientsBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Check-ins Tab -->
+      <div class="tab-content" id="tab-checkins">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Week</th>
+              <th>Weight</th>
+              <th>Compliance</th>
+              <th>Energy</th>
+              <th>Submitted</th>
+            </tr>
+          </thead>
+          <tbody id="checkinsBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Programs Tab -->
+      <div class="tab-content" id="tab-programs">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Week</th>
+              <th>Generated</th>
+              <th>Sent</th>
+              <th>Flagged</th>
+              <th>PDF</th>
+            </tr>
+          </thead>
+          <tbody id="programsBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Escalations Tab -->
+      <div class="tab-content" id="tab-escalations">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Phone</th>
+              <th>Message</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="escalationsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var supabaseUrl = '';
+    var supabaseKey = '';
+    var accessToken = null;
+
+    function getConfig() {
+      var el = document.querySelector('meta[name="supabase-url"]');
+      supabaseUrl = (el && el.content) || window.SUPABASE_URL || '';
+      var el2 = document.querySelector('meta[name="supabase-anon-key"]');
+      supabaseKey = (el2 && el2.content) || window.SUPABASE_ANON_KEY || '';
+    }
+
+    async function supabaseFetch(table, query) {
+      var url = supabaseUrl + '/rest/v1/' + table + '?' + query;
+      var res = await fetch(url, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': 'Bearer ' + accessToken,
+          'Content-Type': 'application/json',
+        },
+      });
+      return res.json();
+    }
+
+    async function supabaseRpc(fn, params) {
+      var url = supabaseUrl + '/rest/v1/rpc/' + fn;
+      var res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': 'Bearer ' + accessToken,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params || {}),
+      });
+      return res.json();
+    }
+
+    async function login() {
+      var email = document.getElementById('authEmail').value;
+      var password = document.getElementById('authPassword').value;
+      var errEl = document.getElementById('authError');
+      errEl.style.display = 'none';
+
+      getConfig();
+
+      if (!supabaseUrl) {
+        errEl.textContent = 'Dashboard not configured. Set SUPABASE_URL.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        var res = await fetch(supabaseUrl + '/auth/v1/token?grant_type=password', {
+          method: 'POST',
+          headers: {
+            'apikey': supabaseKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: email, password: password }),
+        });
+
+        var data = await res.json();
+
+        if (!res.ok || !data.access_token) {
+          throw new Error(data.error_description || data.msg || 'Login failed');
+        }
+
+        accessToken = data.access_token;
+        localStorage.setItem('fbm_token', accessToken);
+        showDashboard();
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.style.display = 'block';
+      }
+    }
+
+    function logout() {
+      accessToken = null;
+      localStorage.removeItem('fbm_token');
+      document.getElementById('authScreen').style.display = 'flex';
+      document.getElementById('dashboard').style.display = 'none';
+    }
+
+    function showDashboard() {
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadDashboard();
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.textContent.toLowerCase() === name);
+      });
+      document.querySelectorAll('.tab-content').forEach(function(tab) {
+        tab.classList.toggle('active', tab.id === 'tab-' + name);
+      });
+    }
+
+    function maskPhone(p) {
+      if (!p || p.length < 6) return '***';
+      return p.slice(0, 3) + 'XXX...' + p.slice(-3);
+    }
+
+    function fmtDate(d) {
+      if (!d) return '—';
+      return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    }
+
+    function badgeHtml(status) {
+      return '<span class="badge badge-' + status + '">' + status + '</span>';
+    }
+
+    async function loadDashboard() {
+      getConfig();
+      if (!supabaseUrl || !accessToken) return;
+
+      var today = new Date();
+      var startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+      var startOfWeek = new Date(today.getTime() - today.getDay() * 86400000).toISOString();
+
+      try {
+        var [leads, clients, checkins, programs, messages] = await Promise.all([
+          supabaseFetch('leads', 'select=*&order=created_at.desc&limit=50'),
+          supabaseFetch('clients', 'select=*&order=created_at.desc&limit=50'),
+          supabaseFetch('checkins', 'select=*,clients(name,phone)&order=form_submitted_at.desc&limit=50'),
+          supabaseFetch('programs', 'select=*,clients(name,phone)&order=generated_at.desc&limit=50'),
+          supabaseFetch('messages', 'select=*&direction=eq.in&order=sent_at.desc&limit=100'),
+        ]);
+
+        if (!Array.isArray(leads)) leads = [];
+        if (!Array.isArray(clients)) clients = [];
+        if (!Array.isArray(checkins)) checkins = [];
+        if (!Array.isArray(programs)) programs = [];
+        if (!Array.isArray(messages)) messages = [];
+
+        // Stats
+        var leadsToday = leads.filter(function(l) { return l.created_at >= startOfDay; }).length;
+        var leadsWeek = leads.filter(function(l) { return l.created_at >= startOfWeek; }).length;
+        var converted = leads.filter(function(l) { return l.status === 'converted'; }).length;
+        var convRate = leads.length > 0 ? Math.round((converted / leads.length) * 100) : 0;
+        var activeClients = clients.filter(function(c) { return c.status === 'active'; });
+        var checkinsThisWeek = checkins.filter(function(c) { return c.form_submitted_at >= startOfWeek; }).length;
+        var programsThisWeek = programs.filter(function(p) { return p.generated_at >= startOfWeek; }).length;
+        var flaggedPrograms = programs.filter(function(p) { return p.flagged; }).length;
+
+        document.getElementById('statLeadsToday').textContent = leadsToday;
+        document.getElementById('statLeadsWeek').textContent = leadsWeek + ' this week';
+        document.getElementById('statConversion').textContent = convRate + '%';
+        document.getElementById('statActiveClients').textContent = activeClients.length;
+        document.getElementById('statPendingCheckins').textContent = checkinsThisWeek;
+        document.getElementById('statProgramsGenerated').textContent = programsThisWeek;
+        document.getElementById('statEscalations').textContent = flaggedPrograms;
+
+        // Program breakdown
+        var breakdown = {};
+        activeClients.forEach(function(c) {
+          breakdown[c.program] = (breakdown[c.program] || 0) + 1;
+        });
+        var breakdownStr = Object.entries(breakdown).map(function(e) { return e[1] + ' ' + e[0]; }).join(', ');
+        document.getElementById('statByProgram').textContent = breakdownStr || 'none';
+
+        // Leads table
+        var leadsHtml = leads.length === 0
+          ? '<tr><td colspan="6" class="empty-state">No leads yet</td></tr>'
+          : leads.map(function(l) {
+              return '<tr><td>' + maskPhone(l.phone) + '</td><td>' + (l.name || '—') +
+                '</td><td>' + badgeHtml(l.status) + '</td><td>' + (l.program_interest || '—') +
+                '</td><td>' + l.market + '</td><td>' + fmtDate(l.created_at) + '</td></tr>';
+            }).join('');
+        document.getElementById('leadsBody').innerHTML = leadsHtml;
+
+        // Clients table
+        var clientsHtml = clients.length === 0
+          ? '<tr><td colspan="6" class="empty-state">No clients yet</td></tr>'
+          : clients.map(function(c) {
+              return '<tr><td>' + (c.name || '—') + '</td><td>' + c.program +
+                '</td><td>' + badgeHtml(c.status) + '</td><td>' + fmtDate(c.program_started_at) +
+                '</td><td>' + fmtDate(c.program_ends_at) + '</td><td>$' + (c.paid_amount || '—') + '</td></tr>';
+            }).join('');
+        document.getElementById('clientsBody').innerHTML = clientsHtml;
+
+        // Check-ins table
+        var checkinsHtml = checkins.length === 0
+          ? '<tr><td colspan="6" class="empty-state">No check-ins yet</td></tr>'
+          : checkins.map(function(c) {
+              var name = c.clients ? c.clients.name : '—';
+              return '<tr><td>' + name + '</td><td>Week ' + c.week_no +
+                '</td><td>' + (c.weight || '—') + ' kg</td><td>' + (c.compliance_score || '—') + '/10' +
+                '</td><td>' + (c.energy || '—') + '/10</td><td>' + fmtDate(c.form_submitted_at) + '</td></tr>';
+            }).join('');
+        document.getElementById('checkinsBody').innerHTML = checkinsHtml;
+
+        // Programs table
+        var programsHtml = programs.length === 0
+          ? '<tr><td colspan="6" class="empty-state">No programs generated yet</td></tr>'
+          : programs.map(function(p) {
+              var name = p.clients ? p.clients.name : '—';
+              var flagClass = p.flagged ? ' class="escalation-row"' : '';
+              var pdfLink = p.pdf_url ? '<a href="' + p.pdf_url + '" target="_blank">View</a>' : '—';
+              return '<tr' + flagClass + '><td>' + name + '</td><td>Week ' + p.week_no +
+                '</td><td>' + fmtDate(p.generated_at) + '</td><td>' + (p.whatsapp_sent_at ? fmtDate(p.whatsapp_sent_at) : 'Pending') +
+                '</td><td>' + (p.flagged ? '⚠️ Yes' : '—') + '</td><td>' + pdfLink + '</td></tr>';
+            }).join('');
+        document.getElementById('programsBody').innerHTML = programsHtml;
+
+        // Escalations (messages with escalation keywords)
+        var escalationKeywords = ['injury', 'medical', 'pregnant', 'pain', 'refund', 'lawyer', 'complaint', 'side effect', 'dizzy'];
+        var escalations = messages.filter(function(m) {
+          var lower = (m.body || '').toLowerCase();
+          return escalationKeywords.some(function(kw) { return lower.includes(kw); });
+        });
+        var escHtml = escalations.length === 0
+          ? '<tr><td colspan="3" class="empty-state">No escalations — all clear!</td></tr>'
+          : escalations.map(function(m) {
+              return '<tr class="escalation-row"><td>' + maskPhone(m.phone) +
+                '</td><td>' + (m.body || '').slice(0, 100) +
+                '</td><td>' + fmtDate(m.sent_at) + '</td></tr>';
+            }).join('');
+        document.getElementById('escalationsBody').innerHTML = escHtml;
+        document.getElementById('statEscalations').textContent = escalations.length + flaggedPrograms;
+
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+      }
+    }
+
+    // Auto-login if token exists
+    (function() {
+      getConfig();
+      var saved = localStorage.getItem('fbm_token');
+      if (saved) {
+        accessToken = saved;
+        showDashboard();
+      }
+    })();
+  </script>
+</body>
+</html>
