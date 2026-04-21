@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: #111; color: #fff; min-height: 100vh; }
+    .auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .auth-box { max-width: 400px; width: 100%; text-align: center; }
+    .auth-box h1 { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: #D4AF7A; margin-bottom: 24px; }
+    .auth-box input { width: 100%; padding: 14px 16px; background: #2a2a2a; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 15px; margin-bottom: 16px; }
+    .auth-box input:focus { outline: none; border-color: #D4AF7A; }
+    .auth-box button { width: 100%; padding: 14px; background: #D4AF7A; color: #1a1a1a; border: none; border-radius: 8px; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; cursor: pointer; }
+    .dashboard { display: none; padding: 24px; max-width: 1200px; margin: 0 auto; }
+    .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid #2a2a2a; }
+    .dash-header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: #D4AF7A; letter-spacing: 2px; }
+    .dash-header button { padding: 8px 16px; background: #333; color: #aaa; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px; }
+    .stat-card .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .stat-card .value { font-size: 32px; font-weight: 600; color: #D4AF7A; }
+    .stat-card .sub { font-size: 12px; color: #666; margin-top: 4px; }
+    .section { margin-bottom: 32px; }
+    .section h2 { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #D4AF7A; margin-bottom: 16px; letter-spacing: 1px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #1a1a1a; color: #D4AF7A; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; position: sticky; top: 0; }
+    td { padding: 12px; border-bottom: 1px solid #222; color: #ccc; }
+    tr:hover td { background: #1a1a1a; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; text-transform: uppercase; }
+    .badge-new { background: #1a3a2a; color: #4ade80; }
+    .badge-qualified { background: #1a2a3a; color: #60a5fa; }
+    .badge-converted { background: #2a2a1a; color: #D4AF7A; }
+    .badge-dropped { background: #2a1a1a; color: #f87171; }
+    .badge-active { background: #1a3a2a; color: #4ade80; }
+    .escalation-card { background: #2a1a1a; border: 1px solid #3a2222; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+    .escalation-card .reason { color: #f87171; font-weight: 500; margin-bottom: 4px; }
+    .escalation-card .phone { color: #888; font-size: 13px; }
+    .escalation-card .time { color: #666; font-size: 12px; margin-top: 4px; }
+    .empty { color: #555; text-align: center; padding: 40px; font-size: 14px; }
+    .refresh-btn { padding: 6px 12px; background: #2a2a2a; border: 1px solid #333; color: #D4AF7A; border-radius: 6px; cursor: pointer; font-size: 12px; margin-left: 12px; }
+  </style>
+</head>
+<body>
+  <div class="auth-screen" id="authScreen">
+    <div class="auth-box">
+      <h1>ADMIN ACCESS</h1>
+      <input type="password" id="authKey" placeholder="Enter service key">
+      <button onclick="authenticate()">ENTER DASHBOARD</button>
+    </div>
+  </div>
+
+  <div class="dashboard" id="dashboard">
+    <div class="dash-header">
+      <h1>FITNESSBYMADDY OPS</h1>
+      <div>
+        <button class="refresh-btn" onclick="loadDashboard()">Refresh</button>
+        <button onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="section">
+      <h2>ESCALATIONS AWAITING REVIEW</h2>
+      <div id="escalations"><div class="empty">Loading...</div></div>
+    </div>
+
+    <div class="section">
+      <h2>RECENT LEADS</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Phone</th><th>Name</th><th>Status</th><th>Interest</th><th>Market</th><th>Created</th></tr></thead>
+          <tbody id="leadsTable"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>ACTIVE CLIENTS</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Program</th><th>Week</th><th>Started</th><th>Status</th></tr></thead>
+          <tbody id="clientsTable"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>PROGRAMS GENERATED THIS WEEK</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Client</th><th>Week</th><th>Generated</th><th>Sent</th><th>Flagged</th></tr></thead>
+          <tbody id="programsTable"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let serviceKey = '';
+    let supabaseUrl = '';
+
+    function authenticate() {
+      serviceKey = document.getElementById('authKey').value.trim();
+      if (!serviceKey) return alert('Enter your Supabase service key');
+
+      // Extract Supabase URL from the key or use stored
+      supabaseUrl = localStorage.getItem('sbUrl') || prompt('Supabase project URL (e.g. https://xxx.supabase.co):');
+      if (!supabaseUrl) return;
+      localStorage.setItem('sbUrl', supabaseUrl);
+
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadDashboard();
+    }
+
+    function logout() {
+      serviceKey = '';
+      document.getElementById('authScreen').style.display = 'flex';
+      document.getElementById('dashboard').style.display = 'none';
+    }
+
+    async function sbQuery(table, { select = '*', filters = {}, order, limit = 50 } = {}) {
+      let url = `${supabaseUrl}/rest/v1/${table}?select=${encodeURIComponent(select)}`;
+      for (const [k, v] of Object.entries(filters)) {
+        url += `&${k}=${encodeURIComponent(v)}`;
+      }
+      if (order) url += `&order=${order}`;
+      if (limit) url += `&limit=${limit}`;
+
+      const res = await fetch(url, {
+        headers: {
+          'apikey': serviceKey,
+          'Authorization': `Bearer ${serviceKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      return res.json();
+    }
+
+    async function loadDashboard() {
+      try {
+        const [leads, clients, programs, escalations] = await Promise.all([
+          sbQuery('leads', { order: 'created_at.desc', limit: 50 }),
+          sbQuery('clients', { order: 'created_at.desc', limit: 50 }),
+          sbQuery('programs', { order: 'generated_at.desc', limit: 20 }),
+          sbQuery('escalations', { filters: { resolved: 'eq.false' }, order: 'created_at.desc' })
+        ]);
+
+        renderStats(leads, clients, programs, escalations);
+        renderLeads(leads);
+        renderClients(clients);
+        renderPrograms(programs, clients);
+        renderEscalations(escalations);
+      } catch (err) {
+        alert('Failed to load data. Check your credentials.');
+        console.error(err);
+      }
+    }
+
+    function renderStats(leads, clients, programs, escalations) {
+      const today = new Date().toISOString().split('T')[0];
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      const leadsToday = leads.filter(l => l.created_at && l.created_at.startsWith(today)).length;
+      const leadsWeek = leads.filter(l => l.created_at && l.created_at >= weekAgo).length;
+      const activeClients = clients.filter(c => c.status === 'active').length;
+      const converted = leads.filter(l => l.status === 'converted').length;
+      const convRate = leads.length ? Math.round((converted / leads.length) * 100) : 0;
+
+      document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card"><div class="label">Leads Today</div><div class="value">${leadsToday}</div><div class="sub">${leadsWeek} this week</div></div>
+        <div class="stat-card"><div class="label">Conversion Rate</div><div class="value">${convRate}%</div><div class="sub">${converted} of ${leads.length} leads</div></div>
+        <div class="stat-card"><div class="label">Active Clients</div><div class="value">${activeClients}</div><div class="sub">${clients.length} total</div></div>
+        <div class="stat-card"><div class="label">Programs Generated</div><div class="value">${programs.length}</div><div class="sub">this week</div></div>
+        <div class="stat-card"><div class="label">Pending Escalations</div><div class="value">${escalations.length}</div><div class="sub">awaiting review</div></div>
+      `;
+    }
+
+    function renderLeads(leads) {
+      const tbody = document.getElementById('leadsTable');
+      if (!leads.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">No leads yet</td></tr>'; return; }
+      tbody.innerHTML = leads.slice(0, 25).map(l => `
+        <tr>
+          <td>${maskPhone(l.phone)}</td>
+          <td>${l.name || '—'}</td>
+          <td><span class="badge badge-${l.status}">${l.status}</span></td>
+          <td>${l.program_interest || '—'}</td>
+          <td>${l.market || '—'}</td>
+          <td>${formatDate(l.created_at)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderClients(clients) {
+      const tbody = document.getElementById('clientsTable');
+      const active = clients.filter(c => c.status === 'active');
+      if (!active.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">No active clients</td></tr>'; return; }
+      tbody.innerHTML = active.map(c => {
+        const week = c.program_started_at ? Math.max(1, Math.ceil((Date.now() - new Date(c.program_started_at)) / (7*24*60*60*1000))) : '—';
+        return `<tr>
+          <td>${c.name || maskPhone(c.phone)}</td>
+          <td>${c.program}</td>
+          <td>Week ${week}</td>
+          <td>${formatDate(c.program_started_at)}</td>
+          <td><span class="badge badge-active">${c.status}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderPrograms(programs, clients) {
+      const tbody = document.getElementById('programsTable');
+      if (!programs.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">No programs yet</td></tr>'; return; }
+      const clientMap = {};
+      clients.forEach(c => { clientMap[c.id] = c; });
+      tbody.innerHTML = programs.map(p => {
+        const client = clientMap[p.client_id];
+        return `<tr>
+          <td>${client ? (client.name || maskPhone(client.phone)) : '—'}</td>
+          <td>Week ${p.week_no}</td>
+          <td>${formatDate(p.generated_at)}</td>
+          <td>${p.whatsapp_sent_at ? '✓' : '—'}</td>
+          <td>${p.flagged_for_review ? '⚠️' : '—'}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderEscalations(escalations) {
+      const container = document.getElementById('escalations');
+      if (!escalations.length) { container.innerHTML = '<div class="empty">No pending escalations</div>'; return; }
+      container.innerHTML = escalations.map(e => `
+        <div class="escalation-card">
+          <div class="reason">${e.reason}</div>
+          <div class="phone">${maskPhone(e.phone)}</div>
+          ${e.message_body ? `<div style="color:#aaa;font-size:13px;margin-top:8px">"${e.message_body.slice(0, 100)}"</div>` : ''}
+          <div class="time">${formatDate(e.created_at)}</div>
+        </div>
+      `).join('');
+    }
+
+    function maskPhone(phone) {
+      if (!phone || phone.length < 6) return '***';
+      return phone.slice(0, 3) + 'XXX...' + phone.slice(-3);
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    }
+  </script>
+</body>
+</html>
