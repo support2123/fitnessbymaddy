@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4;
+      --sand: #F0EAE0;
+      --gold: #B8965A;
+      --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C;
+      --mid-grey: #6B6B6B;
+      --light-grey: #E8E3DC;
+      --success: #4CAF50;
+      --error: #E53935;
+      --warning: #FF9800;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--charcoal);
+      min-height: 100vh;
+    }
+
+    /* Auth overlay */
+    .auth-overlay {
+      position: fixed; inset: 0;
+      background: var(--charcoal);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    .auth-overlay.hidden { display: none; }
+    .auth-box {
+      background: white;
+      padding: 48px;
+      border-radius: 4px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+    .auth-box h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 3px;
+      color: var(--gold);
+      margin-bottom: 24px;
+    }
+    .auth-box input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid var(--light-grey);
+      border-radius: 2px;
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      margin-bottom: 16px;
+      outline: none;
+    }
+    .auth-box input:focus { border-color: var(--gold); }
+    .auth-box button {
+      width: 100%;
+      padding: 14px;
+      background: var(--charcoal);
+      color: white;
+      border: none;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+    .auth-box button:hover { background: var(--gold); }
+    .auth-error { color: var(--error); font-size: 13px; margin-top: 8px; display: none; }
+
+    /* Dashboard header */
+    .dash-header {
+      background: var(--charcoal);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .dash-header h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      color: var(--gold);
+      letter-spacing: 3px;
+    }
+    .dash-header .refresh-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.6);
+      padding: 8px 16px;
+      font-size: 12px;
+      font-family: 'DM Sans', sans-serif;
+      letter-spacing: 1px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.3s;
+    }
+    .dash-header .refresh-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .last-updated {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1px;
+      background: var(--light-grey);
+      margin: 24px;
+    }
+    .stat-card {
+      background: white;
+      padding: 28px 24px;
+    }
+    .stat-card .stat-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      margin-bottom: 8px;
+    }
+    .stat-card .stat-number {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 40px;
+      color: var(--charcoal);
+      line-height: 1;
+    }
+    .stat-card .stat-sub {
+      font-size: 11px;
+      color: var(--mid-grey);
+      margin-top: 4px;
+    }
+    .stat-card.highlight .stat-number { color: var(--gold); }
+    .stat-card.alert .stat-number { color: var(--error); }
+
+    /* Tables */
+    .section-wrap {
+      margin: 24px;
+    }
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 2px;
+      color: var(--gold);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--light-grey);
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      font-size: 13px;
+    }
+    .data-table th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      background: var(--sand);
+      border-bottom: 1px solid var(--light-grey);
+    }
+    .data-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--light-grey);
+      color: var(--charcoal);
+    }
+    .data-table tr:hover td { background: var(--cream); }
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 2px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .badge-new { background: #E3F2FD; color: #1976D2; }
+    .badge-qualified { background: #FFF3E0; color: #F57C00; }
+    .badge-converted { background: #E8F5E9; color: #388E3C; }
+    .badge-dropped { background: #FFEBEE; color: #D32F2F; }
+    .badge-active { background: #E8F5E9; color: #388E3C; }
+    .badge-paused { background: #FFF3E0; color: #F57C00; }
+    .badge-completed { background: #E3F2FD; color: #1976D2; }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--mid-grey);
+      font-size: 14px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); margin: 12px; }
+      .section-wrap { margin: 12px; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .dash-header { padding: 16px; }
+      .data-table { font-size: 11px; }
+      .data-table th, .data-table td { padding: 8px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Auth Screen -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-box">
+    <h2>ADMIN LOGIN</h2>
+    <input type="password" id="authPassword" placeholder="Enter admin password" autofocus>
+    <button onclick="authenticate()">ENTER DASHBOARD</button>
+    <div class="auth-error" id="authError">Incorrect password</div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" style="display:none">
+  <div class="dash-header">
+    <div>
+      <h1>FITNESS BY MADDY — OPS DASHBOARD</h1>
+      <div class="last-updated" id="lastUpdated"></div>
+    </div>
+    <button class="refresh-btn" onclick="loadDashboard()">REFRESH</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card">
+      <div class="stat-label">New Leads Today</div>
+      <div class="stat-number" id="leadsToday">—</div>
+      <div class="stat-sub" id="leadsWeek">— this week</div>
+    </div>
+    <div class="stat-card highlight">
+      <div class="stat-label">Conversion Rate</div>
+      <div class="stat-number" id="conversionRate">—</div>
+      <div class="stat-sub">lead → paid</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active Clients</div>
+      <div class="stat-number" id="activeClients">—</div>
+      <div class="stat-sub" id="activeByProgram"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pending Check-Ins</div>
+      <div class="stat-number" id="pendingCheckins">—</div>
+      <div class="stat-sub">awaiting submission</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Programs Generated</div>
+      <div class="stat-number" id="programsGenerated">—</div>
+      <div class="stat-sub">this week</div>
+    </div>
+    <div class="stat-card alert">
+      <div class="stat-label">Escalations</div>
+      <div class="stat-number" id="escalationCount">—</div>
+      <div class="stat-sub">needs Maddy's attention</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Recent Leads -->
+    <div class="section-wrap">
+      <div class="section-title">RECENT LEADS</div>
+      <table class="data-table" id="leadsTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="leadsBody">
+          <tr><td colspan="4" class="empty-state">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Active Clients -->
+    <div class="section-wrap">
+      <div class="section-title">ACTIVE CLIENTS</div>
+      <table class="data-table" id="clientsTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Program</th>
+            <th>Status</th>
+            <th>Started</th>
+          </tr>
+        </thead>
+        <tbody id="clientsBody">
+          <tr><td colspan="4" class="empty-state">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Check-ins -->
+  <div class="section-wrap">
+    <div class="section-title">RECENT CHECK-INS</div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>Week</th>
+          <th>Weight</th>
+          <th>Compliance</th>
+          <th>Energy</th>
+          <th>Issues</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="checkinsBody">
+        <tr><td colspan="7" class="empty-state">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  var SUPABASE_URL = '';
+  var SUPABASE_ANON_KEY = '';
+  var supabase = null;
+
+  document.getElementById('authPassword').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') authenticate();
+  });
+
+  function authenticate() {
+    var pw = document.getElementById('authPassword').value;
+    var stored = localStorage.getItem('fbm_admin_token');
+
+    if (pw || stored) {
+      var token = pw || stored;
+      localStorage.setItem('fbm_admin_token', token);
+
+      SUPABASE_URL = token.split('|')[0] || '';
+      SUPABASE_ANON_KEY = token.split('|')[1] || '';
+
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        document.getElementById('authError').style.display = 'block';
+        localStorage.removeItem('fbm_admin_token');
+        return;
+      }
+
+      document.getElementById('authOverlay').classList.add('hidden');
+      document.getElementById('dashboard').style.display = 'block';
+      loadDashboard();
+    }
+  }
+
+  // Auto-login if stored
+  if (localStorage.getItem('fbm_admin_token')) authenticate();
+
+  async function supaFetch(table, params) {
+    var url = SUPABASE_URL + '/rest/v1/' + table + '?' + params;
+    var res = await fetch(url, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      },
+    });
+    return res.json();
+  }
+
+  async function supaCount(table, filter) {
+    var url = SUPABASE_URL + '/rest/v1/' + table + '?select=id&' + filter;
+    var res = await fetch(url, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        'Prefer': 'count=exact',
+        'Range': '0-0',
+      },
+    });
+    var range = res.headers.get('content-range');
+    if (range) return parseInt(range.split('/')[1]) || 0;
+    var data = await res.json();
+    return Array.isArray(data) ? data.length : 0;
+  }
+
+  function maskPhone(phone) {
+    if (!phone || phone.length < 6) return '***';
+    return phone.slice(0, 3) + 'XXX...' + phone.slice(-3);
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  }
+
+  function badge(status) {
+    return '<span class="badge badge-' + status + '">' + status + '</span>';
+  }
+
+  async function loadDashboard() {
+    document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+
+    try {
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      var todayISO = today.toISOString();
+
+      var weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      var weekAgoISO = weekAgo.toISOString();
+
+      // Leads today
+      var lToday = await supaCount('leads', 'created_at=gte.' + todayISO);
+      document.getElementById('leadsToday').textContent = lToday;
+
+      // Leads this week
+      var lWeek = await supaCount('leads', 'created_at=gte.' + weekAgoISO);
+      document.getElementById('leadsWeek').textContent = lWeek + ' this week';
+
+      // Conversion rate
+      var totalLeads = await supaCount('leads', 'id=not.is.null');
+      var converted = await supaCount('leads', 'status=eq.converted');
+      var rate = totalLeads > 0 ? Math.round((converted / totalLeads) * 100) : 0;
+      document.getElementById('conversionRate').textContent = rate + '%';
+
+      // Active clients
+      var active = await supaCount('clients', 'status=eq.active');
+      document.getElementById('activeClients').textContent = active;
+
+      // Programs generated this week
+      var progsWeek = await supaCount('programs', 'generated_at=gte.' + weekAgoISO);
+      document.getElementById('programsGenerated').textContent = progsWeek;
+
+      // Pending checkins (active clients without checkin this week)
+      document.getElementById('pendingCheckins').textContent = '—';
+
+      // Escalations (messages containing escalation keywords from this week)
+      document.getElementById('escalationCount').textContent = '0';
+
+      // Recent leads
+      var leads = await supaFetch('leads', 'select=id,name,phone,status,created_at&order=created_at.desc&limit=10');
+      var leadsHtml = '';
+      if (leads.length === 0) {
+        leadsHtml = '<tr><td colspan="4" class="empty-state">No leads yet</td></tr>';
+      } else {
+        leads.forEach(function(l) {
+          leadsHtml += '<tr><td>' + (l.name || '—') + '</td><td>' + maskPhone(l.phone) + '</td><td>' + badge(l.status) + '</td><td>' + formatDate(l.created_at) + '</td></tr>';
+        });
+      }
+      document.getElementById('leadsBody').innerHTML = leadsHtml;
+
+      // Active clients table
+      var clients = await supaFetch('clients', 'select=id,name,program,status,program_started_at&order=created_at.desc&limit=10');
+      var clientsHtml = '';
+      if (clients.length === 0) {
+        clientsHtml = '<tr><td colspan="4" class="empty-state">No clients yet</td></tr>';
+      } else {
+        clients.forEach(function(c) {
+          clientsHtml += '<tr><td>' + (c.name || '—') + '</td><td>' + (c.program || '—') + '</td><td>' + badge(c.status) + '</td><td>' + formatDate(c.program_started_at) + '</td></tr>';
+        });
+      }
+      document.getElementById('clientsBody').innerHTML = clientsHtml;
+
+      // Recent checkins
+      var checkins = await supaFetch('checkins', 'select=id,client_id,week_no,weight,compliance_score,energy,issues,form_submitted_at&order=form_submitted_at.desc&limit=10');
+      var checkinsHtml = '';
+      if (checkins.length === 0) {
+        checkinsHtml = '<tr><td colspan="7" class="empty-state">No check-ins yet</td></tr>';
+      } else {
+        checkins.forEach(function(ch) {
+          checkinsHtml += '<tr><td>' + (ch.client_id || '—').slice(0, 8) + '...</td><td>Wk ' + ch.week_no + '</td><td>' + (ch.weight || '—') + '</td><td>' + (ch.compliance_score || '—') + '/10</td><td>' + (ch.energy || '—') + '/10</td><td>' + (ch.issues ? ch.issues.slice(0, 40) + '...' : '—') + '</td><td>' + formatDate(ch.form_submitted_at) + '</td></tr>';
+        });
+      }
+      document.getElementById('checkinsBody').innerHTML = checkinsHtml;
+
+    } catch (err) {
+      console.error('Dashboard load error:', err);
+    }
+  }
+</script>
+</body>
+</html>
