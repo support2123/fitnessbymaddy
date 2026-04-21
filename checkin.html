@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in | Fitness by Maddy</title>
+  <meta name="description" content="Submit your weekly check-in to track progress and get your next week's program.">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<div class="form-page" id="formPage">
+  <div class="form-header">
+    <a class="form-logo" href="index.html">Fitness by Maddy</a>
+    <h1 class="form-title">Week <span id="weekDisplay">-</span> <em>Check-in</em></h1>
+    <p class="form-subtitle">Quick update on your progress. Takes 2 minutes. This helps us fine-tune your next week's program.</p>
+  </div>
+
+  <div class="alert alert-error" id="errorAlert"></div>
+
+  <form id="checkinForm" novalidate>
+    <input type="hidden" id="clientId" name="client_id">
+    <input type="hidden" id="weekNo" name="week_no">
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Current Weight (kg) <span class="required">*</span></label>
+        <input type="number" name="weight" required step="0.1" min="30" max="250" placeholder="72.5">
+      </div>
+      <div class="form-group">
+        <label>Waist (inches)</label>
+        <input type="number" name="waist" step="0.1" min="15" max="80" placeholder="32">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Workout Compliance <span class="required">*</span></label>
+      <p class="hint" style="margin-bottom:8px">How closely did you follow this week's workout plan?</p>
+      <div class="range-group">
+        <span style="font-size:12px;color:var(--mid-grey)">Missed most</span>
+        <input type="range" name="compliance_score" min="1" max="10" value="7" id="complianceRange">
+        <span class="range-value" id="complianceValue">7</span>
+        <span style="font-size:12px;color:var(--mid-grey)">Nailed it</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Energy Level <span class="required">*</span></label>
+      <p class="hint" style="margin-bottom:8px">How's your overall energy been this week?</p>
+      <div class="range-group">
+        <span style="font-size:12px;color:var(--mid-grey)">Drained</span>
+        <input type="range" name="energy" min="1" max="10" value="7" id="energyRange">
+        <span class="range-value" id="energyValue">7</span>
+        <span style="font-size:12px;color:var(--mid-grey)">Amazing</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Issues or Challenges</label>
+      <textarea name="issues" placeholder="Any pain, soreness, motivation struggles, scheduling issues, diet difficulties..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Progress Photos</label>
+      <p class="hint" style="margin-bottom:12px">Front, side, and back. Same lighting, same time of day for best comparison.</p>
+      <div class="photo-upload">
+        <label class="photo-slot" id="slot1">
+          <input type="file" accept="image/*" data-slot="1">
+          <span class="upload-icon">+</span>
+          <span class="upload-label">Front</span>
+        </label>
+        <label class="photo-slot" id="slot2">
+          <input type="file" accept="image/*" data-slot="2">
+          <span class="upload-icon">+</span>
+          <span class="upload-label">Side</span>
+        </label>
+        <label class="photo-slot" id="slot3">
+          <input type="file" accept="image/*" data-slot="3">
+          <span class="upload-icon">+</span>
+          <span class="upload-label">Back</span>
+        </label>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-submit" id="submitBtn">Submit Check-in</button>
+  </form>
+
+  <div class="form-footer">
+    Consistency beats perfection. Just showing up matters.
+  </div>
+</div>
+
+<div class="form-page form-success" id="successPage" style="display:none">
+  <div class="check-icon">&#10003;</div>
+  <h2>Check-in Received!</h2>
+  <p>Great work staying consistent. Your coach will review your progress and your updated program will be sent via WhatsApp.</p>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w');
+
+  if (clientId) document.getElementById('clientId').value = clientId;
+  if (weekNo) {
+    document.getElementById('weekNo').value = weekNo;
+    document.getElementById('weekDisplay').textContent = weekNo;
+  }
+
+  var complianceRange = document.getElementById('complianceRange');
+  var complianceValue = document.getElementById('complianceValue');
+  complianceRange.addEventListener('input', function() {
+    complianceValue.textContent = this.value;
+  });
+
+  var energyRange = document.getElementById('energyRange');
+  var energyValue = document.getElementById('energyValue');
+  energyRange.addEventListener('input', function() {
+    energyValue.textContent = this.value;
+  });
+
+  var photoFiles = {};
+  document.querySelectorAll('.photo-slot input').forEach(function(input) {
+    input.addEventListener('change', function() {
+      var slot = this.getAttribute('data-slot');
+      var file = this.files[0];
+      if (!file) return;
+      photoFiles[slot] = file;
+      var slotEl = document.getElementById('slot' + slot);
+      slotEl.classList.add('has-photo');
+      var existingImg = slotEl.querySelector('img');
+      if (existingImg) existingImg.remove();
+      var img = document.createElement('img');
+      img.src = URL.createObjectURL(file);
+      slotEl.appendChild(img);
+    });
+  });
+
+  var form = document.getElementById('checkinForm');
+  var btn = document.getElementById('submitBtn');
+  var errorAlert = document.getElementById('errorAlert');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    errorAlert.style.display = 'none';
+
+    var weight = form.querySelector('[name="weight"]').value;
+    if (!weight) {
+      errorAlert.textContent = 'Please enter your current weight.';
+      errorAlert.style.display = 'block';
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    var data = {
+      client_id: document.getElementById('clientId').value,
+      week_no: document.getElementById('weekNo').value,
+      weight: parseFloat(weight),
+      waist: form.querySelector('[name="waist"]').value ? parseFloat(form.querySelector('[name="waist"]').value) : null,
+      compliance_score: parseInt(complianceRange.value),
+      energy: parseInt(energyRange.value),
+      issues: form.querySelector('[name="issues"]').value || null,
+      photos_urls: []
+    };
+
+    fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+      if (result.success) {
+        document.getElementById('formPage').style.display = 'none';
+        document.getElementById('successPage').style.display = 'block';
+      } else {
+        throw new Error(result.error || 'Something went wrong');
+      }
+    })
+    .catch(function(err) {
+      errorAlert.textContent = err.message || 'Failed to submit. Please try again.';
+      errorAlert.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Submit Check-in';
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
