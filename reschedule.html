@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: #1a1a1a; color: #fff; min-height: 100vh; }
+    .container { max-width: 480px; margin: 0 auto; padding: 40px 20px; }
+    .logo { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: #D4AF7A; text-align: center; letter-spacing: 3px; margin-bottom: 8px; }
+    .subtitle { text-align: center; color: #888; font-size: 14px; margin-bottom: 40px; }
+    h1 { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: #D4AF7A; text-align: center; margin-bottom: 24px; letter-spacing: 1px; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-size: 13px; font-weight: 500; color: #D4AF7A; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    input, select, textarea { width: 100%; padding: 14px 16px; background: #2a2a2a; border: 1px solid #333; border-radius: 8px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 15px; transition: border-color 0.3s; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #D4AF7A; }
+    textarea { min-height: 80px; resize: vertical; }
+    .btn { width: 100%; padding: 16px; background: #D4AF7A; color: #1a1a1a; border: none; border-radius: 8px; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; cursor: pointer; transition: background 0.3s; margin-top: 12px; }
+    .btn:hover { background: #c49a5a; }
+    .btn:disabled { background: #555; cursor: not-allowed; }
+    .time-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+    .time-slot { padding: 12px; background: #2a2a2a; border: 1px solid #333; border-radius: 8px; text-align: center; cursor: pointer; font-size: 14px; transition: all 0.3s; }
+    .time-slot:hover { border-color: #D4AF7A; }
+    .time-slot.selected { background: #D4AF7A; color: #1a1a1a; border-color: #D4AF7A; font-weight: 600; }
+    .success { display: none; text-align: center; padding: 40px 20px; }
+    .success h2 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: #D4AF7A; margin-bottom: 12px; }
+    .success p { color: #aaa; font-size: 15px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">FITNESS BY MADDY</div>
+    <p class="subtitle">Missed a session? No worries — let's reschedule</p>
+    <h1>RESCHEDULE SESSION</h1>
+
+    <form id="rescheduleForm">
+      <div class="form-group">
+        <label>Your Phone Number</label>
+        <input type="tel" name="phone" required placeholder="+91 XXXXX XXXXX">
+      </div>
+
+      <div class="form-group">
+        <label>Preferred Date</label>
+        <input type="date" name="date" required id="dateInput">
+      </div>
+
+      <div class="form-group">
+        <label>Preferred Time Slot</label>
+        <div class="time-slots" id="timeSlots">
+          <div class="time-slot" data-time="07:00">7:00 AM</div>
+          <div class="time-slot" data-time="08:00">8:00 AM</div>
+          <div class="time-slot" data-time="09:00">9:00 AM</div>
+          <div class="time-slot" data-time="10:00">10:00 AM</div>
+          <div class="time-slot" data-time="17:00">5:00 PM</div>
+          <div class="time-slot" data-time="18:00">6:00 PM</div>
+          <div class="time-slot" data-time="19:00">7:00 PM</div>
+          <div class="time-slot" data-time="20:00">8:00 PM</div>
+        </div>
+        <input type="hidden" name="time" id="timeInput">
+      </div>
+
+      <div class="form-group">
+        <label>Reason (Optional)</label>
+        <textarea name="reason" placeholder="Why you missed / any scheduling constraints..."></textarea>
+      </div>
+
+      <button type="submit" class="btn" id="submitBtn">REQUEST RESCHEDULE</button>
+    </form>
+
+    <div class="success" id="successMsg">
+      <h2>REQUEST RECEIVED!</h2>
+      <p>We'll confirm your new session time on WhatsApp shortly. Keep up the consistency!</p>
+    </div>
+  </div>
+
+  <script>
+    // Set min date to today
+    const dateInput = document.getElementById('dateInput');
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.min = today;
+
+    // Time slot selection
+    const slots = document.querySelectorAll('.time-slot');
+    const timeInput = document.getElementById('timeInput');
+    slots.forEach(slot => {
+      slot.addEventListener('click', () => {
+        slots.forEach(s => s.classList.remove('selected'));
+        slot.classList.add('selected');
+        timeInput.value = slot.dataset.time;
+      });
+    });
+
+    // Form submission
+    const form = document.getElementById('rescheduleForm');
+    const btn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      if (!timeInput.value) {
+        alert('Please select a time slot.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'SUBMITTING...';
+
+      const data = Object.fromEntries(new FormData(form));
+
+      try {
+        const res = await fetch('/api/lead-intake', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...data, type: 'reschedule' })
+        });
+
+        if (res.ok) {
+          form.style.display = 'none';
+          document.getElementById('successMsg').style.display = 'block';
+        } else {
+          alert('Something went wrong. Please try again or message us on WhatsApp.');
+          btn.disabled = false;
+          btn.textContent = 'REQUEST RESCHEDULE';
+        }
+      } catch (err) {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'REQUEST RESCHEDULE';
+      }
+    });
+  </script>
+</body>
+</html>
