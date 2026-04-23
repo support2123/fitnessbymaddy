@@ -71,7 +71,7 @@ CREATE INDEX IF NOT EXISTS programs_client_week_idx ON programs(client_id, week_
 CREATE TABLE IF NOT EXISTS messages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   phone TEXT NOT NULL,
-  direction TEXT NOT NULL CHECK (direction IN ('in','out')),
+  direction TEXT NOT NULL CHECK (direction IN ('inbound','outbound')),
   body TEXT,
   template_name TEXT,
   sent_at TIMESTAMPTZ DEFAULT now(),

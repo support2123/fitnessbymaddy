@@ -89,8 +89,8 @@ module.exports = async function handler(req, res) {
       compliance_score: compliance_score || null,
       energy: energy || null,
       issues: issues || null,
-      photos: photoUrls.length > 0 ? photoUrls : null,
-      submitted_at: new Date().toISOString(),
+      photos_urls: photoUrls.length > 0 ? photoUrls : null,
+      form_submitted_at: new Date().toISOString(),
     });
 
     if (insertError) {
@@ -101,16 +101,15 @@ module.exports = async function handler(req, res) {
     // Check if client is on 12wk program — insert pending program generation marker
     const { data: client } = await supabase
       .from("clients")
-      .select("id, phone, program_type")
+      .select("id, phone, program")
       .eq("id", client_id)
       .maybeSingle();
 
-    if (client && client.program_type === "12wk") {
+    if (client && client.program === "12wk") {
       const { error: programError } = await supabase.from("programs").insert({
         client_id,
         week_no: week_no + 1,
         generated_at: null,
-        status: "pending",
       });
 
       if (programError) {
