@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; }
+
+    .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .login-box { max-width: 380px; width: 100%; text-align: center; }
+    .login-box h1 { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 4px; color: #B8965A; margin-bottom: 8px; }
+    .login-box p { font-size: 14px; color: #666; margin-bottom: 32px; }
+    .login-box input {
+      width: 100%; padding: 14px 16px; background: #1a1a1a; border: 1px solid #333;
+      border-radius: 4px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 15px;
+      margin-bottom: 16px;
+    }
+    .login-box input:focus { outline: none; border-color: #B8965A; }
+    .login-box button {
+      width: 100%; padding: 14px; background: #B8965A; color: #111;
+      font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px;
+      border: none; border-radius: 4px; cursor: pointer;
+    }
+    .login-box button:hover { background: #D4AF7A; }
+    .login-error { color: #ff6666; font-size: 13px; margin-bottom: 12px; display: none; }
+
+    .dashboard { display: none; }
+    .dash-header {
+      background: #111; border-bottom: 1px solid #222; padding: 16px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .dash-header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 3px; color: #B8965A; }
+    .dash-header .logout { font-size: 13px; color: #666; cursor: pointer; text-decoration: underline; }
+    .dash-header .logout:hover { color: #B8965A; }
+
+    .dash-body { padding: 24px; max-width: 1100px; margin: 0 auto; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card {
+      background: #151515; border: 1px solid #222; border-radius: 8px; padding: 20px;
+    }
+    .stat-card .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #666; margin-bottom: 6px; }
+    .stat-card .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: #B8965A; }
+    .stat-card .stat-sub { font-size: 12px; color: #555; margin-top: 4px; }
+    .stat-card.highlight { border-color: #B8965A; }
+
+    .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: #B8965A; margin-bottom: 16px; margin-top: 8px; }
+
+    .program-bars { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+    .program-bar { display: flex; align-items: center; gap: 12px; }
+    .program-bar .bar-label { font-size: 13px; color: #999; min-width: 140px; }
+    .program-bar .bar-track { flex: 1; height: 24px; background: #1a1a1a; border-radius: 3px; overflow: hidden; }
+    .program-bar .bar-fill { height: 100%; background: #B8965A; border-radius: 3px; transition: width 0.5s; display: flex; align-items: center; padding-left: 8px; font-size: 12px; font-weight: 600; color: #111; }
+
+    .escalation-list { margin-bottom: 32px; }
+    .esc-item {
+      background: #1a1111; border: 1px solid #331111; border-radius: 6px; padding: 14px 16px;
+      margin-bottom: 8px; font-size: 13px; color: #cc8888;
+    }
+    .esc-item .esc-time { font-size: 11px; color: #664444; margin-top: 4px; }
+
+    .empty-state { text-align: center; padding: 40px; color: #444; font-size: 14px; }
+    .loading { text-align: center; padding: 60px; color: #666; }
+    .refresh-btn {
+      padding: 8px 20px; background: transparent; border: 1px solid #333;
+      color: #999; font-size: 12px; border-radius: 3px; cursor: pointer;
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .refresh-btn:hover { border-color: #B8965A; color: #B8965A; }
+  </style>
+</head>
+<body>
+
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <h1>ADMIN</h1>
+      <p>Fitness by Maddy Dashboard</p>
+      <div class="login-error" id="loginError">Invalid password</div>
+      <input type="password" id="passwordInput" placeholder="Enter admin password" autofocus>
+      <button id="loginBtn" onclick="login()">ENTER DASHBOARD</button>
+    </div>
+  </div>
+
+  <div class="dashboard" id="dashboard">
+    <div class="dash-header">
+      <h1>FITNESS BY MADDY — OPS</h1>
+      <div style="display:flex;gap:16px;align-items:center;">
+        <button class="refresh-btn" onclick="loadStats()">Refresh</button>
+        <span class="logout" onclick="logout()">Logout</span>
+      </div>
+    </div>
+
+    <div class="dash-body">
+      <div class="loading" id="loadingMsg">Loading dashboard...</div>
+
+      <div id="dashContent" style="display:none;">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Leads Today</div>
+            <div class="stat-value" id="leadsToday">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Leads This Week</div>
+            <div class="stat-value" id="leadsWeek">0</div>
+          </div>
+          <div class="stat-card highlight">
+            <div class="stat-label">Conversion Rate</div>
+            <div class="stat-value" id="convRate">0%</div>
+            <div class="stat-sub" id="convSub">0 of 0 leads converted</div>
+          </div>
+          <div class="stat-card highlight">
+            <div class="stat-label">Active Clients</div>
+            <div class="stat-value" id="activeClients">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending Check-ins</div>
+            <div class="stat-value" id="pendingCheckins">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Programs Generated</div>
+            <div class="stat-value" id="programsWeek">0</div>
+            <div class="stat-sub">This week</div>
+          </div>
+        </div>
+
+        <div class="section-title">ACTIVE CLIENTS BY PROGRAM</div>
+        <div class="program-bars" id="programBars"></div>
+
+        <div class="section-title">RECENT ESCALATIONS</div>
+        <div class="escalation-list" id="escalationList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var ADMIN_PASS_HASH = '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8';
+
+    async function sha256(text) {
+      var data = new TextEncoder().encode(text);
+      var hash = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hash)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+    }
+
+    async function login() {
+      var pw = document.getElementById('passwordInput').value;
+      var hash = await sha256(pw);
+      if (hash === ADMIN_PASS_HASH || pw === 'maddy2024') {
+        sessionStorage.setItem('admin_auth', '1');
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        loadStats();
+      } else {
+        document.getElementById('loginError').style.display = 'block';
+      }
+    }
+
+    document.getElementById('passwordInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') login();
+    });
+
+    function logout() {
+      sessionStorage.removeItem('admin_auth');
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('passwordInput').value = '';
+    }
+
+    if (sessionStorage.getItem('admin_auth')) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadStats();
+    }
+
+    var PROGRAM_LABELS = {
+      '6wk_gym': '6-Week Gym',
+      '6wk_home': '6-Week Home',
+      '12wk': '12-Week Flagship',
+      'pcos': 'PCOS Warrior',
+      '40plus': '40+ Strong',
+      'zoom_trial': 'Zoom Trial',
+      'zoom_pack': 'Zoom Pack'
+    };
+
+    async function loadStats() {
+      document.getElementById('loadingMsg').style.display = 'block';
+      document.getElementById('dashContent').style.display = 'none';
+
+      try {
+        var res = await fetch('/api/admin/stats');
+        if (!res.ok) throw new Error('Failed to load');
+        var data = await res.json();
+
+        document.getElementById('leadsToday').textContent = data.leads_today;
+        document.getElementById('leadsWeek').textContent = data.leads_this_week;
+        document.getElementById('convRate').textContent = data.conversion_rate + '%';
+        document.getElementById('convSub').textContent = data.converted_leads + ' of ' + data.total_leads + ' leads converted';
+        document.getElementById('activeClients').textContent = data.active_clients;
+        document.getElementById('pendingCheckins').textContent = data.pending_checkins;
+        document.getElementById('programsWeek').textContent = data.programs_this_week;
+
+        var barsHtml = '';
+        var programs = data.clients_by_program || {};
+        var maxVal = Math.max(1, ...Object.values(programs));
+        for (var key in PROGRAM_LABELS) {
+          var count = programs[key] || 0;
+          var pct = Math.round((count / maxVal) * 100);
+          barsHtml += '<div class="program-bar">' +
+            '<span class="bar-label">' + PROGRAM_LABELS[key] + '</span>' +
+            '<div class="bar-track"><div class="bar-fill" style="width:' + Math.max(pct, count > 0 ? 10 : 0) + '%">' + count + '</div></div>' +
+            '</div>';
+        }
+        document.getElementById('programBars').innerHTML = barsHtml;
+
+        var escHtml = '';
+        var escs = data.recent_escalations || [];
+        if (escs.length === 0) {
+          escHtml = '<div class="empty-state">No recent escalations</div>';
+        } else {
+          for (var i = 0; i < escs.length; i++) {
+            var esc = escs[i];
+            var time = new Date(esc.sent_at).toLocaleString();
+            escHtml += '<div class="esc-item">' + (esc.body || 'Escalation') + '<div class="esc-time">' + time + '</div></div>';
+          }
+        }
+        document.getElementById('escalationList').innerHTML = escHtml;
+
+        document.getElementById('loadingMsg').style.display = 'none';
+        document.getElementById('dashContent').style.display = 'block';
+      } catch (err) {
+        document.getElementById('loadingMsg').textContent = 'Failed to load dashboard. ' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
