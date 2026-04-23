@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In | Fitness by Maddy</title>
+  <meta name="description" content="Submit your weekly check-in to keep your program on track.">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .checkin-wrap { max-width: 640px; margin: 0 auto; padding: 40px 24px 80px; }
+    .checkin-header { text-align: center; margin-bottom: 48px; }
+    .checkin-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: var(--charcoal); margin-bottom: 12px; }
+    .checkin-header h1 em { font-style: italic; color: var(--gold); }
+    .checkin-header p { font-size: 14px; color: var(--mid-grey); line-height: 1.7; }
+    .week-badge { display: inline-block; background: var(--charcoal); color: white; font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; padding: 6px 16px; border-radius: 2px; margin-bottom: 16px; }
+    .form-section { margin-bottom: 36px; }
+    .form-section-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; color: var(--charcoal); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--light-grey); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { margin-bottom: 16px; }
+    .form-textarea { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--charcoal); background: var(--cream); transition: border-color 0.3s; outline: none; resize: vertical; min-height: 80px; }
+    .form-textarea:focus { border-color: var(--gold); }
+    .range-wrap { display: flex; align-items: center; gap: 12px; }
+    .range-wrap input[type="range"] { flex: 1; accent-color: var(--gold); }
+    .range-val { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 600; color: var(--charcoal); min-width: 36px; text-align: center; }
+    .photo-upload { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .photo-box { aspect-ratio: 3/4; border: 2px dashed var(--light-grey); border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: border-color 0.3s; position: relative; overflow: hidden; background: white; }
+    .photo-box:hover { border-color: var(--gold); }
+    .photo-box.has-photo { border-style: solid; border-color: var(--gold); }
+    .photo-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; }
+    .photo-box input { display: none; }
+    .photo-box .photo-label { font-size: 11px; color: var(--mid-grey); text-align: center; letter-spacing: 0.5px; }
+    .photo-box .photo-icon { font-size: 24px; margin-bottom: 4px; }
+    .submit-btn { width: 100%; padding: 18px; background: var(--charcoal); color: white; border: none; font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: background 0.3s; margin-top: 24px; }
+    .submit-btn:hover { background: var(--gold); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .success-msg { text-align: center; padding: 48px 24px; display: none; }
+    .success-msg h2 { font-family: 'Cormorant Garamond', serif; font-size: 32px; color: var(--charcoal); margin-bottom: 12px; }
+    .success-msg p { color: var(--mid-grey); font-size: 15px; line-height: 1.7; }
+    .error-msg { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 12px 16px; border-radius: 4px; font-size: 13px; margin-bottom: 16px; display: none; }
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .photo-upload { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+  <div class="checkin-wrap">
+    <div class="checkin-header">
+      <div class="week-badge" id="weekBadge">Week —</div>
+      <h1>Weekly <em>Check-In</em></h1>
+      <p>Track your progress so Maddy can fine-tune your program. Be honest — every data point matters.</p>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <form id="checkinForm">
+      <div class="form-section">
+        <div class="form-section-title">Body Stats</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Current Weight (kg) *</label>
+            <input class="form-input" type="number" name="weight" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Waist (inches)</label>
+            <input class="form-input" type="number" name="waist" step="0.1">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Self Assessment</div>
+        <div class="form-group">
+          <label class="form-label">Workout Compliance (1 = missed most, 10 = nailed every session) *</label>
+          <div class="range-wrap">
+            <input type="range" name="compliance_score" min="1" max="10" value="7" id="complianceRange">
+            <div class="range-val" id="complianceVal">7</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Energy Level (1 = exhausted, 10 = electric) *</label>
+          <div class="range-wrap">
+            <input type="range" name="energy" min="1" max="10" value="7" id="energyRange">
+            <div class="range-val" id="energyVal">7</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Notes</div>
+        <div class="form-group">
+          <label class="form-label">Any Issues, Challenges, or Questions This Week?</label>
+          <textarea class="form-textarea" name="issues" placeholder="Joint pain, sleep issues, food cravings, schedule problems, plateaus..."></textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Progress Photos</div>
+        <p style="font-size: 13px; color: var(--mid-grey); margin-bottom: 16px;">Front, side, and back. Same lighting & time of day each week for best comparison.</p>
+        <div class="photo-upload">
+          <label class="photo-box" id="photoBox0">
+            <div class="photo-icon">📸</div>
+            <div class="photo-label">Front</div>
+            <input type="file" accept="image/*" data-index="0">
+          </label>
+          <label class="photo-box" id="photoBox1">
+            <div class="photo-icon">📸</div>
+            <div class="photo-label">Side</div>
+            <input type="file" accept="image/*" data-index="1">
+          </label>
+          <label class="photo-box" id="photoBox2">
+            <div class="photo-icon">📸</div>
+            <div class="photo-label">Back</div>
+            <input type="file" accept="image/*" data-index="2">
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">Submit Check-In</button>
+    </form>
+
+    <div class="success-msg" id="successMsg">
+      <div style="font-size: 48px; margin-bottom: 16px;">💪</div>
+      <h2>Check-In Submitted!</h2>
+      <p>Great work staying consistent. Maddy will review your progress and your updated program will be ready soon.</p>
+    </div>
+  </div>
+
+  <footer>
+    <div>
+      <div class="footer-brand">Fitness by Maddy</div>
+      <p class="footer-tagline">Elite online fitness coaching for those serious about transformation.</p>
+    </div>
+    <div>
+      <div class="footer-heading">Programs</div>
+      <ul class="footer-links">
+        <li><a href="shred.html">6 Week Shred Challenge</a></li>
+        <li><a href="custom.html">12 Week Custom Program</a></li>
+        <li><a href="vip.html">1-on-1 Live Coaching</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-heading">Connect</div>
+      <ul class="footer-links">
+        <li><a href="https://instagram.com/fitnessbymaddy_" target="_blank">Instagram @fitnessbymaddy_</a></li>
+      </ul>
+    </div>
+  </footer>
+  <div class="footer-bottom">
+    <span class="footer-copy">&copy; 2025 Fitness by Maddy. All rights reserved.</span>
+  </div>
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w');
+
+  document.getElementById('weekBadge').textContent = 'Week ' + (weekNo || '—');
+
+  var complianceRange = document.getElementById('complianceRange');
+  var complianceVal = document.getElementById('complianceVal');
+  var energyRange = document.getElementById('energyRange');
+  var energyVal = document.getElementById('energyVal');
+
+  complianceRange.addEventListener('input', function() { complianceVal.textContent = this.value; });
+  energyRange.addEventListener('input', function() { energyVal.textContent = this.value; });
+
+  // Photo handling
+  var photos = [null, null, null];
+
+  function compressImage(file, maxWidth, quality) {
+    return new Promise(function(resolve) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+          var canvas = document.createElement('canvas');
+          var ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
+          if (ratio >= 1) ratio = 1;
+          canvas.width = img.width * ratio;
+          canvas.height = img.height * ratio;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          var dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve({
+            data: dataUrl.split(',')[1],
+            type: 'image/jpeg',
+          });
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  document.querySelectorAll('.photo-box input').forEach(function(input) {
+    input.addEventListener('change', function() {
+      var idx = parseInt(this.getAttribute('data-index'));
+      var box = document.getElementById('photoBox' + idx);
+      if (this.files && this.files[0]) {
+        compressImage(this.files[0], 800, 0.7).then(function(compressed) {
+          photos[idx] = compressed;
+          var existingImg = box.querySelector('img');
+          if (existingImg) existingImg.remove();
+          var img = document.createElement('img');
+          img.src = 'data:image/jpeg;base64,' + compressed.data;
+          box.appendChild(img);
+          box.classList.add('has-photo');
+        });
+      }
+    });
+  });
+
+  // Form submission
+  var form = document.getElementById('checkinForm');
+  var btn = document.getElementById('submitBtn');
+  var errorEl = document.getElementById('errorMsg');
+  var successEl = document.getElementById('successMsg');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!clientId || !weekNo) {
+      errorEl.textContent = 'Invalid check-in link. Please use the link sent to your WhatsApp.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    errorEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    var data = {
+      client_id: clientId,
+      week_no: parseInt(weekNo),
+      weight: parseFloat(form.weight.value) || null,
+      waist: parseFloat(form.waist.value) || null,
+      compliance_score: parseInt(complianceRange.value),
+      energy: parseInt(energyRange.value),
+      issues: form.issues.value || null,
+      photos: photos.filter(function(p) { return p !== null; }),
+    };
+
+    fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+      if (result.ok) {
+        form.style.display = 'none';
+        successEl.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        errorEl.textContent = result.error || 'Something went wrong. Please try again.';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Submit Check-In';
+      }
+    })
+    .catch(function() {
+      errorEl.textContent = 'Network error. Please check your connection and try again.';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Submit Check-In';
+    });
+  });
+})();
+</script>
+</body>
+</html>
