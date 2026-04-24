@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<div class="form-container">
+  <div class="form-header">
+    <div class="brand">FITNESS BY MADDY</div>
+    <h1>Weekly Check-in</h1>
+    <p id="weekLabel">Week — Progress Update</p>
+  </div>
+
+  <form id="checkinForm" novalidate>
+    <input type="hidden" id="clientId" name="client_id">
+    <input type="hidden" id="weekNo" name="week_no">
+
+    <div class="form-section">
+      <h2>Body Stats</h2>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="weight">Current Weight (kg) *</label>
+          <input type="number" id="weight" name="weight" required min="30" max="200" step="0.1" placeholder="65.0">
+        </div>
+        <div class="field">
+          <label for="waist">Waist (inches)</label>
+          <input type="number" id="waist" name="waist" min="15" max="60" step="0.1" placeholder="30.0">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>Self Assessment</h2>
+
+      <div class="field">
+        <label>Workout Compliance (1-10) *</label>
+        <p class="field-hint">How closely did you follow the workout plan?</p>
+        <div class="slider-group">
+          <input type="range" id="compliance_score" name="compliance_score" min="1" max="10" value="7" required>
+          <span class="slider-value" id="complianceVal">7</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Energy Level (1-10) *</label>
+        <p class="field-hint">How was your overall energy this week?</p>
+        <div class="slider-group">
+          <input type="range" id="energy" name="energy" min="1" max="10" value="7" required>
+          <span class="slider-value" id="energyVal">7</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>Notes & Concerns</h2>
+
+      <div class="field">
+        <label for="issues">Any issues, pain, or concerns?</label>
+        <textarea id="issues" name="issues" rows="4" placeholder="How did the week go? Any challenges, soreness, or things you'd like adjusted?"></textarea>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>Progress Photos</h2>
+      <p class="field-hint" style="margin-bottom:16px;">Front, side, and back — same lighting and pose as last week</p>
+
+      <div class="photo-uploads">
+        <div class="photo-slot">
+          <label for="photo1" class="photo-label">
+            <span class="photo-icon">&#128247;</span>
+            <span>Front</span>
+          </label>
+          <input type="file" id="photo1" accept="image/*" capture="environment" class="photo-input">
+          <img id="preview1" class="photo-preview" style="display:none;">
+        </div>
+        <div class="photo-slot">
+          <label for="photo2" class="photo-label">
+            <span class="photo-icon">&#128247;</span>
+            <span>Side</span>
+          </label>
+          <input type="file" id="photo2" accept="image/*" capture="environment" class="photo-input">
+          <img id="preview2" class="photo-preview" style="display:none;">
+        </div>
+        <div class="photo-slot">
+          <label for="photo3" class="photo-label">
+            <span class="photo-icon">&#128247;</span>
+            <span>Back</span>
+          </label>
+          <input type="file" id="photo3" accept="image/*" capture="environment" class="photo-input">
+          <img id="preview3" class="photo-preview" style="display:none;">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-submit" id="submitBtn">Submit Check-in</button>
+      <p class="form-note">Your coach will review this and update your program accordingly.</p>
+    </div>
+  </form>
+
+  <div id="successMsg" class="success-message" style="display:none;">
+    <div class="success-icon">&#10003;</div>
+    <h2>Check-in Submitted!</h2>
+    <p>Great job staying consistent. Your updated program will be sent via WhatsApp shortly.</p>
+  </div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const clientId = params.get('c');
+  const weekNo = params.get('w');
+
+  if (clientId) document.getElementById('clientId').value = clientId;
+  if (weekNo) {
+    document.getElementById('weekNo').value = weekNo;
+    document.getElementById('weekLabel').textContent = 'Week ' + weekNo + ' Progress Update';
+  }
+
+  document.getElementById('compliance_score').addEventListener('input', function() {
+    document.getElementById('complianceVal').textContent = this.value;
+  });
+  document.getElementById('energy').addEventListener('input', function() {
+    document.getElementById('energyVal').textContent = this.value;
+  });
+
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById('photo' + i).addEventListener('change', function() {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const preview = document.getElementById('preview' + i);
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+          preview.parentElement.querySelector('.photo-label').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  document.getElementById('checkinForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Uploading...';
+
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+
+    const photos = [];
+    for (let i = 1; i <= 3; i++) {
+      const fileInput = document.getElementById('photo' + i);
+      if (fileInput.files[0]) {
+        const base64 = await fileToBase64(fileInput.files[0]);
+        photos.push(base64);
+      }
+    }
+    data.photos = photos;
+
+    try {
+      const res = await fetch('/api/checkin-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (res.ok) {
+        document.getElementById('checkinForm').style.display = 'none';
+        document.getElementById('successMsg').style.display = 'block';
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Something went wrong. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Submit Check-in';
+      }
+    } catch (err) {
+      alert('Network error. Please check your connection and try again.');
+      btn.disabled = false;
+      btn.textContent = 'Submit Check-in';
+    }
+  });
+
+  function fileToBase64(file) {
+    return new Promise(function(resolve) {
+      const reader = new FileReader();
+      reader.onload = function(e) { resolve(e.target.result); };
+      reader.readAsDataURL(file);
+    });
+  }
+</script>
+
+</body>
+</html>

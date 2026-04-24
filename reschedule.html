@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<div class="form-container">
+  <div class="form-header">
+    <div class="brand">FITNESS BY MADDY</div>
+    <h1>Reschedule Session</h1>
+    <p>Missed a session? No stress — let's get you back on track</p>
+  </div>
+
+  <form id="rescheduleForm" novalidate>
+    <div class="form-section">
+      <div class="field">
+        <label for="phone">WhatsApp Number *</label>
+        <input type="tel" id="phone" name="phone" required placeholder="+91 XXXXX XXXXX">
+      </div>
+
+      <div class="field">
+        <label for="name">Your Name *</label>
+        <input type="text" id="name" name="name" required placeholder="Your name">
+      </div>
+
+      <div class="field">
+        <label for="missed_date">Date Missed</label>
+        <input type="date" id="missed_date" name="missed_date">
+      </div>
+
+      <div class="field">
+        <label for="reason">Reason for Missing</label>
+        <select id="reason" name="reason">
+          <option value="">Select</option>
+          <option value="sick">Feeling unwell</option>
+          <option value="travel">Travel / Out of station</option>
+          <option value="work">Work commitment</option>
+          <option value="family">Family emergency</option>
+          <option value="forgot">Forgot / Time conflict</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="preferred_date">Preferred Reschedule Date *</label>
+        <input type="date" id="preferred_date" name="preferred_date" required>
+      </div>
+
+      <div class="field">
+        <label for="preferred_time">Preferred Time *</label>
+        <select id="preferred_time" name="preferred_time" required>
+          <option value="">Select a time slot</option>
+          <option value="6am">6:00 AM</option>
+          <option value="7am">7:00 AM</option>
+          <option value="8am">8:00 AM</option>
+          <option value="9am">9:00 AM</option>
+          <option value="10am">10:00 AM</option>
+          <option value="5pm">5:00 PM</option>
+          <option value="6pm">6:00 PM</option>
+          <option value="7pm">7:00 PM</option>
+          <option value="8pm">8:00 PM</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="notes">Additional Notes</label>
+        <textarea id="notes" name="notes" rows="3" placeholder="Anything else we should know?"></textarea>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-submit" id="submitBtn">Request Reschedule</button>
+      <p class="form-note">We'll confirm the new slot via WhatsApp within a few hours.</p>
+    </div>
+  </form>
+
+  <div id="successMsg" class="success-message" style="display:none;">
+    <div class="success-icon">&#10003;</div>
+    <h2>Request Submitted!</h2>
+    <p>We'll confirm your rescheduled session on WhatsApp shortly.</p>
+  </div>
+</div>
+
+<script>
+  var today = new Date().toISOString().split('T')[0];
+  document.getElementById('preferred_date').setAttribute('min', today);
+
+  document.getElementById('rescheduleForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    var formData = new FormData(this);
+    var data = Object.fromEntries(formData.entries());
+
+    try {
+      var res = await fetch('/api/lead-intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: data.phone,
+          name: data.name,
+          reschedule: {
+            missed_date: data.missed_date,
+            reason: data.reason,
+            preferred_date: data.preferred_date,
+            preferred_time: data.preferred_time,
+            notes: data.notes
+          }
+        })
+      });
+
+      document.getElementById('rescheduleForm').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    } catch (err) {
+      alert('Network error. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Request Reschedule';
+    }
+  });
+</script>
+
+</body>
+</html>
