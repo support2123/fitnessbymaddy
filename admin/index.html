@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --sand: #F0EAE0; --gold: #B8965A; --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C; --mid-grey: #6B6B6B; --light-grey: #E8E3DC;
+      --green: #2D8B4E; --red: #C44A4A; --blue: #4A6EC4;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); }
+
+    .admin-nav { background: var(--charcoal); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .admin-nav h1 { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
+    .admin-nav .status { font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 1px; }
+    #loginWrap { max-width: 400px; margin: 120px auto; padding: 48px; background: white; border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+    #loginWrap h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 24px; text-align: center; }
+    .login-input { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; margin-bottom: 16px; outline: none; }
+    .login-input:focus { border-color: var(--gold); }
+    .login-btn { width: 100%; padding: 14px; background: var(--charcoal); color: white; border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; font-family: 'DM Sans', sans-serif; }
+    .login-btn:hover { background: var(--gold); }
+    .login-error { color: var(--red); font-size: 12px; text-align: center; margin-top: 12px; display: none; }
+
+    #dashWrap { display: none; padding: 32px; max-width: 1200px; margin: 0 auto; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: white; padding: 24px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .stat-card .label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card .value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; line-height: 1; }
+    .stat-card .sub { font-size: 11px; color: var(--mid-grey); margin-top: 4px; }
+    .stat-card.gold .value { color: var(--gold); }
+    .stat-card.green .value { color: var(--green); }
+    .stat-card.red .value { color: var(--red); }
+
+    .section-title { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin: 32px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--light-grey); }
+
+    .data-table { width: 100%; background: white; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 24px; }
+    .data-table th { background: var(--charcoal); color: white; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 16px; text-align: left; }
+    .data-table td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--light-grey); }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--sand); }
+
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-new { background: #E8F0FE; color: var(--blue); }
+    .badge-qualified { background: #FFF3E0; color: #E65100; }
+    .badge-converted { background: #E8F5E9; color: var(--green); }
+    .badge-dropped { background: #FFEBEE; color: var(--red); }
+    .badge-active { background: #E8F5E9; color: var(--green); }
+    .badge-paused { background: #FFF3E0; color: #E65100; }
+
+    .empty-state { text-align: center; padding: 48px; color: var(--mid-grey); font-size: 13px; }
+    .refresh-btn { background: var(--gold); color: white; border: none; padding: 8px 20px; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; border-radius: 2px; font-family: 'DM Sans', sans-serif; }
+
+    @media (max-width: 768px) {
+      #dashWrap { padding: 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .data-table { font-size: 12px; display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="admin-nav">
+  <h1>Fitness by Maddy</h1>
+  <div>
+    <span class="status" id="lastRefresh"></span>
+    <button class="refresh-btn" onclick="loadDashboard()" style="margin-left:12px">Refresh</button>
+  </div>
+</div>
+
+<div id="loginWrap">
+  <h2>Admin Login</h2>
+  <input class="login-input" type="email" id="loginEmail" placeholder="Email">
+  <input class="login-input" type="password" id="loginPassword" placeholder="Password">
+  <button class="login-btn" onclick="handleLogin()">Sign In</button>
+  <div class="login-error" id="loginError">Invalid credentials. Try again.</div>
+</div>
+
+<div id="dashWrap">
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <div class="section-title">Recent Leads</div>
+  <table class="data-table">
+    <thead><tr><th>Name</th><th>Phone</th><th>Interest</th><th>Status</th><th>Date</th></tr></thead>
+    <tbody id="leadsTable"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+  </table>
+
+  <div class="section-title">Active Clients</div>
+  <table class="data-table">
+    <thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Status</th><th>Paid</th></tr></thead>
+    <tbody id="clientsTable"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+  </table>
+
+  <div class="section-title">Pending Check-Ins</div>
+  <table class="data-table">
+    <thead><tr><th>Client</th><th>Week</th><th>Due Since</th><th>Status</th></tr></thead>
+    <tbody id="checkinsTable"><tr><td colspan="4" class="empty-state">Loading...</td></tr></tbody>
+  </table>
+
+  <div class="section-title">Programs Generated This Week</div>
+  <table class="data-table">
+    <thead><tr><th>Client</th><th>Week</th><th>Generated</th><th>Sent</th><th>PDF</th></tr></thead>
+    <tbody id="programsTable"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+  </table>
+
+  <div class="section-title">Escalations</div>
+  <table class="data-table">
+    <thead><tr><th>Phone</th><th>Message</th><th>Time</th></tr></thead>
+    <tbody id="escalationsTable"><tr><td colspan="3" class="empty-state">Loading...</td></tr></tbody>
+  </table>
+</div>
+
+<script>
+var SUPABASE_URL = '';
+var SUPABASE_ANON_KEY = '';
+var session = null;
+
+function handleLogin() {
+  var email = document.getElementById('loginEmail').value;
+  var password = document.getElementById('loginPassword').value;
+  var errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY
+    },
+    body: JSON.stringify({ email: email, password: password })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.access_token) {
+      session = data;
+      document.getElementById('loginWrap').style.display = 'none';
+      document.getElementById('dashWrap').style.display = 'block';
+      loadDashboard();
+    } else {
+      errEl.style.display = 'block';
+    }
+  })
+  .catch(function() { errEl.style.display = 'block'; });
+}
+
+function sbFetch(table, query) {
+  var url = SUPABASE_URL + '/rest/v1/' + table + '?' + query;
+  return fetch(url, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + session.access_token,
+      'Content-Type': 'application/json'
+    }
+  }).then(function(r) { return r.json(); });
+}
+
+function maskPhone(p) {
+  if (!p || p.length < 6) return '***';
+  return p.slice(0, 4) + '***' + p.slice(-3);
+}
+
+function badge(status) {
+  return '<span class="badge badge-' + status + '">' + status + '</span>';
+}
+
+function fmtDate(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+function loadDashboard() {
+  if (!session) return;
+
+  var now = new Date();
+  var weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  var today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+
+  Promise.all([
+    sbFetch('leads', 'select=*&order=created_at.desc&limit=50'),
+    sbFetch('clients', 'select=*&order=created_at.desc'),
+    sbFetch('checkins', 'select=*&order=form_submitted_at.desc&limit=20'),
+    sbFetch('programs', 'select=*&generated_at=gte.' + weekAgo + '&order=generated_at.desc'),
+    sbFetch('messages', 'select=*&template_name=eq.escalation_alert&order=sent_at.desc&limit=10'),
+  ]).then(function(results) {
+    var leads = results[0] || [];
+    var clients = results[1] || [];
+    var checkins = results[2] || [];
+    var programs = results[3] || [];
+    var escalations = results[4] || [];
+
+    var leadsToday = leads.filter(function(l) { return l.created_at >= today; }).length;
+    var leadsWeek = leads.filter(function(l) { return l.created_at >= weekAgo; }).length;
+    var converted = leads.filter(function(l) { return l.status === 'converted'; }).length;
+    var convRate = leads.length > 0 ? Math.round((converted / leads.length) * 100) : 0;
+    var activeClients = clients.filter(function(c) { return c.status === 'active'; }).length;
+
+    var statsHTML = '';
+    statsHTML += statCard('Leads Today', leadsToday, 'new today', 'gold');
+    statsHTML += statCard('Leads This Week', leadsWeek, 'last 7 days', '');
+    statsHTML += statCard('Conversion Rate', convRate + '%', converted + ' of ' + leads.length, 'green');
+    statsHTML += statCard('Active Clients', activeClients, 'across all programs', 'gold');
+    statsHTML += statCard('Check-Ins (Week)', checkins.length, 'submitted', '');
+    statsHTML += statCard('Programs Generated', programs.length, 'this week', 'green');
+    document.getElementById('statsGrid').innerHTML = statsHTML;
+
+    var leadsHTML = '';
+    leads.slice(0, 20).forEach(function(l) {
+      leadsHTML += '<tr><td>' + (l.name || '-') + '</td><td>' + maskPhone(l.phone) + '</td><td>' + (l.program_interest || '-') + '</td><td>' + badge(l.status) + '</td><td>' + fmtDate(l.created_at) + '</td></tr>';
+    });
+    document.getElementById('leadsTable').innerHTML = leadsHTML || '<tr><td colspan="5" class="empty-state">No leads yet</td></tr>';
+
+    var clientsHTML = '';
+    clients.forEach(function(c) {
+      clientsHTML += '<tr><td>' + (c.name || '-') + '</td><td>' + (c.program || '-') + '</td><td>' + fmtDate(c.program_started_at) + '</td><td>' + badge(c.status) + '</td><td>$' + (c.paid_amount || 0) + '</td></tr>';
+    });
+    document.getElementById('clientsTable').innerHTML = clientsHTML || '<tr><td colspan="5" class="empty-state">No clients yet</td></tr>';
+
+    var activeClientIds = clients.filter(function(c) { return c.status === 'active'; });
+    var pendingHTML = '';
+    activeClientIds.forEach(function(c) {
+      var start = new Date(c.program_started_at);
+      var days = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+      var weekNo = Math.ceil(days / 7);
+      var hasCheckin = checkins.some(function(ci) { return ci.client_id === c.id && ci.week_no === weekNo; });
+      if (!hasCheckin && weekNo >= 1) {
+        pendingHTML += '<tr><td>' + (c.name || '-') + '</td><td>Week ' + weekNo + '</td><td>' + days + ' days</td><td>' + badge('new') + '</td></tr>';
+      }
+    });
+    document.getElementById('checkinsTable').innerHTML = pendingHTML || '<tr><td colspan="4" class="empty-state">All check-ins submitted</td></tr>';
+
+    var progsHTML = '';
+    programs.forEach(function(p) {
+      var clientName = (clients.find(function(c) { return c.id === p.client_id; }) || {}).name || '-';
+      var sentBadge = p.whatsapp_sent_at ? badge('active') : badge('new');
+      var pdfLink = p.pdf_url ? '<a href="' + p.pdf_url + '" target="_blank" style="color:var(--gold)">View</a>' : '-';
+      progsHTML += '<tr><td>' + clientName + '</td><td>Week ' + p.week_no + '</td><td>' + fmtDate(p.generated_at) + '</td><td>' + sentBadge + '</td><td>' + pdfLink + '</td></tr>';
+    });
+    document.getElementById('programsTable').innerHTML = progsHTML || '<tr><td colspan="5" class="empty-state">No programs this week</td></tr>';
+
+    var escHTML = '';
+    escalations.forEach(function(m) {
+      escHTML += '<tr><td>' + maskPhone(m.phone) + '</td><td>' + (m.body || '-').slice(0, 100) + '</td><td>' + fmtDate(m.sent_at) + '</td></tr>';
+    });
+    document.getElementById('escalationsTable').innerHTML = escHTML || '<tr><td colspan="3" class="empty-state">No escalations</td></tr>';
+
+    document.getElementById('lastRefresh').textContent = 'Updated ' + now.toLocaleTimeString();
+  });
+}
+
+function statCard(label, value, sub, color) {
+  return '<div class="stat-card ' + color + '"><div class="label">' + label + '</div><div class="value">' + value + '</div><div class="sub">' + sub + '</div></div>';
+}
+
+(function() {
+  var meta = document.querySelector('meta[name="supabase-url"]');
+  SUPABASE_URL = (meta && meta.content) || localStorage.getItem('sb_url') || '';
+  SUPABASE_ANON_KEY = localStorage.getItem('sb_anon') || '';
+
+  if (!SUPABASE_URL) {
+    var url = prompt('Enter your Supabase URL:');
+    var key = prompt('Enter your Supabase anon key:');
+    if (url && key) {
+      localStorage.setItem('sb_url', url);
+      localStorage.setItem('sb_anon', key);
+      SUPABASE_URL = url;
+      SUPABASE_ANON_KEY = key;
+    }
+  }
+})();
+</script>
+</body>
+</html>
