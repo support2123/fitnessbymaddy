@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --sand: #F0EAE0; --taupe: #C8B89A;
+      --gold: #B8965A; --gold-light: #D4AF7A; --charcoal: #2C2C2C;
+      --mid-grey: #6B6B6B; --light-grey: #E8E3DC;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); }
+
+    /* Auth Screen */
+    .auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .auth-card { background: white; padding: 48px; border-radius: 4px; box-shadow: 0 8px 40px rgba(0,0,0,0.08); width: 100%; max-width: 400px; text-align: center; }
+    .auth-card h1 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 8px; }
+    .auth-card p { font-size: 13px; color: var(--mid-grey); margin-bottom: 32px; }
+    .auth-input { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; margin-bottom: 12px; outline: none; background: var(--cream); }
+    .auth-input:focus { border-color: var(--gold); }
+    .auth-btn { width: 100%; padding: 14px; background: var(--charcoal); color: white; border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: background 0.3s; }
+    .auth-btn:hover { background: var(--gold); }
+    .auth-error { color: #cc3333; font-size: 13px; margin-bottom: 12px; display: none; }
+
+    /* Dashboard */
+    .dashboard { display: none; }
+    .dash-header { background: var(--charcoal); padding: 20px 40px; display: flex; align-items: center; justify-content: space-between; }
+    .dash-logo { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: white; letter-spacing: 2px; text-transform: uppercase; }
+    .dash-user { font-size: 12px; color: var(--gold-light); letter-spacing: 1px; }
+    .dash-logout { background: none; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); font-size: 11px; padding: 6px 16px; cursor: pointer; border-radius: 2px; letter-spacing: 1px; text-transform: uppercase; transition: all 0.3s; }
+    .dash-logout:hover { border-color: var(--gold); color: var(--gold); }
+    .dash-content { padding: 40px; max-width: 1200px; margin: 0 auto; }
+    .dash-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; margin-bottom: 8px; }
+    .dash-subtitle { font-size: 13px; color: var(--mid-grey); margin-bottom: 32px; }
+
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
+    .stat-card { background: white; padding: 28px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .stat-card .label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card .value { font-family: 'Cormorant Garamond', serif; font-size: 40px; font-weight: 600; color: var(--charcoal); line-height: 1; }
+    .stat-card .sub { font-size: 12px; color: var(--gold); margin-top: 4px; }
+    .stat-card.gold { background: var(--charcoal); }
+    .stat-card.gold .label { color: var(--gold-light); }
+    .stat-card.gold .value { color: white; }
+    .stat-card.gold .sub { color: var(--gold-light); }
+
+    /* Tables */
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .section-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 400; }
+    .table-wrap { background: white; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); overflow: hidden; margin-bottom: 40px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: var(--sand); font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); padding: 12px 16px; text-align: left; }
+    td { padding: 14px 16px; font-size: 13px; border-bottom: 1px solid var(--light-grey); }
+    tr:last-child td { border-bottom: none; }
+    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .status-new { background: #e8f4fd; color: #1a73e8; }
+    .status-qualified { background: #fff3e0; color: #e65100; }
+    .status-converted { background: #e8f5e9; color: #2e7d32; }
+    .status-dropped { background: #fce4ec; color: #c62828; }
+    .status-active { background: #e8f5e9; color: #2e7d32; }
+    .status-paused { background: #fff3e0; color: #e65100; }
+    .escalation-row { background: #fff8f0; }
+    .escalation-badge { background: #cc3333; color: white; padding: 2px 8px; border-radius: 2px; font-size: 9px; font-weight: 600; letter-spacing: 1px; }
+    .empty-state { padding: 40px; text-align: center; color: var(--mid-grey); font-size: 14px; }
+
+    .refresh-btn { background: none; border: 1.5px solid var(--charcoal); color: var(--charcoal); font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 20px; cursor: pointer; border-radius: 2px; transition: all 0.3s; }
+    .refresh-btn:hover { background: var(--charcoal); color: white; }
+
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .dash-content { padding: 24px; }
+      table { font-size: 12px; }
+      th, td { padding: 10px 12px; }
+    }
+    @media (max-width: 500px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <h1>Admin Dashboard</h1>
+    <p>Fitness by Maddy — Operations Panel</p>
+    <div class="auth-error" id="authError"></div>
+    <input type="email" class="auth-input" id="authEmail" placeholder="Email address">
+    <input type="password" class="auth-input" id="authPassword" placeholder="Password">
+    <button class="auth-btn" id="authBtn" onclick="login()">Sign In</button>
+  </div>
+</div>
+
+<div class="dashboard" id="dashboard">
+  <div class="dash-header">
+    <div class="dash-logo">Fitness by Maddy</div>
+    <div style="display:flex;align-items:center;gap:20px">
+      <span class="dash-user" id="dashUser"></span>
+      <button class="dash-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="dash-content">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px">
+      <div>
+        <h1 class="dash-title">Operations Dashboard</h1>
+        <p class="dash-subtitle" id="dashDate"></p>
+      </div>
+      <button class="refresh-btn" onclick="loadDashboard()">Refresh Data</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">New Leads Today</div>
+        <div class="value" id="leadsToday">—</div>
+        <div class="sub" id="leadsWeek">this week: —</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="label">Conversion Rate</div>
+        <div class="value" id="conversionRate">—</div>
+        <div class="sub">lead → paid</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Active Clients</div>
+        <div class="value" id="activeClients">—</div>
+        <div class="sub" id="activeByProgram"></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Programs Generated</div>
+        <div class="value" id="programsWeek">—</div>
+        <div class="sub">this week</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <h2>Escalations</h2>
+    </div>
+    <div class="table-wrap" id="escalationsTable">
+      <div class="empty-state">Loading...</div>
+    </div>
+
+    <div class="section-header">
+      <h2>Recent Leads</h2>
+    </div>
+    <div class="table-wrap" id="leadsTable">
+      <div class="empty-state">Loading...</div>
+    </div>
+
+    <div class="section-header">
+      <h2>Pending Check-Ins</h2>
+    </div>
+    <div class="table-wrap" id="checkinsTable">
+      <div class="empty-state">Loading...</div>
+    </div>
+
+    <div class="section-header">
+      <h2>Active Clients</h2>
+    </div>
+    <div class="table-wrap" id="clientsTable">
+      <div class="empty-state">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = window.__SUPABASE_URL__ || localStorage.getItem('sb_url') || '';
+  const SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY__ || localStorage.getItem('sb_anon') || '';
+
+  let sb = null;
+  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+
+  async function init() {
+    if (!sb) {
+      const url = prompt('Enter Supabase URL:');
+      const key = prompt('Enter Supabase Anon Key:');
+      if (url && key) {
+        localStorage.setItem('sb_url', url);
+        localStorage.setItem('sb_anon', key);
+        sb = supabase.createClient(url, key);
+      } else return;
+    }
+
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      showDashboard(session.user);
+    }
+  }
+
+  async function login() {
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+    const errorEl = document.getElementById('authError');
+    errorEl.style.display = 'none';
+
+    if (!email || !password) {
+      errorEl.textContent = 'Please enter email and password.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    if (!sb) {
+      errorEl.textContent = 'Supabase not configured.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      errorEl.textContent = error.message;
+      errorEl.style.display = 'block';
+      return;
+    }
+    showDashboard(data.user);
+  }
+
+  function showDashboard(user) {
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('dashUser').textContent = user.email;
+    document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    loadDashboard();
+  }
+
+  async function logout() {
+    await sb.auth.signOut();
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('authScreen').style.display = 'flex';
+  }
+
+  async function loadDashboard() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    const [leadsRes, allLeadsRes, clientsRes, programsRes, messagesRes, checkinsRes] = await Promise.all([
+      sb.from('leads').select('*').order('created_at', { ascending: false }).limit(50),
+      sb.from('leads').select('id, status, created_at'),
+      sb.from('clients').select('*').order('created_at', { ascending: false }),
+      sb.from('programs').select('*').gte('generated_at', weekAgo.toISOString()),
+      sb.from('messages').select('*').order('sent_at', { ascending: false }).limit(20),
+      sb.from('checkins').select('*, client:clients(name, phone, program)').order('form_submitted_at', { ascending: false }).limit(30),
+    ]);
+
+    const leads = leadsRes.data || [];
+    const allLeads = allLeadsRes.data || [];
+    const clients = clientsRes.data || [];
+    const programs = programsRes.data || [];
+
+    const todayStr = today.toISOString();
+    const leadsToday = allLeads.filter(l => l.created_at >= todayStr).length;
+    const leadsThisWeek = allLeads.filter(l => l.created_at >= weekAgo.toISOString()).length;
+    const converted = allLeads.filter(l => l.status === 'converted').length;
+    const convRate = allLeads.length > 0 ? Math.round((converted / allLeads.length) * 100) : 0;
+    const activeClients = clients.filter(c => c.status === 'active');
+
+    document.getElementById('leadsToday').textContent = leadsToday;
+    document.getElementById('leadsWeek').textContent = 'this week: ' + leadsThisWeek;
+    document.getElementById('conversionRate').textContent = convRate + '%';
+    document.getElementById('activeClients').textContent = activeClients.length;
+    document.getElementById('programsWeek').textContent = programs.length;
+
+    const byProgram = {};
+    activeClients.forEach(c => { byProgram[c.program] = (byProgram[c.program] || 0) + 1; });
+    document.getElementById('activeByProgram').textContent = Object.entries(byProgram).map(([k, v]) => `${k}: ${v}`).join(' | ') || 'none yet';
+
+    renderEscalations(messagesRes.data || []);
+    renderLeads(leads.slice(0, 20));
+    renderClients(activeClients);
+    renderPendingCheckins(activeClients, checkinsRes.data || []);
+  }
+
+  function renderEscalations(messages) {
+    const escalationWords = ['refund','lawyer','complaint',"didn't work",'side effect','injury','pain','dizzy','pregnant','medication'];
+    const flagged = messages.filter(m => m.direction === 'in' && escalationWords.some(kw => (m.body || '').toLowerCase().includes(kw)));
+
+    if (flagged.length === 0) {
+      document.getElementById('escalationsTable').innerHTML = '<div class="empty-state">No escalations — all clear</div>';
+      return;
+    }
+
+    let html = '<table><tr><th>Phone</th><th>Message</th><th>Time</th><th>Flag</th></tr>';
+    flagged.forEach(m => {
+      const masked = m.phone ? m.phone.slice(0, 4) + 'XXX...' + m.phone.slice(-3) : '—';
+      const kw = escalationWords.find(k => (m.body || '').toLowerCase().includes(k)) || '';
+      html += `<tr class="escalation-row"><td>${masked}</td><td>${(m.body || '').slice(0, 80)}</td><td>${new Date(m.sent_at).toLocaleString('en-IN')}</td><td><span class="escalation-badge">${kw.toUpperCase()}</span></td></tr>`;
+    });
+    html += '</table>';
+    document.getElementById('escalationsTable').innerHTML = html;
+  }
+
+  function renderLeads(leads) {
+    if (leads.length === 0) {
+      document.getElementById('leadsTable').innerHTML = '<div class="empty-state">No leads yet</div>';
+      return;
+    }
+    let html = '<table><tr><th>Name</th><th>Phone</th><th>Source</th><th>Interest</th><th>Status</th><th>Date</th></tr>';
+    leads.forEach(l => {
+      const masked = l.phone ? l.phone.slice(0, 4) + 'XXX...' + l.phone.slice(-3) : '—';
+      html += `<tr><td>${l.name || '—'}</td><td>${masked}</td><td>${l.source || '—'}</td><td>${l.program_interest || '—'}</td><td><span class="status-badge status-${l.status}">${l.status}</span></td><td>${new Date(l.created_at).toLocaleDateString('en-IN')}</td></tr>`;
+    });
+    html += '</table>';
+    document.getElementById('leadsTable').innerHTML = html;
+  }
+
+  function renderClients(clients) {
+    if (clients.length === 0) {
+      document.getElementById('clientsTable').innerHTML = '<div class="empty-state">No active clients</div>';
+      return;
+    }
+    let html = '<table><tr><th>Name</th><th>Program</th><th>Started</th><th>Ends</th><th>Status</th></tr>';
+    clients.forEach(c => {
+      html += `<tr><td>${c.name || '—'}</td><td>${c.program || '—'}</td><td>${new Date(c.program_started_at).toLocaleDateString('en-IN')}</td><td>${c.program_ends_at ? new Date(c.program_ends_at).toLocaleDateString('en-IN') : '—'}</td><td><span class="status-badge status-${c.status}">${c.status}</span></td></tr>`;
+    });
+    html += '</table>';
+    document.getElementById('clientsTable').innerHTML = html;
+  }
+
+  function renderPendingCheckins(activeClients, checkins) {
+    const pending = [];
+    activeClients.forEach(c => {
+      const start = new Date(c.program_started_at);
+      const daysSince = Math.floor((Date.now() - start.getTime()) / (1000 * 60 * 60 * 24));
+      const currentWeek = Math.floor(daysSince / 7) + 1;
+      const submitted = checkins.filter(ci => ci.client_id === c.id).map(ci => ci.week_no);
+      if (!submitted.includes(currentWeek) && daysSince % 7 >= 0) {
+        pending.push({ name: c.name, program: c.program, week: currentWeek });
+      }
+    });
+
+    if (pending.length === 0) {
+      document.getElementById('checkinsTable').innerHTML = '<div class="empty-state">All check-ins submitted</div>';
+      return;
+    }
+    let html = '<table><tr><th>Client</th><th>Program</th><th>Pending Week</th></tr>';
+    pending.forEach(p => {
+      html += `<tr><td>${p.name || '—'}</td><td>${p.program || '—'}</td><td>Week ${p.week}</td></tr>`;
+    });
+    html += '</table>';
+    document.getElementById('checkinsTable').innerHTML = html;
+  }
+
+  init();
+</script>
+</body>
+</html>
