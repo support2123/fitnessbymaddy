@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+    :root {
+      --cream: #FAF8F4;
+      --gold: #B8965A;
+      --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C;
+      --mid-grey: #6B6B6B;
+      --light-grey: #E8E3DC;
+      --sand: #F0EAE0;
+      --green: #2d7a2d;
+      --red: #9a2d2d;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); }
+
+    /* Auth */
+    .auth-overlay {
+      position: fixed; inset: 0; background: var(--cream);
+      display: flex; align-items: center; justify-content: center; z-index: 9999;
+    }
+    .auth-box {
+      background: white; padding: 48px; border-radius: 4px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.08); text-align: center; max-width: 400px; width: 90%;
+    }
+    .auth-box h1 {
+      font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400;
+      margin-bottom: 8px;
+    }
+    .auth-box p { font-size: 13px; color: var(--mid-grey); margin-bottom: 24px; }
+    .auth-input {
+      width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey);
+      border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif;
+      background: var(--cream); outline: none; margin-bottom: 16px;
+    }
+    .auth-input:focus { border-color: var(--gold); }
+    .auth-btn {
+      width: 100%; padding: 14px; background: var(--charcoal); color: white;
+      border: none; font-size: 12px; font-weight: 500; letter-spacing: 2px;
+      text-transform: uppercase; cursor: pointer; border-radius: 2px;
+    }
+    .auth-btn:hover { background: var(--gold); }
+    .auth-error { color: var(--red); font-size: 12px; margin-top: 12px; display: none; }
+
+    /* Layout */
+    .dash-wrap { display: none; }
+    .dash-header {
+      background: var(--charcoal); padding: 20px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dash-logo {
+      font-family: 'Cormorant Garamond', serif; font-size: 18px;
+      font-weight: 600; color: white; letter-spacing: 2px; text-transform: uppercase;
+    }
+    .dash-logout {
+      font-size: 11px; color: var(--gold-light); letter-spacing: 1.5px;
+      text-transform: uppercase; cursor: pointer; border: none; background: none;
+    }
+    .dash-nav {
+      background: white; border-bottom: 1px solid var(--light-grey);
+      padding: 0 40px; display: flex; gap: 32px;
+    }
+    .dash-tab {
+      padding: 16px 0; font-size: 12px; font-weight: 500; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--mid-grey); cursor: pointer;
+      border-bottom: 2px solid transparent; background: none; border-top: none;
+      border-left: none; border-right: none;
+    }
+    .dash-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .dash-content { padding: 40px; }
+
+    /* Cards */
+    .stat-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px; margin-bottom: 40px;
+    }
+    .stat-card {
+      background: white; padding: 24px; border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .stat-card-label {
+      font-size: 11px; font-weight: 500; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px;
+    }
+    .stat-card-value {
+      font-family: 'Cormorant Garamond', serif; font-size: 36px;
+      font-weight: 600; color: var(--charcoal); line-height: 1;
+    }
+    .stat-card-sub {
+      font-size: 11px; color: var(--mid-grey); margin-top: 4px;
+    }
+
+    /* Table */
+    .dash-table-wrap {
+      background: white; border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04); overflow-x: auto;
+    }
+    .dash-table-title {
+      font-family: 'Cormorant Garamond', serif; font-size: 20px;
+      padding: 20px 24px; border-bottom: 1px solid var(--light-grey);
+    }
+    .dash-table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+    }
+    .dash-table th {
+      text-align: left; padding: 12px 16px; font-size: 10px; font-weight: 600;
+      letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey);
+      border-bottom: 1px solid var(--light-grey); background: var(--cream);
+    }
+    .dash-table td {
+      padding: 12px 16px; border-bottom: 1px solid var(--light-grey);
+      color: var(--charcoal);
+    }
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 2px;
+      font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .badge-new { background: #e8f4fd; color: #1a6fb5; }
+    .badge-qualified { background: #fef3e0; color: #b57d1a; }
+    .badge-converted { background: #e8f5e8; color: var(--green); }
+    .badge-dropped { background: #fde8e8; color: var(--red); }
+    .badge-active { background: #e8f5e8; color: var(--green); }
+    .badge-paused { background: #fef3e0; color: #b57d1a; }
+    .badge-completed { background: #e8f4fd; color: #1a6fb5; }
+
+    .dash-section { margin-bottom: 40px; }
+    .loading-text { color: var(--mid-grey); font-size: 13px; padding: 20px; }
+
+    @media (max-width: 768px) {
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .dash-content { padding: 20px; }
+      .dash-nav { padding: 0 20px; gap: 20px; overflow-x: auto; }
+      .dash-header { padding: 16px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Auth Gate -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-box">
+    <h1>Fitness by Maddy</h1>
+    <p>Admin Dashboard Login</p>
+    <input class="auth-input" type="email" id="auth-email" placeholder="Email">
+    <input class="auth-input" type="password" id="auth-pass" placeholder="Password">
+    <button class="auth-btn" id="auth-btn">Sign In</button>
+    <p class="auth-error" id="auth-error">Invalid credentials. Please try again.</p>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div class="dash-wrap" id="dash-wrap">
+  <div class="dash-header">
+    <div class="dash-logo">Fitness by Maddy</div>
+    <button class="dash-logout" id="logout-btn">Sign Out</button>
+  </div>
+
+  <div class="dash-nav">
+    <button class="dash-tab active" data-tab="overview">Overview</button>
+    <button class="dash-tab" data-tab="leads">Leads</button>
+    <button class="dash-tab" data-tab="clients">Clients</button>
+    <button class="dash-tab" data-tab="checkins">Check-Ins</button>
+    <button class="dash-tab" data-tab="programs">Programs</button>
+    <button class="dash-tab" data-tab="escalations">Escalations</button>
+  </div>
+
+  <div class="dash-content" id="dash-content">
+    <p class="loading-text">Loading dashboard data...</p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var SUPABASE_URL = '';
+  var SUPABASE_ANON_KEY = '';
+  var sb = null;
+  var session = null;
+
+  function initSupabase() {
+    if (typeof window.supabase !== 'undefined') return;
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+    s.onload = function() {
+      SUPABASE_URL = document.body.getAttribute('data-sb-url') || prompt('Supabase URL:');
+      SUPABASE_ANON_KEY = document.body.getAttribute('data-sb-key') || prompt('Supabase Anon Key:');
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      checkSession();
+    };
+    document.head.appendChild(s);
+  }
+
+  async function checkSession() {
+    var stored = localStorage.getItem('fbm_admin_token');
+    if (stored) {
+      try {
+        var resp = await sb.auth.setSession(JSON.parse(stored));
+        if (resp.data && resp.data.session) {
+          session = resp.data.session;
+          showDashboard();
+          return;
+        }
+      } catch(e) {}
+    }
+    document.getElementById('auth-overlay').style.display = 'flex';
+  }
+
+  document.getElementById('auth-btn').addEventListener('click', async function() {
+    var email = document.getElementById('auth-email').value;
+    var pass = document.getElementById('auth-pass').value;
+
+    if (!sb) return;
+
+    var resp = await sb.auth.signInWithPassword({ email: email, password: pass });
+    if (resp.error) {
+      document.getElementById('auth-error').style.display = 'block';
+      return;
+    }
+
+    session = resp.data.session;
+    localStorage.setItem('fbm_admin_token', JSON.stringify({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token
+    }));
+    showDashboard();
+  });
+
+  document.getElementById('auth-pass').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('auth-btn').click();
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', function() {
+    localStorage.removeItem('fbm_admin_token');
+    if (sb) sb.auth.signOut();
+    location.reload();
+  });
+
+  function showDashboard() {
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('dash-wrap').style.display = 'block';
+    loadTab('overview');
+  }
+
+  document.querySelectorAll('.dash-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.dash-tab').forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      loadTab(tab.getAttribute('data-tab'));
+    });
+  });
+
+  async function loadTab(tab) {
+    var content = document.getElementById('dash-content');
+    content.innerHTML = '<p class="loading-text">Loading...</p>';
+
+    try {
+      switch(tab) {
+        case 'overview': await renderOverview(content); break;
+        case 'leads': await renderLeads(content); break;
+        case 'clients': await renderClients(content); break;
+        case 'checkins': await renderCheckins(content); break;
+        case 'programs': await renderPrograms(content); break;
+        case 'escalations': await renderEscalations(content); break;
+      }
+    } catch(e) {
+      content.innerHTML = '<p class="loading-text">Error loading data: ' + e.message + '</p>';
+    }
+  }
+
+  async function renderOverview(el) {
+    var today = new Date(); today.setHours(0,0,0,0);
+    var weekAgo = new Date(today.getTime() - 7 * 86400000);
+
+    var [leads, leadsWeek, clients, activeClients, pendingCheckins, programsWeek] = await Promise.all([
+      sb.from('leads').select('id', { count: 'exact', head: true }).gte('created_at', today.toISOString()),
+      sb.from('leads').select('id', { count: 'exact', head: true }).gte('created_at', weekAgo.toISOString()),
+      sb.from('clients').select('id', { count: 'exact', head: true }),
+      sb.from('clients').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+      sb.from('clients').select('id, phone, name, program, program_started_at').eq('status', 'active'),
+      sb.from('programs').select('id', { count: 'exact', head: true }).gte('generated_at', weekAgo.toISOString())
+    ]);
+
+    var converted = await sb.from('leads').select('id', { count: 'exact', head: true })
+      .eq('status', 'converted').gte('created_at', weekAgo.toISOString());
+    var convRate = leadsWeek.count > 0 ? Math.round((converted.count / leadsWeek.count) * 100) : 0;
+
+    var programCounts = {};
+    if (pendingCheckins.data) {
+      pendingCheckins.data.forEach(function(c) {
+        programCounts[c.program] = (programCounts[c.program] || 0) + 1;
+      });
+    }
+
+    el.innerHTML = '<div class="stat-grid">' +
+      statCard('New Leads Today', leads.count || 0) +
+      statCard('Leads This Week', leadsWeek.count || 0) +
+      statCard('Conversion Rate', convRate + '%', 'This week') +
+      statCard('Total Clients', clients.count || 0) +
+      statCard('Active Clients', activeClients.count || 0) +
+      statCard('Programs Generated', programsWeek.count || 0, 'This week') +
+    '</div>' +
+    '<div class="dash-section"><div class="dash-table-wrap"><div class="dash-table-title">Active Clients by Program</div>' +
+    '<table class="dash-table"><thead><tr><th>Program</th><th>Active Clients</th></tr></thead><tbody>' +
+    Object.entries(programCounts).map(function(entry) {
+      return '<tr><td>' + entry[0] + '</td><td>' + entry[1] + '</td></tr>';
+    }).join('') +
+    '</tbody></table></div></div>';
+  }
+
+  async function renderLeads(el) {
+    var resp = await sb.from('leads').select('*').order('created_at', { ascending: false }).limit(100);
+    el.innerHTML = '<div class="dash-table-wrap"><div class="dash-table-title">Recent Leads</div>' +
+      '<table class="dash-table"><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Interest</th><th>Market</th><th>Created</th></tr></thead><tbody>' +
+      (resp.data || []).map(function(l) {
+        return '<tr><td>' + (l.name || '—') + '</td><td>' + maskPhone(l.phone) + '</td>' +
+          '<td><span class="badge badge-' + l.status + '">' + l.status + '</span></td>' +
+          '<td>' + (l.program_interest || '—') + '</td><td>' + (l.market || '—') + '</td>' +
+          '<td>' + fmtDate(l.created_at) + '</td></tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  }
+
+  async function renderClients(el) {
+    var resp = await sb.from('clients').select('*').order('created_at', { ascending: false }).limit(100);
+    el.innerHTML = '<div class="dash-table-wrap"><div class="dash-table-title">Clients</div>' +
+      '<table class="dash-table"><thead><tr><th>Name</th><th>Phone</th><th>Program</th><th>Status</th><th>Paid</th><th>Started</th></tr></thead><tbody>' +
+      (resp.data || []).map(function(c) {
+        return '<tr><td>' + (c.name || '—') + '</td><td>' + maskPhone(c.phone) + '</td>' +
+          '<td>' + c.program + '</td>' +
+          '<td><span class="badge badge-' + c.status + '">' + c.status + '</span></td>' +
+          '<td>$' + ((c.paid_amount || 0) / 100).toFixed(0) + '</td>' +
+          '<td>' + fmtDate(c.program_started_at) + '</td></tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  }
+
+  async function renderCheckins(el) {
+    var resp = await sb.from('checkins').select('*, clients(name, phone)').order('form_submitted_at', { ascending: false }).limit(50);
+    el.innerHTML = '<div class="dash-table-wrap"><div class="dash-table-title">Recent Check-Ins</div>' +
+      '<table class="dash-table"><thead><tr><th>Client</th><th>Week</th><th>Weight</th><th>Compliance</th><th>Energy</th><th>Issues</th><th>Date</th></tr></thead><tbody>' +
+      (resp.data || []).map(function(ci) {
+        return '<tr><td>' + (ci.clients ? ci.clients.name : '—') + '</td><td>' + ci.week_no + '</td>' +
+          '<td>' + (ci.weight || '—') + '</td><td>' + (ci.compliance_score || '—') + '/10</td>' +
+          '<td>' + (ci.energy || '—') + '/10</td>' +
+          '<td>' + (ci.issues ? ci.issues.slice(0, 60) : '—') + '</td>' +
+          '<td>' + fmtDate(ci.form_submitted_at) + '</td></tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  }
+
+  async function renderPrograms(el) {
+    var resp = await sb.from('programs').select('*, clients(name)').order('generated_at', { ascending: false }).limit(50);
+    el.innerHTML = '<div class="dash-table-wrap"><div class="dash-table-title">Generated Programs</div>' +
+      '<table class="dash-table"><thead><tr><th>Client</th><th>Week</th><th>Generated</th><th>WA Sent</th><th>PDF</th></tr></thead><tbody>' +
+      (resp.data || []).map(function(p) {
+        return '<tr><td>' + (p.clients ? p.clients.name : '—') + '</td><td>' + p.week_no + '</td>' +
+          '<td>' + fmtDate(p.generated_at) + '</td>' +
+          '<td>' + (p.whatsapp_sent_at ? fmtDate(p.whatsapp_sent_at) : 'Pending') + '</td>' +
+          '<td>' + (p.pdf_url ? '<a href="' + p.pdf_url + '" target="_blank" style="color:var(--gold)">Download</a>' : '—') + '</td></tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  }
+
+  async function renderEscalations(el) {
+    var resp = await sb.from('messages').select('*')
+      .eq('direction', 'out')
+      .eq('template_name', 'escalation_alert')
+      .order('sent_at', { ascending: false }).limit(30);
+
+    el.innerHTML = '<div class="dash-table-wrap"><div class="dash-table-title">Escalations Sent to Maddy</div>' +
+      '<table class="dash-table"><thead><tr><th>Details</th><th>Sent At</th></tr></thead><tbody>' +
+      (resp.data || []).map(function(m) {
+        return '<tr><td>' + (m.body || '—') + '</td><td>' + fmtDate(m.sent_at) + '</td></tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  }
+
+  function statCard(label, value, sub) {
+    return '<div class="stat-card"><div class="stat-card-label">' + label + '</div>' +
+      '<div class="stat-card-value">' + value + '</div>' +
+      (sub ? '<div class="stat-card-sub">' + sub + '</div>' : '') + '</div>';
+  }
+
+  function maskPhone(phone) {
+    if (!phone || phone.length < 6) return '***';
+    return phone.slice(0, 3) + 'XXX...' + phone.slice(-3);
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  initSupabase();
+})();
+</script>
+</body>
+</html>
