@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <meta name="description" content="Reschedule your missed or upcoming session with Fitness by Maddy.">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<div class="loading-overlay" id="loader">
+  <div class="spinner"></div>
+</div>
+
+<div class="form-page">
+  <div class="form-header">
+    <a class="form-logo" href="index.html">Fitness by Maddy</a>
+    <h1 class="form-title">Reschedule<br><em>Your Session</em></h1>
+    <p class="form-subtitle">Life happens. Let us know your preferred time and we'll get you rebooked.</p>
+  </div>
+
+  <form id="rescheduleForm" class="form-card">
+    <div class="field">
+      <label class="field-label field-required">Your Name</label>
+      <input class="field-input" type="text" name="name" placeholder="Your full name" required>
+    </div>
+
+    <div class="field">
+      <label class="field-label field-required">Phone Number</label>
+      <input class="field-input" type="tel" name="phone" placeholder="+91 98765 43210" required>
+    </div>
+
+    <div class="field">
+      <label class="field-label field-required">Reason for Reschedule</label>
+      <select class="field-input" name="reason" required>
+        <option value="">Select</option>
+        <option value="schedule_conflict">Schedule Conflict</option>
+        <option value="sick">Feeling Unwell</option>
+        <option value="travel">Travelling</option>
+        <option value="emergency">Personal Emergency</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="field-label field-required">Preferred New Date</label>
+      <input class="field-input" type="date" name="preferred_date" required>
+    </div>
+
+    <div class="field">
+      <label class="field-label field-required">Preferred Time</label>
+      <select class="field-input" name="preferred_time" required>
+        <option value="">Select a time slot</option>
+        <option value="morning_early">6:00 AM - 8:00 AM</option>
+        <option value="morning">8:00 AM - 10:00 AM</option>
+        <option value="midday">10:00 AM - 12:00 PM</option>
+        <option value="afternoon">2:00 PM - 4:00 PM</option>
+        <option value="evening">5:00 PM - 7:00 PM</option>
+        <option value="night">7:00 PM - 9:00 PM</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Additional Notes</label>
+      <textarea class="field-input" name="notes" rows="3" placeholder="Anything else we should know..."></textarea>
+    </div>
+
+    <button type="submit" class="btn-submit">Request Reschedule</button>
+
+    <p style="font-size:11px; color:var(--taupe); text-align:center; margin-top:12px;">We'll confirm your new slot via WhatsApp within 24 hours.</p>
+  </form>
+
+  <div class="success-message" id="successMsg">
+    <div class="check-icon">&#10003;</div>
+    <h2>Request Received!</h2>
+    <p>We'll confirm your rescheduled session on WhatsApp within 24 hours. Keep an eye on your messages.</p>
+  </div>
+
+  <div class="form-footer">
+    <p><a href="index.html">fitnessbymaddy.com</a></p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var today = new Date();
+  var tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  var dateInput = document.querySelector('input[name="preferred_date"]');
+  dateInput.min = tomorrow.toISOString().split('T')[0];
+
+  var form = document.getElementById('rescheduleForm');
+  var loader = document.getElementById('loader');
+  var successMsg = document.getElementById('successMsg');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    loader.classList.add('active');
+
+    var data = {};
+    var formData = new FormData(form);
+    formData.forEach(function(value, key) { data[key] = value; });
+
+    fetch('/api/send-whatsapp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer public-reschedule'
+      },
+      body: JSON.stringify({
+        phone: '+917082478374',
+        text: 'Reschedule request from ' + data.name + ' (' + data.phone + '): ' +
+              data.reason + ' | New: ' + data.preferred_date + ' ' + data.preferred_time +
+              (data.notes ? ' | Notes: ' + data.notes : ''),
+        force: true
+      })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function() {
+      loader.classList.remove('active');
+      form.style.display = 'none';
+      successMsg.style.display = 'block';
+    })
+    .catch(function() {
+      loader.classList.remove('active');
+      form.style.display = 'none';
+      successMsg.style.display = 'block';
+    });
+  });
+})();
+</script>
+</body>
+</html>
