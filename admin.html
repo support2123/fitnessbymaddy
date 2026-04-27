@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="/admin" class="active">Dashboard</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- LOGIN -->
+  <div id="login-section" class="admin-login">
+    <h2>Admin Login</h2>
+    <div class="form-group">
+      <input class="form-input" type="email" id="login-email" placeholder="Email">
+    </div>
+    <div class="form-group">
+      <input class="form-input" type="password" id="login-password" placeholder="Password">
+    </div>
+    <button class="btn-primary form-submit" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div id="login-error" class="form-status"></div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard-section" class="admin-page" style="display:none;">
+    <div class="admin-header">
+      <p class="section-eyebrow">Operations Hub</p>
+      <h1>Dashboard</h1>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-label">Leads Today</div>
+        <div class="stat-card-value" id="s-leads-today">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Leads This Week</div>
+        <div class="stat-card-value" id="s-leads-week">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Conversion Rate</div>
+        <div class="stat-card-value" id="s-conversion">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Active Clients</div>
+        <div class="stat-card-value" id="s-active-clients">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Pending Check-Ins</div>
+        <div class="stat-card-value" id="s-pending-checkins">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Programs This Week</div>
+        <div class="stat-card-value" id="s-programs-week">—</div>
+      </div>
+    </div>
+
+    <!-- ESCALATIONS -->
+    <div class="admin-section">
+      <h2 class="admin-section-title">Escalations Awaiting Review</h2>
+      <div id="escalations-list"><div class="admin-empty">Loading...</div></div>
+    </div>
+
+    <!-- ACTIVE CLIENTS BY PROGRAM -->
+    <div class="admin-section">
+      <h2 class="admin-section-title">Active Clients by Program</h2>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Program</th>
+              <th>Count</th>
+            </tr>
+          </thead>
+          <tbody id="program-breakdown"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RECENT LEADS -->
+    <div class="admin-section">
+      <h2 class="admin-section-title">Recent Leads</h2>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Status</th>
+              <th>Interest</th>
+              <th>Source</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody id="leads-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RECENT CLIENTS -->
+    <div class="admin-section">
+      <h2 class="admin-section-title">Active Clients</h2>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Program</th>
+              <th>Status</th>
+              <th>Started</th>
+              <th>Ends</th>
+              <th>Paid</th>
+            </tr>
+          </thead>
+          <tbody id="clients-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var SUPABASE_URL = '';
+var SUPABASE_ANON_KEY = '';
+var supabase = null;
+
+function initSupabase() {
+  var script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+  script.onload = function() {
+    SUPABASE_URL = prompt('Supabase URL:', localStorage.getItem('sb_url') || '');
+    SUPABASE_ANON_KEY = prompt('Supabase Anon Key:', localStorage.getItem('sb_key') || '');
+    if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+      localStorage.setItem('sb_url', SUPABASE_URL);
+      localStorage.setItem('sb_key', SUPABASE_ANON_KEY);
+    }
+  };
+  document.head.appendChild(script);
+}
+
+if (localStorage.getItem('sb_url') && localStorage.getItem('sb_key')) {
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+  s.onload = function() {
+    SUPABASE_URL = localStorage.getItem('sb_url');
+    SUPABASE_ANON_KEY = localStorage.getItem('sb_key');
+  };
+  document.head.appendChild(s);
+} else {
+  initSupabase();
+}
+
+function doLogin() {
+  var email = document.getElementById('login-email').value;
+  var password = document.getElementById('login-password').value;
+  var errEl = document.getElementById('login-error');
+
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    initSupabase();
+    return;
+  }
+
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  supabase.auth.signInWithPassword({ email: email, password: password })
+    .then(function(result) {
+      if (result.error) throw result.error;
+      document.getElementById('login-section').style.display = 'none';
+      document.getElementById('dashboard-section').style.display = 'block';
+      loadDashboard();
+    })
+    .catch(function(err) {
+      errEl.className = 'form-status form-error';
+      errEl.textContent = err.message || 'Login failed';
+    });
+}
+
+function maskPhone(phone) {
+  if (!phone || phone.length < 6) return '***';
+  return phone.slice(0, 4) + 'XXX...' + phone.slice(-3);
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+async function loadDashboard() {
+  var now = new Date();
+  var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  var weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  var leadsAll = await supabase.from('leads').select('*').order('created_at', { ascending: false }).limit(50);
+  var clientsAll = await supabase.from('clients').select('*').order('created_at', { ascending: false });
+  var programsWeek = await supabase.from('programs').select('id').gte('generated_at', weekStart);
+
+  var leads = leadsAll.data || [];
+  var clients = clientsAll.data || [];
+
+  var leadsToday = leads.filter(function(l) { return l.created_at >= todayStart; }).length;
+  var leadsWeek = leads.filter(function(l) { return l.created_at >= weekStart; }).length;
+  var converted = leads.filter(function(l) { return l.status === 'converted'; }).length;
+  var convRate = leads.length > 0 ? Math.round((converted / leads.length) * 100) : 0;
+  var activeClients = clients.filter(function(c) { return c.status === 'active'; });
+
+  document.getElementById('s-leads-today').textContent = leadsToday;
+  document.getElementById('s-leads-week').textContent = leadsWeek;
+  document.getElementById('s-conversion').textContent = convRate + '%';
+  document.getElementById('s-active-clients').textContent = activeClients.length;
+  document.getElementById('s-programs-week').textContent = (programsWeek.data || []).length;
+
+  var pendingCheckins = 0;
+  for (var i = 0; i < activeClients.length; i++) {
+    var c = activeClients[i];
+    var start = new Date(c.program_started_at);
+    var days = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+    var wk = Math.ceil(days / 7);
+    if (wk >= 1) {
+      var check = await supabase.from('checkins').select('id').eq('client_id', c.id).eq('week_no', wk).single();
+      if (!check.data) pendingCheckins++;
+    }
+  }
+  document.getElementById('s-pending-checkins').textContent = pendingCheckins;
+
+  // Program breakdown
+  var programCounts = {};
+  activeClients.forEach(function(c) {
+    programCounts[c.program] = (programCounts[c.program] || 0) + 1;
+  });
+  var pbHtml = '';
+  Object.keys(programCounts).forEach(function(p) {
+    pbHtml += '<tr><td>' + p + '</td><td>' + programCounts[p] + '</td></tr>';
+  });
+  document.getElementById('program-breakdown').innerHTML = pbHtml || '<tr><td colspan="2" class="admin-empty">No active clients yet</td></tr>';
+
+  // Leads table
+  var lHtml = '';
+  leads.slice(0, 20).forEach(function(l) {
+    lHtml += '<tr><td>' + (l.name || '—') + '</td><td>' + maskPhone(l.phone) + '</td>'
+      + '<td><span class="badge badge-' + l.status + '">' + l.status + '</span></td>'
+      + '<td>' + (l.program_interest || '—') + '</td>'
+      + '<td>' + (l.source || '—') + '</td>'
+      + '<td>' + fmtDate(l.created_at) + '</td></tr>';
+  });
+  document.getElementById('leads-table').innerHTML = lHtml || '<tr><td colspan="6" class="admin-empty">No leads yet</td></tr>';
+
+  // Clients table
+  var cHtml = '';
+  clients.forEach(function(c) {
+    cHtml += '<tr><td>' + (c.name || '—') + '</td><td>' + (c.program || '—') + '</td>'
+      + '<td><span class="badge badge-' + c.status + '">' + c.status + '</span></td>'
+      + '<td>' + fmtDate(c.program_started_at) + '</td>'
+      + '<td>' + fmtDate(c.program_ends_at) + '</td>'
+      + '<td>$' + (c.paid_amount || 0) + '</td></tr>';
+  });
+  document.getElementById('clients-table').innerHTML = cHtml || '<tr><td colspan="6" class="admin-empty">No clients yet</td></tr>';
+
+  // Escalations
+  var escMsgs = await supabase.from('messages').select('*')
+    .eq('direction', 'out')
+    .like('template_name', 'escalation%')
+    .order('sent_at', { ascending: false })
+    .limit(10);
+
+  var escHtml = '';
+  (escMsgs.data || []).forEach(function(m) {
+    escHtml += '<div class="escalation-item">'
+      + '<div class="escalation-reason">' + (m.template_name || 'Alert') + '</div>'
+      + '<div class="escalation-detail">' + maskPhone(m.phone) + ' &mdash; ' + fmtDate(m.sent_at) + '</div>'
+      + '<div class="escalation-detail">' + (m.body || '') + '</div>'
+      + '</div>';
+  });
+  document.getElementById('escalations-list').innerHTML = escHtml || '<div class="admin-empty">No escalations</div>';
+}
+
+document.getElementById('login-password').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>
