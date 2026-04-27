@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <meta name="description" content="Reschedule your missed or upcoming session.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+  <section class="form-page">
+    <div class="form-header">
+      <p class="section-eyebrow">Reschedule</p>
+      <h1 class="section-title">Missed a <em>Session</em>?</h1>
+      <p class="section-body">No stress — life happens. Let us know your availability and we'll adjust your schedule.</p>
+    </div>
+
+    <form id="reschedule-form" class="app-form" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="r-name">Your Name *</label>
+        <input class="form-input" type="text" id="r-name" name="name" required placeholder="Your name">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="r-phone">WhatsApp Number *</label>
+        <input class="form-input" type="tel" id="r-phone" name="phone" required placeholder="+91 98765 43210">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="r-reason">Reason for Reschedule</label>
+        <select class="form-select" id="r-reason" name="reason">
+          <option value="schedule_conflict">Schedule Conflict</option>
+          <option value="feeling_unwell">Feeling Unwell</option>
+          <option value="travel">Travelling</option>
+          <option value="family_emergency">Family Emergency</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="r-preferred-date">Preferred New Date *</label>
+        <input class="form-input" type="date" id="r-preferred-date" name="preferred_date" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="r-preferred-time">Preferred Time Slot *</label>
+        <select class="form-select" id="r-preferred-time" name="preferred_time" required>
+          <option value="">Select time</option>
+          <option value="morning_6_8">Morning (6am - 8am IST)</option>
+          <option value="morning_8_10">Morning (8am - 10am IST)</option>
+          <option value="afternoon_12_2">Afternoon (12pm - 2pm IST)</option>
+          <option value="evening_5_7">Evening (5pm - 7pm IST)</option>
+          <option value="evening_7_9">Evening (7pm - 9pm IST)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="r-notes">Additional Notes</label>
+        <textarea class="form-input form-textarea" id="r-notes" name="notes" rows="2" placeholder="Anything else we should know..."></textarea>
+      </div>
+
+      <button type="submit" class="btn-primary form-submit" id="r-submit-btn">Request Reschedule</button>
+
+      <div id="r-form-status" class="form-status"></div>
+    </form>
+  </section>
+
+  <footer>
+    <div>
+      <div class="footer-brand">Fitness by Maddy</div>
+      <p class="footer-tagline">Elite online fitness coaching for those serious about transformation.</p>
+    </div>
+    <div>
+      <div class="footer-heading">Connect</div>
+      <ul class="footer-links">
+        <li><a href="https://instagram.com/fitnessbymaddy_" target="_blank">Instagram @fitnessbymaddy_</a></li>
+      </ul>
+    </div>
+  </footer>
+  <div class="footer-bottom">
+    <span class="footer-copy">&copy; 2025 Fitness by Maddy. All rights reserved.</span>
+  </div>
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+(function() {
+  var today = new Date().toISOString().split('T')[0];
+  document.getElementById('r-preferred-date').setAttribute('min', today);
+
+  var form = document.getElementById('reschedule-form');
+  var status = document.getElementById('r-form-status');
+  var btn = document.getElementById('r-submit-btn');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!form.checkValidity()) { form.reportValidity(); return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    var data = {
+      name: document.getElementById('r-name').value,
+      phone: document.getElementById('r-phone').value,
+      reason: document.getElementById('r-reason').value,
+      preferred_date: document.getElementById('r-preferred-date').value,
+      preferred_time: document.getElementById('r-preferred-time').value,
+      notes: document.getElementById('r-notes').value,
+    };
+
+    var msg = 'Reschedule request from ' + data.name + ' (' + data.phone + '): '
+      + data.reason + ', prefers ' + data.preferred_date + ' ' + data.preferred_time
+      + (data.notes ? '. Notes: ' + data.notes : '');
+
+    fetch('/api/send-whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: '+917082478374',
+        template: 'reschedule_request',
+        params: [data.name, data.phone, data.preferred_date, data.preferred_time, data.reason],
+      }),
+    })
+    .then(function() {
+      status.className = 'form-status form-success';
+      status.textContent = 'Reschedule request sent! We\'ll confirm your new slot on WhatsApp.';
+      form.reset();
+    })
+    .catch(function() {
+      status.className = 'form-status form-error';
+      status.textContent = 'Something went wrong. Please message us directly on WhatsApp.';
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.textContent = 'Request Reschedule';
+    });
+  });
+})();
+</script>
+</body>
+</html>
