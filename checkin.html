@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .checkin-wrap { max-width: 560px; margin: 0 auto; padding: 40px 24px 80px; }
+    .checkin-header { text-align: center; margin-bottom: 40px; }
+    .checkin-form { background: white; padding: 40px; border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+    .form-group { margin-bottom: 20px; }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+    .range-wrap { display: flex; align-items: center; gap: 12px; }
+    .range-wrap input[type="range"] { flex: 1; accent-color: var(--gold); }
+    .range-val { font-size: 18px; font-weight: 600; color: var(--gold); min-width: 28px; text-align: center; font-family: 'Cormorant Garamond', serif; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .photo-upload { border: 2px dashed var(--light-grey); padding: 24px; text-align: center; border-radius: 4px; cursor: pointer; transition: border-color 0.3s; }
+    .photo-upload:hover { border-color: var(--gold); }
+    .photo-upload input { display: none; }
+    .photo-upload p { font-size: 13px; color: var(--mid-grey); margin: 8px 0 0; }
+    .success-msg { display: none; text-align: center; padding: 60px 24px; }
+    .success-msg h2 { font-family: 'Cormorant Garamond', serif; font-size: 36px; color: var(--charcoal); margin-bottom: 12px; }
+    .success-msg p { color: var(--mid-grey); font-size: 16px; line-height: 1.7; }
+    .week-badge { display: inline-block; background: var(--charcoal); color: var(--gold); padding: 6px 16px; border-radius: 2px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+    .form-error { color: #c0392b; font-size: 12px; margin-top: 4px; display: none; }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } .checkin-form { padding: 24px; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+  <div class="checkin-wrap">
+    <div class="checkin-header">
+      <div class="week-badge" id="weekBadge">Week Check-In</div>
+      <h1 class="section-title">Weekly<br><em>Check-In</em></h1>
+      <p class="section-body" style="max-width:440px; margin:0 auto;">Track your progress. Your coach reviews this to fine-tune your next week.</p>
+    </div>
+
+    <form id="checkinForm" class="checkin-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Current Weight (kg) *</label>
+          <input class="form-input" type="number" name="weight" min="30" max="300" step="0.1" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Waist (cm)</label>
+          <input class="form-input" type="number" name="waist" min="40" max="200" step="0.1">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Workout Compliance (1-10) *</label>
+        <div class="range-wrap">
+          <span style="font-size:11px; color:var(--mid-grey);">Missed most</span>
+          <input type="range" name="compliance_score" min="1" max="10" value="7" id="complianceRange">
+          <span style="font-size:11px; color:var(--mid-grey);">Perfect</span>
+          <span class="range-val" id="complianceVal">7</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Energy Level (1-10) *</label>
+        <div class="range-wrap">
+          <span style="font-size:11px; color:var(--mid-grey);">Low</span>
+          <input type="range" name="energy" min="1" max="10" value="7" id="energyRange">
+          <span style="font-size:11px; color:var(--mid-grey);">High</span>
+          <span class="range-val" id="energyVal">7</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Any Issues or Concerns?</label>
+        <textarea class="form-input" name="issues" placeholder="Pain, soreness, sleep issues, stress, nutrition struggles..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Progress Photos (front, side, back)</label>
+        <div class="photo-upload" id="photoUpload">
+          <span style="font-size:24px;">+</span>
+          <p>Tap to upload photos (max 3)</p>
+          <input type="file" name="photos" accept="image/*" multiple id="photoInput">
+        </div>
+      </div>
+
+      <p id="formError" class="form-error"></p>
+      <button type="submit" class="btn-primary" style="width:100%; padding:16px; margin-top:8px;" id="submitBtn">Submit Check-In</button>
+    </form>
+
+    <div id="successMsg" class="success-msg">
+      <h2>Check-In Received!</h2>
+      <p>Great job staying consistent. Your coach will review this and your updated program will be ready soon.</p>
+    </div>
+  </div>
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w') || '1';
+
+  document.getElementById('weekBadge').textContent = 'Week ' + weekNo + ' Check-In';
+
+  document.getElementById('complianceRange').addEventListener('input', function() {
+    document.getElementById('complianceVal').textContent = this.value;
+  });
+  document.getElementById('energyRange').addEventListener('input', function() {
+    document.getElementById('energyVal').textContent = this.value;
+  });
+
+  document.getElementById('photoUpload').addEventListener('click', function() {
+    document.getElementById('photoInput').click();
+  });
+  document.getElementById('photoInput').addEventListener('change', function(e) {
+    var count = e.target.files.length;
+    document.getElementById('photoUpload').querySelector('p').textContent =
+      count > 0 ? count + ' photo(s) selected' : 'Tap to upload photos (max 3)';
+  });
+
+  document.getElementById('checkinForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!clientId) {
+      document.getElementById('formError').textContent = 'Invalid check-in link. Contact support.';
+      document.getElementById('formError').style.display = 'block';
+      return;
+    }
+
+    var btn = document.getElementById('submitBtn');
+    var errEl = document.getElementById('formError');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+    errEl.style.display = 'none';
+
+    var fd = new FormData(this);
+    var data = {
+      client_id: clientId,
+      week_no: weekNo,
+      weight: fd.get('weight'),
+      waist: fd.get('waist'),
+      compliance_score: fd.get('compliance_score'),
+      energy: fd.get('energy'),
+      issues: fd.get('issues'),
+      photos_urls: []
+    };
+
+    fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(result) {
+      if (result.ok) {
+        document.getElementById('checkinForm').style.display = 'none';
+        document.getElementById('successMsg').style.display = 'block';
+      } else {
+        errEl.textContent = result.error || 'Something went wrong. Please try again.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Submit Check-In';
+      }
+    })
+    .catch(function() {
+      errEl.textContent = 'Network error. Please check your connection and try again.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Submit Check-In';
+    });
+  });
+})();
+</script>
+</body>
+</html>
