@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --warm-white: #FFFFFF; --sand: #F0EAE0;
+      --taupe: #C8B89A; --gold: #B8965A; --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C; --mid-grey: #6B6B6B; --light-grey: #E8E3DC;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif; background: var(--cream);
+      color: var(--charcoal);
+    }
+
+    /* Auth */
+    .auth-overlay {
+      position: fixed; inset: 0; background: var(--cream);
+      display: flex; align-items: center; justify-content: center; z-index: 9999;
+    }
+    .auth-card {
+      background: white; padding: 48px; border-radius: 4px; width: 360px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.06); text-align: center;
+    }
+    .auth-logo {
+      font-family: 'Cormorant Garamond', serif; font-size: 20px;
+      font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 24px;
+    }
+    .auth-input {
+      width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey);
+      border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif;
+      background: var(--cream); outline: none; margin-bottom: 12px;
+    }
+    .auth-input:focus { border-color: var(--gold); }
+    .auth-btn {
+      width: 100%; padding: 14px; background: var(--charcoal); color: white;
+      border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; cursor: pointer; border-radius: 2px;
+    }
+    .auth-btn:hover { background: var(--gold); }
+    .auth-error { color: #c0392b; font-size: 13px; margin-top: 12px; display: none; }
+    .auth-hidden { display: none; }
+
+    /* Layout */
+    .admin-header {
+      background: var(--charcoal); padding: 20px 40px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .admin-brand {
+      font-family: 'Cormorant Garamond', serif; font-size: 18px;
+      font-weight: 600; color: white; letter-spacing: 2px; text-transform: uppercase;
+    }
+    .admin-brand span { color: var(--gold); }
+    .admin-logout {
+      font-size: 12px; color: rgba(255,255,255,0.5); cursor: pointer;
+      letter-spacing: 1px; text-transform: uppercase; background: none; border: none;
+    }
+    .admin-logout:hover { color: var(--gold-light); }
+
+    .dashboard { padding: 40px; max-width: 1200px; margin: 0 auto; }
+    .dash-title {
+      font-family: 'Cormorant Garamond', serif; font-size: 36px;
+      font-weight: 400; margin-bottom: 8px;
+    }
+    .dash-title em { color: var(--gold); font-style: italic; }
+    .dash-subtitle {
+      font-size: 14px; color: var(--mid-grey); margin-bottom: 36px;
+    }
+
+    /* Stat cards */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px; margin-bottom: 40px;
+    }
+    .stat-card {
+      background: white; padding: 28px 24px; border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .stat-card-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px;
+    }
+    .stat-card-value {
+      font-family: 'Cormorant Garamond', serif; font-size: 36px;
+      font-weight: 600; color: var(--charcoal); line-height: 1;
+    }
+    .stat-card-sub {
+      font-size: 12px; color: var(--gold); margin-top: 4px;
+    }
+
+    /* Tables */
+    .section-block {
+      background: white; border-radius: 4px; padding: 32px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 24px;
+    }
+    .section-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--gold); margin-bottom: 16px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--mid-grey); padding: 10px 12px;
+      text-align: left; border-bottom: 1px solid var(--light-grey);
+    }
+    td {
+      font-size: 13px; color: var(--charcoal); padding: 12px;
+      border-bottom: 1px solid var(--light-grey);
+    }
+    .status-badge {
+      display: inline-block; font-size: 10px; font-weight: 600;
+      letter-spacing: 1px; text-transform: uppercase; padding: 3px 10px;
+      border-radius: 2px;
+    }
+    .status-new { background: #EBF5FB; color: #2980B9; }
+    .status-qualified { background: #FEF9E7; color: #F39C12; }
+    .status-converted { background: #EAFAF1; color: #27AE60; }
+    .status-dropped { background: #FDEDEC; color: #E74C3C; }
+    .status-active { background: #EAFAF1; color: #27AE60; }
+    .status-paused { background: #FEF9E7; color: #F39C12; }
+
+    .empty-state {
+      text-align: center; padding: 40px; color: var(--mid-grey); font-size: 14px;
+    }
+    .loading { text-align: center; padding: 60px; color: var(--mid-grey); }
+
+    @media (max-width: 768px) {
+      .dashboard { padding: 24px 16px; }
+      .admin-header { padding: 16px 20px; }
+      .section-block { padding: 20px 16px; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Auth Screen -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-logo">Admin Dashboard</div>
+    <form id="authForm">
+      <input class="auth-input" type="email" id="authEmail" placeholder="Email" required>
+      <input class="auth-input" type="password" id="authPassword" placeholder="Password" required>
+      <button class="auth-btn" type="submit">Sign In</button>
+    </form>
+    <p class="auth-error" id="authError">Invalid credentials. Please try again.</p>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashContent" class="auth-hidden">
+  <div class="admin-header">
+    <div class="admin-brand">Fitness by Maddy <span>Admin</span></div>
+    <button class="admin-logout" id="logoutBtn">Sign Out</button>
+  </div>
+
+  <div class="dashboard">
+    <h1 class="dash-title">Dashboard <em>Overview</em></h1>
+    <p class="dash-subtitle" id="dashDate"></p>
+
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card"><div class="stat-card-label">New Leads Today</div><div class="stat-card-value" id="leadsToday">-</div></div>
+      <div class="stat-card"><div class="stat-card-label">Leads This Week</div><div class="stat-card-value" id="leadsWeek">-</div></div>
+      <div class="stat-card"><div class="stat-card-label">Conversion Rate</div><div class="stat-card-value" id="conversionRate">-</div><div class="stat-card-sub" id="conversionSub"></div></div>
+      <div class="stat-card"><div class="stat-card-label">Active Clients</div><div class="stat-card-value" id="activeClients">-</div></div>
+      <div class="stat-card"><div class="stat-card-label">Pending Check-Ins</div><div class="stat-card-value" id="pendingCheckins">-</div></div>
+      <div class="stat-card"><div class="stat-card-label">Programs Generated</div><div class="stat-card-value" id="programsWeek">-</div><div class="stat-card-sub">this week</div></div>
+    </div>
+
+    <!-- Active Clients by Program -->
+    <div class="section-block">
+      <div class="section-label">Active Clients by Program</div>
+      <table>
+        <thead><tr><th>Program</th><th>Count</th></tr></thead>
+        <tbody id="programBreakdown"></tbody>
+      </table>
+    </div>
+
+    <!-- Recent Leads -->
+    <div class="section-block">
+      <div class="section-label">Recent Leads</div>
+      <table>
+        <thead><tr><th>Name</th><th>Phone</th><th>Market</th><th>Interest</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="recentLeads"></tbody>
+      </table>
+    </div>
+
+    <!-- Escalations -->
+    <div class="section-block">
+      <div class="section-label">Escalations / Flagged Items</div>
+      <div id="escalations"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var supabaseUrl = '';
+  var supabaseKey = '';
+  var session = null;
+
+  function initSupabase() {
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+    script.onload = function() {
+      supabaseUrl = prompt('Supabase URL:') || localStorage.getItem('sb_url') || '';
+      supabaseKey = prompt('Supabase Anon Key:') || localStorage.getItem('sb_key') || '';
+      if (supabaseUrl && supabaseKey) {
+        localStorage.setItem('sb_url', supabaseUrl);
+        localStorage.setItem('sb_key', supabaseKey);
+      }
+    };
+    document.head.appendChild(script);
+  }
+
+  var authOverlay = document.getElementById('authOverlay');
+  var dashContent = document.getElementById('dashContent');
+  var storedAuth = sessionStorage.getItem('admin_auth');
+
+  if (storedAuth) {
+    authOverlay.style.display = 'none';
+    dashContent.classList.remove('auth-hidden');
+    loadDashboard();
+  }
+
+  document.getElementById('authForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var email = document.getElementById('authEmail').value;
+    var password = document.getElementById('authPassword').value;
+
+    fetch('/api/admin-auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: password }),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        sessionStorage.setItem('admin_auth', data.token || 'authed');
+        authOverlay.style.display = 'none';
+        dashContent.classList.remove('auth-hidden');
+        loadDashboard();
+      } else {
+        document.getElementById('authError').style.display = 'block';
+      }
+    })
+    .catch(function() {
+      document.getElementById('authError').style.display = 'block';
+    });
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', function() {
+    sessionStorage.removeItem('admin_auth');
+    location.reload();
+  });
+
+  function loadDashboard() {
+    var token = sessionStorage.getItem('admin_auth');
+    var headers = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+
+    document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    fetch('/api/admin-stats', { headers: headers })
+    .then(function(r) { return r.json(); })
+    .then(function(stats) {
+      document.getElementById('leadsToday').textContent = stats.leads_today || 0;
+      document.getElementById('leadsWeek').textContent = stats.leads_week || 0;
+      document.getElementById('activeClients').textContent = stats.active_clients || 0;
+      document.getElementById('pendingCheckins').textContent = stats.pending_checkins || 0;
+      document.getElementById('programsWeek').textContent = stats.programs_week || 0;
+
+      var totalLeads = stats.total_leads || 1;
+      var converted = stats.converted_leads || 0;
+      var rate = Math.round((converted / totalLeads) * 100);
+      document.getElementById('conversionRate').textContent = rate + '%';
+      document.getElementById('conversionSub').textContent = converted + ' of ' + totalLeads + ' leads';
+
+      var tbody = document.getElementById('programBreakdown');
+      tbody.innerHTML = '';
+      var programs = stats.programs_breakdown || {};
+      var programNames = {
+        '6wk_gym': '6-Week Burn & Build (Gym)',
+        '6wk_home': '6-Week Burn & Build (Home)',
+        '12wk': '12-Week Custom Program',
+        'pcos': 'PCOS Warrior',
+        '40plus': '40+ Strong',
+        'zoom_trial': 'Zoom Trial',
+        'zoom_pack': 'Zoom Pack',
+      };
+      Object.keys(programs).forEach(function(key) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + (programNames[key] || key) + '</td><td>' + programs[key] + '</td>';
+        tbody.appendChild(tr);
+      });
+      if (Object.keys(programs).length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="empty-state">No active clients yet</td></tr>';
+      }
+
+      var leadsBody = document.getElementById('recentLeads');
+      leadsBody.innerHTML = '';
+      (stats.recent_leads || []).forEach(function(lead) {
+        var tr = document.createElement('tr');
+        var maskedPhone = lead.phone ? (lead.phone.slice(0,3) + 'XXX...' + lead.phone.slice(-3)) : '-';
+        var statusClass = 'status-' + (lead.status || 'new');
+        tr.innerHTML = '<td>' + (lead.name || '-') + '</td>' +
+          '<td>' + maskedPhone + '</td>' +
+          '<td>' + (lead.market || '-') + '</td>' +
+          '<td>' + (lead.program_interest || '-') + '</td>' +
+          '<td><span class="status-badge ' + statusClass + '">' + (lead.status || '-') + '</span></td>' +
+          '<td>' + new Date(lead.created_at).toLocaleDateString() + '</td>';
+        leadsBody.appendChild(tr);
+      });
+      if (!stats.recent_leads || stats.recent_leads.length === 0) {
+        leadsBody.innerHTML = '<tr><td colspan="6" class="empty-state">No leads yet</td></tr>';
+      }
+
+      var escDiv = document.getElementById('escalations');
+      var escalations = stats.escalations || [];
+      if (escalations.length === 0) {
+        escDiv.innerHTML = '<div class="empty-state">No escalations pending</div>';
+      } else {
+        var html = '<table><thead><tr><th>Type</th><th>Client</th><th>Details</th><th>Date</th></tr></thead><tbody>';
+        escalations.forEach(function(e) {
+          html += '<tr><td>' + e.type + '</td><td>' + e.client + '</td><td>' + e.details + '</td><td>' + new Date(e.date).toLocaleDateString() + '</td></tr>';
+        });
+        html += '</tbody></table>';
+        escDiv.innerHTML = html;
+      }
+    })
+    .catch(function(err) {
+      console.error('Dashboard load error:', err);
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
