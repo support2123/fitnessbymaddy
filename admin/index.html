@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+    :root {
+      --cream: #FAF8F4; --sand: #F0EAE0; --gold: #B8965A; --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C; --mid-grey: #6B6B6B; --light-grey: #E8E3DC;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); }
+
+    .admin-nav {
+      position: fixed; top: 0; left: 0; right: 0; height: 64px; background: var(--charcoal);
+      display: flex; align-items: center; justify-content: space-between; padding: 0 32px; z-index: 100;
+    }
+    .admin-nav h1 {
+      font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600;
+      color: white; letter-spacing: 2px; text-transform: uppercase;
+    }
+    .admin-nav .refresh-btn {
+      background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7);
+      padding: 8px 16px; font-size: 12px; letter-spacing: 1px; cursor: pointer;
+      border-radius: 2px; font-family: 'DM Sans', sans-serif; transition: all 0.3s;
+    }
+    .admin-nav .refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    .admin-body { padding: 88px 32px 40px; max-width: 1200px; margin: 0 auto; }
+
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px;
+    }
+    .stat-card {
+      background: white; padding: 28px 24px; border-radius: 4px;
+      border-left: 3px solid var(--light-grey); transition: border-color 0.3s;
+    }
+    .stat-card:hover { border-left-color: var(--gold); }
+    .stat-card .label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card .value { font-family: 'Cormorant Garamond', serif; font-size: 40px; font-weight: 600; color: var(--charcoal); line-height: 1; }
+    .stat-card .sub { font-size: 12px; color: var(--mid-grey); margin-top: 4px; }
+
+    .section-title {
+      font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 400;
+      color: var(--charcoal); margin-bottom: 20px;
+    }
+    .section-title em { font-style: italic; color: var(--gold); }
+
+    .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 40px; }
+    @media (max-width: 800px) { .panels { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: white; border-radius: 4px; overflow: hidden;
+    }
+    .panel-header {
+      padding: 20px 24px; border-bottom: 1px solid var(--light-grey);
+      font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--mid-grey);
+    }
+    .panel-body { padding: 16px 24px; }
+
+    .program-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid var(--light-grey);
+      font-size: 13px;
+    }
+    .program-row:last-child { border-bottom: none; }
+    .program-row .name { color: var(--charcoal); font-weight: 500; }
+    .program-row .count {
+      background: var(--sand); padding: 4px 12px; border-radius: 2px;
+      font-weight: 600; font-size: 12px; color: var(--gold);
+    }
+
+    .lead-row {
+      display: flex; align-items: center; gap: 12px; padding: 10px 0;
+      border-bottom: 1px solid var(--light-grey); font-size: 13px;
+    }
+    .lead-row:last-child { border-bottom: none; }
+    .lead-name { font-weight: 500; flex: 1; }
+    .lead-phone { color: var(--mid-grey); font-size: 12px; }
+    .status-badge {
+      font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 2px;
+    }
+    .status-new { background: #E8F4FD; color: #1976D2; }
+    .status-qualified { background: #FFF3E0; color: #E65100; }
+    .status-converted { background: #E8F5E9; color: #2E7D32; }
+    .status-dropped { background: var(--sand); color: var(--mid-grey); }
+
+    .escalation-row { padding: 12px 0; border-bottom: 1px solid var(--light-grey); }
+    .escalation-row:last-child { border-bottom: none; }
+    .escalation-body { font-size: 13px; color: var(--charcoal); margin-bottom: 4px; }
+    .escalation-meta { font-size: 11px; color: var(--mid-grey); }
+
+    .loading { text-align: center; padding: 40px; color: var(--mid-grey); font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<div class="admin-nav">
+  <h1>Fitness by Maddy — Ops Dashboard</h1>
+  <button class="refresh-btn" onclick="loadDashboard()">Refresh</button>
+</div>
+
+<div class="admin-body">
+  <div class="loading" id="loadingMsg">Loading dashboard...</div>
+
+  <div id="dashboardContent" style="display:none">
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-header">Active Clients by Program</div>
+        <div class="panel-body" id="programPanel"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">Escalations Awaiting Maddy</div>
+        <div class="panel-body" id="escalationPanel"></div>
+      </div>
+    </div>
+
+    <h2 class="section-title">Recent <em>Leads</em></h2>
+    <div class="panel">
+      <div class="panel-body" id="leadsPanel"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var PROGRAM_LABELS = {
+  '6wk_gym': '6-Week Burn & Build (Gym)',
+  '6wk_home': '6-Week Home',
+  '12wk': '12-Week Flagship',
+  'pcos': 'PCOS Warrior',
+  '40plus': '40+ Strong',
+  'zoom_trial': 'Zoom Trial',
+  'zoom_pack': 'Zoom Pack',
+};
+
+function loadDashboard() {
+  document.getElementById('loadingMsg').style.display = 'block';
+  document.getElementById('dashboardContent').style.display = 'none';
+
+  fetch('/api/admin-stats')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      document.getElementById('loadingMsg').style.display = 'none';
+      document.getElementById('dashboardContent').style.display = 'block';
+      renderStats(d);
+      renderPrograms(d.clients_by_program);
+      renderEscalations(d.recent_escalations);
+      renderLeads(d.recent_leads);
+    })
+    .catch(function(err) {
+      document.getElementById('loadingMsg').textContent = 'Failed to load. Check console.';
+      console.error(err);
+    });
+}
+
+function renderStats(d) {
+  var grid = document.getElementById('statsGrid');
+  grid.innerHTML = [
+    card('Leads Today', d.leads_today),
+    card('Leads This Week', d.leads_this_week),
+    card('Total Leads', d.leads_total),
+    card('Conversion Rate', d.conversion_rate + '%'),
+    card('Active Clients', d.active_clients),
+    card('Pending Check-Ins', d.pending_checkins),
+    card('Programs Generated', d.programs_this_week, 'This week'),
+  ].join('');
+}
+
+function card(label, value, sub) {
+  return '<div class="stat-card"><div class="label">' + label + '</div><div class="value">' + value + '</div>' +
+    (sub ? '<div class="sub">' + sub + '</div>' : '') + '</div>';
+}
+
+function renderPrograms(programs) {
+  var el = document.getElementById('programPanel');
+  if (!programs || Object.keys(programs).length === 0) {
+    el.innerHTML = '<div style="padding:12px 0;color:var(--mid-grey);font-size:13px">No active clients yet</div>';
+    return;
+  }
+  el.innerHTML = Object.keys(programs).map(function(p) {
+    return '<div class="program-row"><span class="name">' +
+      (PROGRAM_LABELS[p] || p) + '</span><span class="count">' + programs[p] + '</span></div>';
+  }).join('');
+}
+
+function renderEscalations(items) {
+  var el = document.getElementById('escalationPanel');
+  if (!items || items.length === 0) {
+    el.innerHTML = '<div style="padding:12px 0;color:var(--mid-grey);font-size:13px">No pending escalations</div>';
+    return;
+  }
+  el.innerHTML = items.map(function(e) {
+    return '<div class="escalation-row"><div class="escalation-body">' + esc(e.body) +
+      '</div><div class="escalation-meta">' + e.phone + ' &middot; ' + timeAgo(e.sent_at) + '</div></div>';
+  }).join('');
+}
+
+function renderLeads(leads) {
+  var el = document.getElementById('leadsPanel');
+  if (!leads || leads.length === 0) {
+    el.innerHTML = '<div style="padding:12px 0;color:var(--mid-grey);font-size:13px">No leads yet</div>';
+    return;
+  }
+  el.innerHTML = leads.map(function(l) {
+    return '<div class="lead-row"><span class="lead-name">' + esc(l.name) +
+      '</span><span class="lead-phone">' + l.phone + '</span>' +
+      '<span class="status-badge status-' + l.status + '">' + l.status + '</span>' +
+      (l.program_interest ? '<span style="font-size:11px;color:var(--gold)">' + (PROGRAM_LABELS[l.program_interest] || l.program_interest) + '</span>' : '') +
+      '</div>';
+  }).join('');
+}
+
+function esc(s) {
+  var d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+function timeAgo(ts) {
+  if (!ts) return '';
+  var diff = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
+  if (diff < 60) return diff + 'm ago';
+  if (diff < 1440) return Math.floor(diff / 60) + 'h ago';
+  return Math.floor(diff / 1440) + 'd ago';
+}
+
+loadDashboard();
+setInterval(loadDashboard, 60000);
+</script>
+</body>
+</html>
