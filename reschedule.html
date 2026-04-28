@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+  <section class="form-hero">
+    <p class="section-eyebrow">Session Management</p>
+    <h1 class="section-title">Reschedule<br><em>Your Session</em></h1>
+    <p class="section-body">Life happens. Pick a new time that works better for you.</p>
+  </section>
+
+  <section class="form-section">
+    <form id="rescheduleForm" class="branded-form">
+      <input type="hidden" id="clientId" name="client_id">
+
+      <div class="form-group">
+        <label class="form-label" for="name">Your Name *</label>
+        <input class="form-input" type="text" id="name" name="name" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="phone">WhatsApp Number *</label>
+        <input class="form-input" type="tel" id="phone" name="phone" placeholder="+91..." required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reason">Reason for Rescheduling</label>
+        <select class="form-select" id="reason" name="reason">
+          <option value="">Select...</option>
+          <option value="schedule_conflict">Schedule Conflict</option>
+          <option value="feeling_unwell">Feeling Unwell</option>
+          <option value="travel">Travelling</option>
+          <option value="personal">Personal Reasons</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="preferred_date">Preferred New Date *</label>
+          <input class="form-input" type="date" id="preferred_date" name="preferred_date" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="preferred_time">Preferred Time (IST) *</label>
+          <select class="form-select" id="preferred_time" name="preferred_time" required>
+            <option value="">Select...</option>
+            <option value="06:00">6:00 AM</option>
+            <option value="07:00">7:00 AM</option>
+            <option value="08:00">8:00 AM</option>
+            <option value="09:00">9:00 AM</option>
+            <option value="10:00">10:00 AM</option>
+            <option value="17:00">5:00 PM</option>
+            <option value="18:00">6:00 PM</option>
+            <option value="19:00">7:00 PM</option>
+            <option value="20:00">8:00 PM</option>
+            <option value="21:00">9:00 PM</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="notes">Additional Notes</label>
+        <textarea class="form-input form-textarea" id="notes" name="notes" rows="2" placeholder="Anything else we should know..."></textarea>
+      </div>
+
+      <button type="submit" class="btn-primary form-submit">Request Reschedule</button>
+
+      <div id="formStatus" class="form-status"></div>
+    </form>
+  </section>
+</div>
+
+<script>
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const clientId = params.get('c');
+  if (clientId) document.getElementById('clientId').value = clientId;
+
+  var dateInput = document.getElementById('preferred_date');
+  var tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  dateInput.min = tomorrow.toISOString().split('T')[0];
+
+  document.getElementById('rescheduleForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var status = document.getElementById('formStatus');
+    var btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Requesting...';
+
+    var data = Object.fromEntries(new FormData(this));
+
+    try {
+      var res = await fetch('/api/reschedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      var json = await res.json();
+      if (res.ok) {
+        status.className = 'form-status success';
+        status.textContent = 'Reschedule request submitted! We\'ll confirm your new slot on WhatsApp.';
+        this.reset();
+      } else {
+        throw new Error(json.error || 'Failed to submit');
+      }
+    } catch (err) {
+      status.className = 'form-status error';
+      status.textContent = err.message;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Request Reschedule';
+    }
+  });
+})();
+</script>
+</body>
+</html>
