@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .form-page { max-width: 640px; margin: 0 auto; padding: 100px 24px 60px; }
+    .form-hero { text-align: center; margin-bottom: 48px; }
+    .form-hero h1 { font-family: 'Cormorant Garamond', serif; font-size: 40px; font-weight: 300; margin-bottom: 12px; }
+    .form-hero h1 em { font-style: italic; color: var(--gold); }
+    .form-hero p { font-size: 15px; color: var(--mid-grey); line-height: 1.7; }
+    .week-badge {
+      display: inline-block; background: var(--charcoal); color: white;
+      font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+      padding: 6px 16px; border-radius: 2px; margin-bottom: 16px;
+    }
+    .checkin-form { background: white; padding: 40px; border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+    .form-section { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--light-grey); }
+    .form-section:last-of-type { border-bottom: none; margin-bottom: 0; }
+    .form-section-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--charcoal); margin-bottom: 20px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 6px; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 12px 14px; border: 1.5px solid var(--light-grey); border-radius: 2px;
+      font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--charcoal);
+      background: var(--cream); transition: border-color 0.3s; outline: none;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--gold); }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    .slider-group { margin-bottom: 16px; }
+    .slider-row { display: flex; align-items: center; gap: 12px; }
+    .slider-row input[type="range"] { flex: 1; accent-color: var(--gold); }
+    .slider-val { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 600; color: var(--charcoal); min-width: 36px; text-align: center; }
+    .photo-upload { margin-bottom: 16px; }
+    .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 8px; }
+    .photo-slot {
+      aspect-ratio: 3/4; border: 2px dashed var(--light-grey); border-radius: 4px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; transition: border-color 0.3s; position: relative; overflow: hidden;
+      background: var(--cream);
+    }
+    .photo-slot:hover { border-color: var(--gold); }
+    .photo-slot span { font-size: 24px; margin-bottom: 4px; }
+    .photo-slot small { font-size: 10px; color: var(--mid-grey); text-transform: uppercase; letter-spacing: 1px; }
+    .photo-slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .photo-slot input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .submit-btn {
+      width: 100%; padding: 16px; background: var(--charcoal); color: white;
+      font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+      border: none; border-radius: 2px; cursor: pointer; transition: background 0.3s;
+    }
+    .submit-btn:hover { background: var(--gold); }
+    .submit-btn:disabled { background: var(--mid-grey); cursor: not-allowed; }
+    .form-success { display: none; text-align: center; padding: 60px 40px; }
+    .form-success h2 { font-family: 'Cormorant Garamond', serif; font-size: 32px; margin-bottom: 16px; }
+    .form-success p { color: var(--mid-grey); font-size: 15px; line-height: 1.7; }
+    .form-error { color: #c0392b; font-size: 13px; margin-top: 12px; display: none; }
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .checkin-form { padding: 24px; }
+      .photo-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+  </ul>
+</nav>
+
+<div class="form-page">
+  <div class="form-hero">
+    <div class="week-badge" id="weekBadge">Week 1</div>
+    <h1>Weekly <em>Check-in</em></h1>
+    <p>Track your progress, upload your photos, and tell us how the week went. This helps Maddy fine-tune your program.</p>
+  </div>
+
+  <div class="checkin-form" id="checkinForm">
+    <form id="form" onsubmit="return submitCheckin(event)">
+
+      <div class="form-section">
+        <div class="form-section-title">Body Metrics</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Current Weight (kg) *</label>
+            <input class="form-input" type="number" name="weight" step="0.1" min="30" max="250" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Waist Measurement (cm)</label>
+            <input class="form-input" type="number" name="waist" step="0.1" min="40" max="200">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">This Week's Performance</div>
+        <div class="slider-group">
+          <label class="form-label">Compliance — How closely did you follow the plan?</label>
+          <div class="slider-row">
+            <span style="font-size:12px;color:var(--mid-grey)">Low</span>
+            <input type="range" name="compliance" min="1" max="10" value="7" oninput="document.getElementById('compVal').textContent=this.value">
+            <span style="font-size:12px;color:var(--mid-grey)">Perfect</span>
+            <div class="slider-val" id="compVal">7</div>
+          </div>
+        </div>
+        <div class="slider-group">
+          <label class="form-label">Energy Level — How did you feel overall?</label>
+          <div class="slider-row">
+            <span style="font-size:12px;color:var(--mid-grey)">Low</span>
+            <input type="range" name="energy" min="1" max="10" value="7" oninput="document.getElementById('energyVal').textContent=this.value">
+            <span style="font-size:12px;color:var(--mid-grey)">Great</span>
+            <div class="slider-val" id="energyVal">7</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Progress Photos</div>
+        <p style="font-size:13px;color:var(--mid-grey);margin-bottom:12px;">Upload 3 photos: front, side, and back. Same lighting & time of day as last week if possible.</p>
+        <div class="photo-grid">
+          <label class="photo-slot" id="slot0">
+            <span>+</span><small>Front</small>
+            <input type="file" accept="image/*" onchange="previewPhoto(this, 0)">
+          </label>
+          <label class="photo-slot" id="slot1">
+            <span>+</span><small>Side</small>
+            <input type="file" accept="image/*" onchange="previewPhoto(this, 1)">
+          </label>
+          <label class="photo-slot" id="slot2">
+            <span>+</span><small>Back</small>
+            <input type="file" accept="image/*" onchange="previewPhoto(this, 2)">
+          </label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Notes</div>
+        <div class="form-group">
+          <label class="form-label">Any issues, struggles, or wins this week?</label>
+          <textarea class="form-textarea" name="issues" placeholder="Tell us anything — sore joints, stress, sleep issues, or a PR you're proud of..."></textarea>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">Submit Check-in</button>
+      <div class="form-error" id="formError"></div>
+    </form>
+  </div>
+
+  <div class="form-success" id="formSuccess">
+    <h2>Check-in Submitted!</h2>
+    <p>Great work staying consistent. Your coach will review your progress and your updated program will be sent via WhatsApp soon.</p>
+  </div>
+</div>
+
+<script>
+var photoFiles = [null, null, null];
+
+function getParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
+}
+
+(function() {
+  var w = getParam('w') || '1';
+  document.getElementById('weekBadge').textContent = 'Week ' + w;
+})();
+
+function previewPhoto(input, index) {
+  if (!input.files || !input.files[0]) return;
+  photoFiles[index] = input.files[0];
+  var slot = document.getElementById('slot' + index);
+  var existing = slot.querySelector('img');
+  if (existing) existing.remove();
+  var img = document.createElement('img');
+  img.src = URL.createObjectURL(input.files[0]);
+  slot.appendChild(img);
+}
+
+async function submitCheckin(e) {
+  e.preventDefault();
+  var btn = document.getElementById('submitBtn');
+  var errEl = document.getElementById('formError');
+  btn.disabled = true;
+  btn.textContent = 'SUBMITTING...';
+  errEl.style.display = 'none';
+
+  var clientId = getParam('c');
+  var weekNo = parseInt(getParam('w') || '1');
+
+  if (!clientId) {
+    errEl.textContent = 'Invalid check-in link — missing client ID. Please use the link sent to your WhatsApp.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'SUBMIT CHECK-IN';
+    return false;
+  }
+
+  var f = e.target;
+  var data = {
+    clientId: clientId,
+    weekNo: weekNo,
+    weight: parseFloat(f.weight.value),
+    waist: f.waist.value ? parseFloat(f.waist.value) : null,
+    complianceScore: parseInt(f.compliance.value),
+    energy: parseInt(f.energy.value),
+    issues: f.issues.value.trim(),
+    photosUrls: []
+  };
+
+  try {
+    var res = await fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    var result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Submission failed');
+
+    document.getElementById('checkinForm').style.display = 'none';
+    document.getElementById('formSuccess').style.display = 'block';
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'SUBMIT CHECK-IN';
+  }
+  return false;
+}
+</script>
+</body>
+</html>
