@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4;
+      --gold: #B8965A;
+      --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C;
+      --mid-grey: #6B6B6B;
+      --light-grey: #E8E3DC;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--charcoal);
+      min-height: 100vh;
+    }
+    .header {
+      background: var(--charcoal);
+      padding: 24px;
+      text-align: center;
+    }
+    .header h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      color: var(--gold);
+      font-size: 32px;
+      letter-spacing: 3px;
+    }
+    .header p {
+      color: rgba(255,255,255,0.6);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    .week-badge {
+      display: inline-block;
+      background: var(--gold);
+      color: white;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 2px;
+      padding: 6px 16px;
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+    .form-group { margin-bottom: 20px; }
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      margin-bottom: 6px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid var(--light-grey);
+      border-radius: 4px;
+      font-size: 15px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--charcoal);
+      background: white;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--gold);
+    }
+    textarea { min-height: 100px; resize: vertical; }
+    .required::after { content: ' *'; color: #c0392b; }
+    .slider-group {
+      margin-bottom: 20px;
+    }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .slider-row input[type="range"] {
+      flex: 1;
+      padding: 0;
+      border: none;
+      accent-color: var(--gold);
+      height: 6px;
+    }
+    .slider-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      color: var(--gold);
+      min-width: 36px;
+      text-align: center;
+    }
+    .photo-upload {
+      border: 2px dashed var(--light-grey);
+      border-radius: 8px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.3s;
+    }
+    .photo-upload:hover { border-color: var(--gold); }
+    .photo-upload p { font-size: 14px; color: var(--mid-grey); }
+    .photo-upload input { display: none; }
+    .photo-preview {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .photo-preview img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 2px solid var(--light-grey);
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 16px;
+      background: var(--charcoal);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin-top: 12px;
+    }
+    .btn-submit:hover { background: var(--gold); }
+    .btn-submit:disabled { background: var(--mid-grey); cursor: not-allowed; }
+    .success {
+      text-align: center;
+      padding: 60px 20px;
+      display: none;
+    }
+    .success h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      color: var(--gold);
+      margin-bottom: 12px;
+    }
+    .success p { font-size: 15px; color: var(--mid-grey); line-height: 1.6; }
+    .error-msg {
+      background: #fdecea;
+      color: #c0392b;
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Fitness by Maddy</h1>
+    <p>Weekly Check-In</p>
+    <div class="week-badge" id="weekBadge">Week —</div>
+  </div>
+
+  <div class="container">
+    <div class="error-msg" id="errorMsg"></div>
+
+    <form id="checkinForm">
+      <div class="form-group">
+        <label class="required">Current Weight (kg)</label>
+        <input type="number" name="weight" step="0.1" min="30" max="250" required placeholder="72.5">
+      </div>
+
+      <div class="form-group">
+        <label>Waist Measurement (cm)</label>
+        <input type="number" name="waist" step="0.1" min="40" max="200" placeholder="82.0">
+      </div>
+
+      <div class="slider-group">
+        <label class="required">Compliance Score (how well did you follow the plan?)</label>
+        <div class="slider-row">
+          <span style="font-size:12px;color:var(--mid-grey)">Low</span>
+          <input type="range" name="compliance_score" min="1" max="10" value="7" id="complianceSlider">
+          <span style="font-size:12px;color:var(--mid-grey)">Perfect</span>
+          <div class="slider-val" id="complianceVal">7</div>
+        </div>
+      </div>
+
+      <div class="slider-group">
+        <label class="required">Energy Level (this week overall)</label>
+        <div class="slider-row">
+          <span style="font-size:12px;color:var(--mid-grey)">Low</span>
+          <input type="range" name="energy" min="1" max="10" value="7" id="energySlider">
+          <span style="font-size:12px;color:var(--mid-grey)">High</span>
+          <div class="slider-val" id="energyVal">7</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Issues, Concerns, or Feedback</label>
+        <textarea name="issues" placeholder="Any pain, soreness, schedule challenges, questions for Maddy..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Progress Photos (up to 3)</label>
+        <div class="photo-upload" id="photoUpload">
+          <p>Tap to upload front, side, and back photos</p>
+          <input type="file" id="photoInput" accept="image/*" multiple>
+        </div>
+        <div class="photo-preview" id="photoPreview"></div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">Submit Check-In</button>
+    </form>
+
+    <div class="success" id="successMsg">
+      <h2>Check-In Submitted!</h2>
+      <p>Great work staying on track. Your updated plan will be sent to you on WhatsApp shortly.</p>
+    </div>
+  </div>
+
+  <script>
+    var params = new URLSearchParams(window.location.search);
+    var clientId = params.get('c');
+    var weekNo = params.get('w') || '1';
+
+    document.getElementById('weekBadge').textContent = 'Week ' + weekNo;
+
+    document.getElementById('complianceSlider').addEventListener('input', function() {
+      document.getElementById('complianceVal').textContent = this.value;
+    });
+    document.getElementById('energySlider').addEventListener('input', function() {
+      document.getElementById('energyVal').textContent = this.value;
+    });
+
+    var selectedFiles = [];
+    document.getElementById('photoUpload').addEventListener('click', function() {
+      document.getElementById('photoInput').click();
+    });
+    document.getElementById('photoInput').addEventListener('change', function(e) {
+      var files = Array.from(e.target.files).slice(0, 3);
+      selectedFiles = files;
+      var preview = document.getElementById('photoPreview');
+      preview.innerHTML = '';
+      files.forEach(function(file) {
+        var img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        preview.appendChild(img);
+      });
+    });
+
+    document.getElementById('checkinForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var btn = document.getElementById('submitBtn');
+      var errorEl = document.getElementById('errorMsg');
+      errorEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'SUBMITTING...';
+
+      var fd = new FormData(this);
+      var data = {
+        client_id: clientId,
+        week_no: weekNo,
+        weight: fd.get('weight'),
+        waist: fd.get('waist') || null,
+        compliance_score: fd.get('compliance_score'),
+        energy: fd.get('energy'),
+        issues: fd.get('issues') || '',
+        photo_urls: []
+      };
+
+      fetch('/api/checkin-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(result) {
+        if (result.error) {
+          errorEl.textContent = result.error;
+          errorEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'SUBMIT CHECK-IN';
+          return;
+        }
+        document.getElementById('checkinForm').style.display = 'none';
+        document.getElementById('successMsg').style.display = 'block';
+      })
+      .catch(function() {
+        errorEl.textContent = 'Something went wrong. Please try again.';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'SUBMIT CHECK-IN';
+      });
+    });
+  </script>
+</body>
+</html>
