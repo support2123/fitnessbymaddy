@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+  <section class="form-hero">
+    <p class="section-eyebrow">Weekly Progress</p>
+    <h1 class="section-title">Check-in<br><em>Week <span id="weekDisplay">—</span></em></h1>
+    <p class="section-body">Track your progress honestly — this data helps Maddy fine-tune your program for maximum results.</p>
+  </section>
+
+  <section class="form-section">
+    <form id="checkinForm" class="branded-form">
+      <input type="hidden" id="clientId" name="client_id">
+      <input type="hidden" id="weekNo" name="week_no">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="weight">Current Weight (kg) *</label>
+          <input class="form-input" type="number" id="weight" name="weight" step="0.1" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="waist">Waist (cm)</label>
+          <input class="form-input" type="number" id="waist" name="waist" step="0.1">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="compliance_score">Workout Compliance (1-10) *</label>
+          <input class="form-input" type="range" id="compliance_score" name="compliance_score" min="1" max="10" value="7">
+          <div class="range-labels"><span>1 — Missed most</span><span>10 — Perfect</span></div>
+          <div class="range-value" id="complianceValue">7</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="energy">Energy Level (1-10) *</label>
+          <input class="form-input" type="range" id="energy" name="energy" min="1" max="10" value="7">
+          <div class="range-labels"><span>1 — Exhausted</span><span>10 — Energised</span></div>
+          <div class="range-value" id="energyValue">7</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="issues">Any Issues This Week?</label>
+        <textarea class="form-input form-textarea" id="issues" name="issues" rows="3" placeholder="Soreness, schedule conflicts, cravings, sleep issues, mood changes..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Progress Photos (front, side, back)</label>
+        <div class="photo-upload-grid">
+          <label class="photo-upload-box">
+            <input type="file" accept="image/*" data-slot="front" class="photo-input">
+            <span class="photo-label">Front</span>
+          </label>
+          <label class="photo-upload-box">
+            <input type="file" accept="image/*" data-slot="side" class="photo-input">
+            <span class="photo-label">Side</span>
+          </label>
+          <label class="photo-upload-box">
+            <input type="file" accept="image/*" data-slot="back" class="photo-input">
+            <span class="photo-label">Back</span>
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary form-submit">Submit Check-in</button>
+
+      <div id="formStatus" class="form-status"></div>
+    </form>
+  </section>
+</div>
+
+<script>
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const clientId = params.get('c');
+  const weekNo = params.get('w');
+
+  if (clientId) document.getElementById('clientId').value = clientId;
+  if (weekNo) {
+    document.getElementById('weekNo').value = weekNo;
+    document.getElementById('weekDisplay').textContent = weekNo;
+  }
+
+  document.getElementById('compliance_score').addEventListener('input', function() {
+    document.getElementById('complianceValue').textContent = this.value;
+  });
+  document.getElementById('energy').addEventListener('input', function() {
+    document.getElementById('energyValue').textContent = this.value;
+  });
+
+  document.getElementById('checkinForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const status = document.getElementById('formStatus');
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+    status.className = 'form-status';
+    status.textContent = '';
+
+    const formData = Object.fromEntries(new FormData(this));
+    formData.compliance_score = parseInt(formData.compliance_score);
+    formData.energy = parseInt(formData.energy);
+    formData.weight = parseFloat(formData.weight);
+    if (formData.waist) formData.waist = parseFloat(formData.waist);
+    formData.photos_urls = [];
+
+    try {
+      const res = await fetch('/api/checkin-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const json = await res.json();
+      if (res.ok) {
+        status.className = 'form-status success';
+        status.textContent = 'Check-in submitted! Your updated program will arrive soon.';
+        this.reset();
+      } else {
+        throw new Error(json.error || 'Submission failed');
+      }
+    } catch (err) {
+      status.className = 'form-status error';
+      status.textContent = err.message;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Submit Check-in';
+    }
+  });
+})();
+</script>
+</body>
+</html>
