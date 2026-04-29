@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In | Fitness by Maddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --gold: #B8965A; --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C; --mid-grey: #6B6B6B; --light-grey: #E8E3DC;
+      --sand: #F0EAE0; --error: #c0392b; --success: #27ae60;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); min-height: 100vh; }
+
+    .form-container { max-width: 480px; margin: 0 auto; padding: 40px 24px 60px; }
+    .brand { text-align: center; margin-bottom: 32px; }
+    .brand h1 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 32px;
+      letter-spacing: 4px; color: var(--gold);
+    }
+    .brand p { font-size: 14px; color: var(--mid-grey); margin-top: 8px; }
+    .week-badge {
+      display: inline-block; background: var(--charcoal); color: #fff;
+      font-family: 'Bebas Neue', sans-serif; font-size: 16px;
+      letter-spacing: 2px; padding: 6px 20px; border-radius: 4px; margin-top: 12px;
+    }
+
+    .form-section { margin-bottom: 28px; }
+    .form-section h2 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 18px;
+      letter-spacing: 2px; color: var(--charcoal); margin-bottom: 16px;
+      padding-bottom: 8px; border-bottom: 1px solid var(--light-grey);
+    }
+
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block; font-size: 13px; font-weight: 500;
+      color: var(--charcoal); margin-bottom: 6px;
+    }
+    .field label .req { color: var(--error); }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: 12px 14px; font-family: 'DM Sans', sans-serif;
+      font-size: 14px; border: 1.5px solid var(--light-grey); border-radius: 4px;
+      background: #fff; color: var(--charcoal); transition: border-color 0.2s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none; border-color: var(--gold);
+    }
+    .field textarea { resize: vertical; min-height: 80px; }
+
+    .slider-field { margin-bottom: 20px; }
+    .slider-field label { font-size: 13px; font-weight: 500; margin-bottom: 10px; display: block; }
+    .slider-row { display: flex; align-items: center; gap: 12px; }
+    .slider-row input[type="range"] {
+      flex: 1; accent-color: var(--gold); height: 6px; -webkit-appearance: none;
+      background: var(--light-grey); border-radius: 3px; border: none; padding: 0;
+    }
+    .slider-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 20px; height: 20px;
+      background: var(--gold); border-radius: 50%; cursor: pointer;
+    }
+    .slider-val {
+      font-family: 'Bebas Neue', sans-serif; font-size: 22px;
+      color: var(--gold); min-width: 32px; text-align: center;
+    }
+    .slider-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--mid-grey); margin-top: 4px; }
+
+    .submit-btn {
+      width: 100%; padding: 16px; font-family: 'DM Sans', sans-serif;
+      font-size: 13px; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; border: none; border-radius: 4px;
+      background: var(--charcoal); color: #fff; cursor: pointer;
+      transition: background 0.3s; margin-top: 20px;
+    }
+    .submit-btn:hover { background: var(--gold); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .status-msg {
+      text-align: center; padding: 16px; border-radius: 4px;
+      margin-top: 16px; font-size: 14px; display: none;
+    }
+    .status-msg.success { display: block; background: #e8f5e9; color: var(--success); }
+    .status-msg.error { display: block; background: #fce4ec; color: var(--error); }
+
+    .photo-upload input[type="file"] {
+      padding: 10px; background: var(--sand); border: 1.5px dashed var(--light-grey); border-radius: 4px;
+    }
+
+    .mood-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .mood-grid label {
+      text-align: center; padding: 10px 4px; border: 1.5px solid var(--light-grey);
+      border-radius: 4px; cursor: pointer; font-size: 20px; transition: all 0.2s;
+    }
+    .mood-grid input { display: none; }
+    .mood-grid input:checked + label { border-color: var(--gold); background: var(--gold); }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <div class="brand">
+      <h1>FITNESS BY MADDY</h1>
+      <p>Weekly Check-In</p>
+      <div class="week-badge" id="weekBadge">WEEK —</div>
+    </div>
+
+    <form id="checkinForm">
+      <input type="hidden" id="clientId" name="client_id">
+      <input type="hidden" id="weekNo" name="week_no">
+
+      <div class="form-section">
+        <h2>Body Stats</h2>
+        <div class="field">
+          <label>Current Weight (kg) <span class="req">*</span></label>
+          <input type="number" name="weight" step="0.1" min="30" max="250" required>
+        </div>
+        <div class="field">
+          <label>Waist Measurement (cm)</label>
+          <input type="number" name="waist" step="0.1" min="40" max="200">
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h2>Self Assessment</h2>
+        <div class="slider-field">
+          <label>Program Compliance <span class="req">*</span></label>
+          <div class="slider-row">
+            <input type="range" name="compliance_score" min="1" max="10" value="7" oninput="this.parentNode.querySelector('.slider-val').textContent=this.value">
+            <span class="slider-val">7</span>
+          </div>
+          <div class="slider-labels"><span>Barely followed</span><span>Nailed it</span></div>
+        </div>
+        <div class="slider-field">
+          <label>Energy Level <span class="req">*</span></label>
+          <div class="slider-row">
+            <input type="range" name="energy" min="1" max="10" value="7" oninput="this.parentNode.querySelector('.slider-val').textContent=this.value">
+            <span class="slider-val">7</span>
+          </div>
+          <div class="slider-labels"><span>Exhausted</span><span>Unstoppable</span></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h2>Notes</h2>
+        <div class="field">
+          <label>Any issues, struggles, or wins this week?</label>
+          <textarea name="issues" placeholder="How did the week go? Any challenges, soreness, victories..."></textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h2>Progress Photos</h2>
+        <div class="field photo-upload">
+          <label>Upload 3 photos: Front, Side, Back</label>
+          <input type="file" name="photos" accept="image/*" multiple>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">Submit Check-In</button>
+      <div class="status-msg" id="statusMsg"></div>
+    </form>
+  </div>
+
+  <script>
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var clientId = params.get('c');
+      var weekNo = params.get('w') || '1';
+
+      document.getElementById('clientId').value = clientId || '';
+      document.getElementById('weekNo').value = weekNo;
+      document.getElementById('weekBadge').textContent = 'WEEK ' + weekNo;
+
+      if (!clientId) {
+        document.getElementById('statusMsg').textContent = 'Invalid check-in link. Please use the link sent to your WhatsApp.';
+        document.getElementById('statusMsg').className = 'status-msg error';
+        document.getElementById('submitBtn').disabled = true;
+      }
+
+      document.getElementById('checkinForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var btn = document.getElementById('submitBtn');
+        var msg = document.getElementById('statusMsg');
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+        msg.className = 'status-msg';
+
+        var fd = new FormData(this);
+        var data = {};
+        fd.forEach(function(v, k) { if (k !== 'photos') data[k] = v; });
+
+        fetch('/api/checkin-submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(result) {
+          if (result.success) {
+            msg.textContent = 'Check-in submitted! Your updated program will be sent to WhatsApp soon.';
+            msg.className = 'status-msg success';
+            btn.textContent = 'Submitted!';
+          } else {
+            throw new Error(result.error || 'Submission failed');
+          }
+        })
+        .catch(function(err) {
+          msg.textContent = 'Something went wrong: ' + err.message;
+          msg.className = 'status-msg error';
+          btn.disabled = false;
+          btn.textContent = 'Submit Check-In';
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
