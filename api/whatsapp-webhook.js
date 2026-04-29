@@ -89,9 +89,9 @@ module.exports = async function handler(req, res) {
     const { error: logError } = await supabase.from('messages').insert({
       phone,
       direction: 'in',
-      type: 'text',
-      payload: { message: messageBody },
-      created_at: new Date().toISOString(),
+      body: messageBody,
+      sent_at: new Date().toISOString(),
+      status: 'received',
     });
     if (logError) {
       console.error(`Failed to log inbound message for ${maskPhone(phone)}:`, logError.message);
@@ -140,9 +140,8 @@ module.exports = async function handler(req, res) {
           status: 'new',
           market,
           source: 'whatsapp',
-          first_message: messageBody,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          first_msg: messageBody,
+          last_msg_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -166,7 +165,7 @@ module.exports = async function handler(req, res) {
           .update({
             program_interest: matched.program,
             status: 'qualified',
-            updated_at: new Date().toISOString(),
+            last_msg_at: new Date().toISOString(),
           })
           .eq('id', lead.id);
 

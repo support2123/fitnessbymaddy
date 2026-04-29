@@ -85,9 +85,8 @@ module.exports = async function handler(req, res) {
         .update({
           status: 'converted',
           name: name || undefined,
-          email: email || undefined,
           program_interest: programInfo.program,
-          updated_at: new Date().toISOString(),
+          last_msg_at: new Date().toISOString(),
         })
         .eq('id', lead.id);
     } else {
@@ -102,12 +101,10 @@ module.exports = async function handler(req, res) {
       await supabase.from('leads').insert({
         phone: normalizedPhone,
         name: name || null,
-        email: email || null,
         status: 'converted',
         program_interest: programInfo.program,
         source: 'exly_direct',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        last_msg_at: new Date().toISOString(),
       });
     }
 
@@ -115,21 +112,21 @@ module.exports = async function handler(req, res) {
     const programEndsAt = calculateEndDate(programInfo.duration_weeks);
 
     // Insert into clients table
+    const leadId = lead ? lead.id : null;
     const { data: client, error: clientError } = await supabase
       .from('clients')
       .insert({
+        lead_id: leadId,
         phone: normalizedPhone,
         name: name || null,
         email: email || null,
         program: programInfo.program,
-        amount_paid: numericAmount,
+        paid_amount: numericAmount,
         checkout_id: checkout_id || null,
-        program_starts_at: new Date().toISOString(),
+        program_started_at: new Date().toISOString(),
         program_ends_at: programEndsAt,
-        storage_path: null, // Will be set after client_id is known
+        folder_url: null,
         status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -142,11 +139,10 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to create client record' });
     }
 
-    // Update storage folder path now that we have the client_id
-    const storagePath = `/clients/${client.id}/`;
+    const folderUrl = `/clients/${client.id}/`;
     await supabase
       .from('clients')
-      .update({ storage_path: storagePath })
+      .update({ folder_url: folderUrl })
       .eq('id', client.id);
 
     // Send onboarding WhatsApp template

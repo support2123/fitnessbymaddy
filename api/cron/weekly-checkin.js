@@ -62,10 +62,7 @@ module.exports = async function handler(req, res) {
         if (duration && weekNo > duration) {
           const { error: updateError } = await supabase
             .from('clients')
-            .update({
-              status: 'completed',
-              updated_at: new Date().toISOString(),
-            })
+            .update({ status: 'completed' })
             .eq('id', client.id);
 
           if (updateError) {

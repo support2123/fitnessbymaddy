@@ -93,9 +93,9 @@ module.exports = async function handler(req, res) {
           // Escalate: 2 consecutive missed check-ins detected
           await supabase.from('escalations').insert({
             phone: client.phone,
-            message: `Client ${client.name || client_id} submitted week ${week_no} but missed weeks ${prevWeek1} and ${prevWeek2}`,
+            client_id,
+            message_body: `Client ${client.name || client_id} submitted week ${week_no} but missed weeks ${prevWeek1} and ${prevWeek2}`,
             reason: 'consecutive_missed_checkins',
-            created_at: new Date().toISOString(),
           });
 
           await sendText(

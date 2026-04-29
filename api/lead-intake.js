@@ -51,14 +51,11 @@ module.exports = async function handler(req, res) {
       submitted_at: new Date().toISOString(),
     };
 
-    // Update lead record with name and full intake metadata
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .update({
         name,
-        email: email || undefined,
-        metadata: intakeData,
-        updated_at: new Date().toISOString(),
+        last_msg_at: new Date().toISOString(),
       })
       .eq('id', lead_id)
       .select()
@@ -94,12 +91,6 @@ module.exports = async function handler(req, res) {
           .update({
             name,
             email: email || undefined,
-            goal: goal || undefined,
-            injuries: injuries || undefined,
-            diet_preference: diet_preference || undefined,
-            schedule: schedule || undefined,
-            age: age || undefined,
-            updated_at: new Date().toISOString(),
           })
           .eq('id', client.id);
 

@@ -41,8 +41,8 @@ module.exports = async function handler(req, res) {
             .from('messages')
             .select('*', { count: 'exact', head: true })
             .eq('phone', lead.phone)
-            .eq('direction', 'outbound')
-            .eq('type', 'nudge');
+            .eq('direction', 'out')
+            .eq('template_name', 'nudge_trial');
 
           if (count > 0) {
             continue; // Already nudged
@@ -52,13 +52,13 @@ module.exports = async function handler(req, res) {
           const result = await sendText(lead.phone, message);
 
           if (result.success) {
-            // Log as nudge type so we can track it
             await supabase.from('messages').insert({
               phone: lead.phone,
-              direction: 'outbound',
-              type: 'nudge',
-              payload: { message, context: 'new_lead_2hr_nudge' },
-              created_at: new Date().toISOString(),
+              direction: 'out',
+              body: message,
+              template_name: 'nudge_trial',
+              sent_at: new Date().toISOString(),
+              status: 'sent',
             });
             nudgesSent++;
             console.log(`Nudge sent to new lead ${maskPhone(lead.phone)}`);
@@ -88,10 +88,7 @@ module.exports = async function handler(req, res) {
         try {
           const { error: updateError } = await supabase
             .from('leads')
-            .update({
-              status: 'dropped',
-              updated_at: new Date().toISOString(),
-            })
+            .update({ status: 'dropped' })
             .eq('id', lead.id);
 
           if (updateError) {
@@ -132,8 +129,8 @@ module.exports = async function handler(req, res) {
             .from('messages')
             .select('*', { count: 'exact', head: true })
             .eq('phone', lead.phone)
-            .eq('direction', 'outbound')
-            .eq('type', 'reengagement');
+            .eq('direction', 'out')
+            .eq('template_name', 'reengagement');
 
           if (count > 0) {
             continue; // Already re-engaged, don't double-send
@@ -143,13 +140,13 @@ module.exports = async function handler(req, res) {
           const result = await sendText(lead.phone, message);
 
           if (result.success) {
-            // Log as reengagement type
             await supabase.from('messages').insert({
               phone: lead.phone,
-              direction: 'outbound',
-              type: 'reengagement',
-              payload: { message, context: 'dropped_7d_reengagement' },
-              created_at: new Date().toISOString(),
+              direction: 'out',
+              body: message,
+              template_name: 'reengagement',
+              sent_at: new Date().toISOString(),
+              status: 'sent',
             });
             reEngaged++;
             console.log(`Re-engagement sent to ${maskPhone(lead.phone)}`);
