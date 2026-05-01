@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="form-page">
+  <div class="form-container" id="formContainer">
+    <div class="form-brand">Fitness by Maddy</div>
+    <h1 class="form-title">Week <span id="weekNum">-</span> <em>Check-In</em></h1>
+    <p class="form-subtitle">Quick progress update — takes under 2 minutes. Be honest, it helps us help you.</p>
+
+    <form id="checkinForm">
+      <div class="form-section-label">Body Stats</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Current Weight (kg)</label>
+          <input type="number" name="weight" step="0.1" placeholder="72.5" required>
+        </div>
+        <div class="form-group">
+          <label>Waist Measurement (cm)</label>
+          <input type="number" name="waist" step="0.1" placeholder="82.0">
+        </div>
+      </div>
+
+      <div class="form-section-label">How's It Going?</div>
+
+      <div class="form-group">
+        <label>Compliance Score — How well did you follow the plan?</label>
+        <div class="range-display">
+          <span style="font-size:11px;color:var(--mid-grey)">Low</span>
+          <input type="range" name="compliance_score" min="1" max="10" value="7" id="compRange">
+          <span class="range-value" id="compVal">7</span>
+          <span style="font-size:11px;color:var(--mid-grey)">High</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Energy Level This Week</label>
+        <div class="range-display">
+          <span style="font-size:11px;color:var(--mid-grey)">Low</span>
+          <input type="range" name="energy" min="1" max="10" value="7" id="energyRange">
+          <span class="range-value" id="energyVal">7</span>
+          <span style="font-size:11px;color:var(--mid-grey)">High</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Any Issues, Pains, or Concerns?</label>
+        <textarea name="issues" rows="3" placeholder="E.g., knee felt sore on squats, sleep was bad, felt bloated..."></textarea>
+      </div>
+
+      <div class="form-section-label">Progress Photos</div>
+
+      <div class="form-group">
+        <label>Upload 3 Photos (Front, Side, Back)</label>
+        <input type="file" name="photos" accept="image/*" multiple>
+      </div>
+
+      <button type="submit" class="form-submit" id="submitBtn">Submit Check-In</button>
+      <p class="form-note">Your check-in triggers your next week's program.</p>
+    </form>
+
+    <div class="form-success" id="successMsg" style="display:none">
+      <div class="form-success-icon">&#10003;</div>
+      <h2>Check-In Submitted!</h2>
+      <p>Nice work staying consistent. Your updated program will be sent to you on WhatsApp within 24 hours.</p>
+    </div>
+  </div>
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w') || '1';
+
+  document.getElementById('weekNum').textContent = weekNo;
+
+  document.getElementById('compRange').addEventListener('input', function() {
+    document.getElementById('compVal').textContent = this.value;
+  });
+  document.getElementById('energyRange').addEventListener('input', function() {
+    document.getElementById('energyVal').textContent = this.value;
+  });
+
+  document.getElementById('checkinForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'SUBMITTING...';
+
+    var fd = new FormData(this);
+    var data = {
+      client_id: clientId,
+      week_no: parseInt(weekNo),
+      weight: fd.get('weight'),
+      waist: fd.get('waist'),
+      compliance_score: fd.get('compliance_score'),
+      energy: fd.get('energy'),
+      issues: fd.get('issues'),
+      photos_urls: []
+    };
+
+    fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(function(r) {
+      if (!r.ok) return r.json().then(function(d) { throw new Error(d.error); });
+      return r.json();
+    })
+    .then(function() {
+      document.getElementById('checkinForm').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT CHECK-IN';
+      alert(err.message || 'Something went wrong. Please try again.');
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

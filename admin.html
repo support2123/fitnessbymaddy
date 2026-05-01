@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="admin.html" class="active">Dashboard</a></li>
+  </ul>
+</nav>
+
+<!-- LOGIN -->
+<div class="admin-login" id="loginView">
+  <div class="admin-login-box">
+    <div class="form-brand" style="margin-bottom:24px">Dashboard</div>
+    <div class="form-group">
+      <label>Admin Password</label>
+      <input type="password" id="adminPass" placeholder="Enter password" class="form-input">
+    </div>
+    <button class="form-submit" id="loginBtn" style="margin-top:8px">Log In</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="admin-wrap" id="dashView" style="display:none">
+  <div class="admin-header">
+    <h1 class="admin-title">Operations Dashboard</h1>
+    <button class="btn-outline" style="padding:10px 20px;font-size:11px" id="refreshBtn">Refresh Data</button>
+  </div>
+
+  <div class="stat-grid" id="statsGrid">
+    <div class="stat-card">
+      <div class="stat-card-label">New Leads Today</div>
+      <div class="stat-card-value" id="leadsToday">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Leads This Week</div>
+      <div class="stat-card-value" id="leadsWeek">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Conversion Rate</div>
+      <div class="stat-card-value" id="convRate">-</div>
+      <div class="stat-card-sub">lead to paid</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Active Clients</div>
+      <div class="stat-card-value" id="activeClients">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Pending Check-ins</div>
+      <div class="stat-card-value" id="pendingCheckins">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Programs This Week</div>
+      <div class="stat-card-value" id="programsWeek">-</div>
+    </div>
+  </div>
+
+  <!-- ACTIVE CLIENTS -->
+  <div class="admin-section">
+    <h3>Active Clients by Program</h3>
+    <table class="data-table" id="clientsTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Program</th>
+          <th>Started</th>
+          <th>Status</th>
+          <th>Last Check-in</th>
+        </tr>
+      </thead>
+      <tbody id="clientsBody"></tbody>
+    </table>
+  </div>
+
+  <!-- RECENT LEADS -->
+  <div class="admin-section">
+    <h3>Recent Leads</h3>
+    <table class="data-table" id="leadsTable">
+      <thead>
+        <tr>
+          <th>Phone</th>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Interest</th>
+          <th>Market</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody id="leadsBody"></tbody>
+    </table>
+  </div>
+
+  <!-- ESCALATIONS -->
+  <div class="admin-section">
+    <h3>Recent Escalations</h3>
+    <table class="data-table" id="escTable">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Phone</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody id="escBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(function() {
+  var SUPABASE_URL = '';
+  var SUPABASE_ANON_KEY = '';
+  var authenticated = false;
+
+  document.getElementById('loginBtn').addEventListener('click', login);
+  document.getElementById('adminPass').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') login();
+  });
+  document.getElementById('refreshBtn').addEventListener('click', loadDashboard);
+
+  function login() {
+    var pass = document.getElementById('adminPass').value;
+    if (!pass) return;
+    SUPABASE_URL = prompt('Supabase URL:');
+    SUPABASE_ANON_KEY = prompt('Supabase Anon Key:');
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      alert('Need Supabase credentials');
+      return;
+    }
+    authenticated = true;
+    document.getElementById('loginView').style.display = 'none';
+    document.getElementById('dashView').style.display = 'block';
+    loadDashboard();
+  }
+
+  function query(table, params) {
+    var url = SUPABASE_URL + '/rest/v1/' + table;
+    if (params) url += '?' + params;
+    return fetch(url, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+      }
+    }).then(function(r) { return r.json(); });
+  }
+
+  function rpc(fn, body) {
+    return fetch(SUPABASE_URL + '/rest/v1/rpc/' + fn, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body || {})
+    }).then(function(r) { return r.json(); });
+  }
+
+  function loadDashboard() {
+    var today = new Date().toISOString().slice(0, 10);
+    var weekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+
+    query('leads', 'select=id&created_at=gte.' + today + 'T00:00:00').then(function(d) {
+      document.getElementById('leadsToday').textContent = d.length || 0;
+    });
+
+    query('leads', 'select=id&created_at=gte.' + weekAgo).then(function(d) {
+      document.getElementById('leadsWeek').textContent = d.length || 0;
+    });
+
+    Promise.all([
+      query('leads', 'select=id'),
+      query('leads', 'select=id&status=eq.converted')
+    ]).then(function(results) {
+      var total = results[0].length || 0;
+      var conv = results[1].length || 0;
+      var rate = total > 0 ? Math.round(conv / total * 100) : 0;
+      document.getElementById('convRate').textContent = rate + '%';
+    });
+
+    query('clients', 'select=id&status=eq.active').then(function(d) {
+      document.getElementById('activeClients').textContent = d.length || 0;
+    });
+
+    query('programs', 'select=id&generated_at=gte.' + weekAgo).then(function(d) {
+      document.getElementById('programsWeek').textContent = d.length || 0;
+    });
+
+    document.getElementById('pendingCheckins').textContent = '-';
+
+    query('clients', 'select=id,name,program,program_started_at,status&status=eq.active&order=program_started_at.desc&limit=20').then(function(clients) {
+      var tbody = document.getElementById('clientsBody');
+      tbody.innerHTML = '';
+      clients.forEach(function(c) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + (c.name || '-') + '</td>' +
+          '<td>' + (c.program || '-') + '</td>' +
+          '<td>' + (c.program_started_at ? new Date(c.program_started_at).toLocaleDateString() : '-') + '</td>' +
+          '<td><span class="badge badge-' + c.status + '">' + c.status + '</span></td>' +
+          '<td>-</td>';
+        tbody.appendChild(tr);
+      });
+    });
+
+    query('leads', 'select=phone,name,status,program_interest,market,created_at&order=created_at.desc&limit=20').then(function(leads) {
+      var tbody = document.getElementById('leadsBody');
+      tbody.innerHTML = '';
+      leads.forEach(function(l) {
+        var maskedPhone = l.phone ? l.phone.slice(0,4) + 'XXX...' + l.phone.slice(-3) : '-';
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + maskedPhone + '</td>' +
+          '<td>' + (l.name || '-') + '</td>' +
+          '<td><span class="badge badge-' + l.status + '">' + l.status + '</span></td>' +
+          '<td>' + (l.program_interest || '-') + '</td>' +
+          '<td>' + (l.market || '-') + '</td>' +
+          '<td>' + (l.created_at ? new Date(l.created_at).toLocaleDateString() : '-') + '</td>';
+        tbody.appendChild(tr);
+      });
+    });
+
+    query('messages', 'select=sent_at,phone,body&body=like.*ESCALATION*&direction=eq.out&order=sent_at.desc&limit=10').then(function(msgs) {
+      var tbody = document.getElementById('escBody');
+      tbody.innerHTML = '';
+      if (!msgs.length) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--mid-grey)">No recent escalations</td></tr>';
+        return;
+      }
+      msgs.forEach(function(m) {
+        var maskedPhone = m.phone ? m.phone.slice(0,4) + 'XXX...' + m.phone.slice(-3) : '-';
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + new Date(m.sent_at).toLocaleString() + '</td>' +
+          '<td>' + maskedPhone + '</td>' +
+          '<td>' + (m.body || '').slice(0, 120) + '</td>';
+        tbody.appendChild(tr);
+      });
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
