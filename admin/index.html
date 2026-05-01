@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --sand: #F0EAE0; --gold: #B8965A; --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C; --mid-grey: #6B6B6B; --light-grey: #E8E3DC;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); }
+    .dash-nav {
+      background: var(--charcoal); padding: 0 40px; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dash-nav-brand {
+      font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600;
+      letter-spacing: 2px; text-transform: uppercase; color: var(--gold-light);
+    }
+    .dash-nav-tag { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 1.5px; text-transform: uppercase; }
+    .dash-wrap { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
+    .dash-header { margin-bottom: 32px; }
+    .dash-header h1 {
+      font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; margin-bottom: 4px;
+    }
+    .dash-header h1 em { font-style: italic; color: var(--gold); }
+    .dash-header p { font-size: 13px; color: var(--mid-grey); }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card {
+      background: white; padding: 24px; border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04); border-top: 3px solid var(--light-grey);
+    }
+    .stat-card.gold { border-top-color: var(--gold); }
+    .stat-card-label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card-value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--charcoal); line-height: 1; }
+    .stat-card-sub { font-size: 11px; color: var(--mid-grey); margin-top: 4px; }
+    .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+    .dash-section {
+      background: white; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); overflow: hidden;
+    }
+    .dash-section-header {
+      padding: 16px 24px; border-bottom: 1px solid var(--light-grey);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dash-section-title { font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--charcoal); }
+    .dash-section-count { font-size: 11px; color: var(--gold); font-weight: 600; }
+    .dash-section-body { padding: 16px 24px; max-height: 360px; overflow-y: auto; }
+    .dash-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--light-grey);
+    }
+    .dash-item:last-child { border-bottom: none; }
+    .dash-item-name { font-size: 13px; font-weight: 500; color: var(--charcoal); }
+    .dash-item-sub { font-size: 11px; color: var(--mid-grey); }
+    .dash-item-badge {
+      font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+      padding: 3px 10px; border-radius: 2px;
+    }
+    .badge-new { background: #EBF5FF; color: #1D4ED8; }
+    .badge-qualified { background: #FFF7ED; color: #B8965A; }
+    .badge-converted { background: #F0FDF4; color: #15803D; }
+    .badge-dropped { background: #FEF2F2; color: #991B1B; }
+    .badge-active { background: #F0FDF4; color: #15803D; }
+    .badge-alert { background: #FEF2F2; color: #991B1B; }
+    .program-bar { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+    .program-bar-label { font-size: 12px; color: var(--mid-grey); min-width: 100px; }
+    .program-bar-fill { height: 6px; background: var(--gold); border-radius: 3px; transition: width 0.5s; }
+    .program-bar-count { font-size: 12px; font-weight: 600; color: var(--charcoal); min-width: 24px; }
+    .loading { text-align: center; padding: 60px; color: var(--mid-grey); font-size: 14px; }
+    .full-width { grid-column: 1 / -1; }
+    @media (max-width: 768px) {
+      .section-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .dash-wrap { padding: 20px 16px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="dash-nav">
+  <span class="dash-nav-brand">Fitness by Maddy</span>
+  <span class="dash-nav-tag">Ops Dashboard</span>
+</div>
+
+<div class="dash-wrap">
+  <div class="dash-header">
+    <h1>Daily <em>Operations</em></h1>
+    <p id="dashDate"></p>
+  </div>
+
+  <div id="loading" class="loading">Loading dashboard data...</div>
+  <div id="dashContent" style="display:none">
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="section-grid">
+      <div class="dash-section">
+        <div class="dash-section-header">
+          <span class="dash-section-title">Recent Leads</span>
+          <span class="dash-section-count" id="leadsCount"></span>
+        </div>
+        <div class="dash-section-body" id="leadsList"></div>
+      </div>
+
+      <div class="dash-section">
+        <div class="dash-section-header">
+          <span class="dash-section-title">Active Clients by Program</span>
+          <span class="dash-section-count" id="clientsCount"></span>
+        </div>
+        <div class="dash-section-body" id="programBreakdown"></div>
+      </div>
+
+      <div class="dash-section">
+        <div class="dash-section-header">
+          <span class="dash-section-title">Pending Check-Ins</span>
+          <span class="dash-section-count" id="pendingCount"></span>
+        </div>
+        <div class="dash-section-body" id="pendingList"></div>
+      </div>
+
+      <div class="dash-section">
+        <div class="dash-section-header">
+          <span class="dash-section-title">Escalations</span>
+          <span class="dash-section-count" id="escalationCount"></span>
+        </div>
+        <div class="dash-section-body" id="escalationList"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function() {
+  var PROGRAM_LABELS = {
+    '6wk_gym': '6-Wk Gym', '6wk_home': '6-Wk Home', '12wk': '12-Week',
+    'pcos': 'PCOS', '40plus': '40+', 'zoom_trial': 'Trial', 'zoom_pack': 'Zoom Pack'
+  };
+
+  document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  fetch('/api/admin/stats')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('dashContent').style.display = 'block';
+      renderStats(d);
+      renderLeads(d.recent_leads);
+      renderPrograms(d.clients_by_program, d.active_clients);
+      renderPending(d.pending_checkins);
+      renderEscalations(d.escalations);
+    })
+    .catch(function() {
+      document.getElementById('loading').textContent = 'Failed to load dashboard. Check Supabase connection.';
+    });
+
+  function renderStats(d) {
+    var cards = [
+      { label: 'Leads Today', value: d.leads_today, sub: 'new inquiries', gold: true },
+      { label: 'Leads This Week', value: d.leads_this_week, sub: 'past 7 days' },
+      { label: 'Conversion Rate', value: d.conversion_rate + '%', sub: d.converted_leads + ' of ' + d.total_leads + ' leads' },
+      { label: 'Active Clients', value: d.active_clients, sub: 'currently enrolled', gold: true },
+      { label: 'Pending Check-Ins', value: d.pending_checkins.length, sub: 'awaiting submission' },
+      { label: 'Programs Generated', value: d.programs_generated_this_week, sub: 'this week' },
+    ];
+    var html = '';
+    cards.forEach(function(c) {
+      html += '<div class="stat-card' + (c.gold ? ' gold' : '') + '">' +
+        '<div class="stat-card-label">' + c.label + '</div>' +
+        '<div class="stat-card-value">' + c.value + '</div>' +
+        '<div class="stat-card-sub">' + c.sub + '</div></div>';
+    });
+    document.getElementById('statsGrid').innerHTML = html;
+  }
+
+  function renderLeads(leads) {
+    document.getElementById('leadsCount').textContent = leads.length + ' recent';
+    if (!leads.length) {
+      document.getElementById('leadsList').innerHTML = '<p style="font-size:13px;color:var(--mid-grey);padding:16px 0">No leads yet.</p>';
+      return;
+    }
+    var html = '';
+    leads.forEach(function(l) {
+      var masked = l.phone ? l.phone.slice(0,4) + 'XXX...' + l.phone.slice(-3) : '—';
+      var badge = l.status || 'new';
+      html += '<div class="dash-item">' +
+        '<div><div class="dash-item-name">' + (l.name || masked) + '</div>' +
+        '<div class="dash-item-sub">' + (l.program_interest || 'No interest yet') + ' &middot; ' + timeAgo(l.created_at) + '</div></div>' +
+        '<span class="dash-item-badge badge-' + badge + '">' + badge + '</span></div>';
+    });
+    document.getElementById('leadsList').innerHTML = html;
+  }
+
+  function renderPrograms(breakdown, total) {
+    document.getElementById('clientsCount').textContent = total + ' active';
+    var html = '';
+    var max = 0;
+    Object.values(breakdown).forEach(function(v) { if (v > max) max = v; });
+    if (max === 0) max = 1;
+    Object.keys(breakdown).forEach(function(key) {
+      var pct = (breakdown[key] / max) * 100;
+      html += '<div class="program-bar">' +
+        '<span class="program-bar-label">' + (PROGRAM_LABELS[key] || key) + '</span>' +
+        '<div style="flex:1;background:var(--light-grey);border-radius:3px;height:6px">' +
+        '<div class="program-bar-fill" style="width:' + pct + '%"></div></div>' +
+        '<span class="program-bar-count">' + breakdown[key] + '</span></div>';
+    });
+    if (!html) html = '<p style="font-size:13px;color:var(--mid-grey);padding:16px 0">No active clients yet.</p>';
+    document.getElementById('programBreakdown').innerHTML = html;
+  }
+
+  function renderPending(list) {
+    document.getElementById('pendingCount').textContent = list.length + ' pending';
+    if (!list.length) {
+      document.getElementById('pendingList').innerHTML = '<p style="font-size:13px;color:var(--mid-grey);padding:16px 0">All caught up!</p>';
+      return;
+    }
+    var html = '';
+    list.forEach(function(c) {
+      html += '<div class="dash-item">' +
+        '<div><div class="dash-item-name">' + (c.name || 'Client') + '</div>' +
+        '<div class="dash-item-sub">Week ' + c.week_no + ' &middot; ' + (PROGRAM_LABELS[c.program] || c.program) + '</div></div>' +
+        '<span class="dash-item-badge badge-alert">Pending</span></div>';
+    });
+    document.getElementById('pendingList').innerHTML = html;
+  }
+
+  function renderEscalations(list) {
+    document.getElementById('escalationCount').textContent = list.length + ' alerts';
+    if (!list.length) {
+      document.getElementById('escalationList').innerHTML = '<p style="font-size:13px;color:var(--mid-grey);padding:16px 0">No escalations.</p>';
+      return;
+    }
+    var html = '';
+    list.forEach(function(e) {
+      var masked = e.phone ? e.phone.slice(0,4) + 'XXX...' + e.phone.slice(-3) : '—';
+      html += '<div class="dash-item">' +
+        '<div><div class="dash-item-name">' + masked + '</div>' +
+        '<div class="dash-item-sub">' + (e.body || '').slice(0, 80) + ' &middot; ' + timeAgo(e.sent_at) + '</div></div>' +
+        '<span class="dash-item-badge badge-alert">Alert</span></div>';
+    });
+    document.getElementById('escalationList').innerHTML = html;
+  }
+
+  function timeAgo(dateStr) {
+    if (!dateStr) return '';
+    var diff = Date.now() - new Date(dateStr).getTime();
+    var mins = Math.floor(diff / 60000);
+    if (mins < 60) return mins + 'm ago';
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    var days = Math.floor(hrs / 24);
+    return days + 'd ago';
+  }
+})();
+</script>
+</body>
+</html>
