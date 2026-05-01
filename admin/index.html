@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --black: #111111; --gold: #B8965A; --gold-light: #D4AF7A;
+      --white: #FFFFFF; --red: #E74C3C; --green: #27AE60;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--black); color: var(--white); }
+
+    /* Auth */
+    .auth-screen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; flex-direction: column; gap: 24px;
+    }
+    .auth-screen h1 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 48px;
+      letter-spacing: 4px; color: var(--gold);
+    }
+    .auth-screen input {
+      padding: 14px 24px; background: #1a1a1a; border: 1px solid #333;
+      border-radius: 2px; color: var(--white); font-size: 14px;
+      font-family: 'DM Sans', sans-serif; width: 300px; text-align: center;
+      outline: none;
+    }
+    .auth-screen input:focus { border-color: var(--gold); }
+    .auth-screen button {
+      padding: 14px 48px; background: var(--gold); color: var(--black);
+      font-family: 'Bebas Neue', sans-serif; font-size: 16px;
+      letter-spacing: 2px; border: none; cursor: pointer; border-radius: 2px;
+    }
+    .auth-error { color: var(--red); font-size: 13px; display: none; }
+
+    /* Layout */
+    .dashboard { display: none; }
+    .top-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 32px; border-bottom: 1px solid #222;
+    }
+    .top-bar h1 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 24px;
+      letter-spacing: 3px; color: var(--gold);
+    }
+    .top-bar button {
+      padding: 8px 20px; background: transparent; border: 1px solid #444;
+      color: rgba(255,255,255,0.5); font-size: 12px; cursor: pointer;
+      border-radius: 2px; font-family: 'DM Sans', sans-serif;
+    }
+    .content { padding: 32px; max-width: 1200px; margin: 0 auto; }
+
+    /* Stats cards */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px; margin-bottom: 40px;
+    }
+    .stat-card {
+      background: #1a1a1a; border: 1px solid #222; border-radius: 4px;
+      padding: 24px;
+    }
+    .stat-card .label {
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(255,255,255,0.4); margin-bottom: 8px;
+    }
+    .stat-card .value {
+      font-family: 'Bebas Neue', sans-serif; font-size: 40px;
+      color: var(--gold); line-height: 1;
+    }
+    .stat-card .sub { font-size: 12px; color: rgba(255,255,255,0.3); margin-top: 4px; }
+
+    /* Sections */
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif; font-size: 22px;
+      letter-spacing: 2px; color: var(--gold); margin-bottom: 16px;
+      padding-bottom: 8px; border-bottom: 1px solid #222;
+    }
+    .section-block { margin-bottom: 40px; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(255,255,255,0.4); text-align: left; padding: 12px 16px;
+      border-bottom: 1px solid #222;
+    }
+    td {
+      font-size: 13px; padding: 12px 16px; border-bottom: 1px solid #1a1a1a;
+      color: rgba(255,255,255,0.7);
+    }
+    tr:hover td { background: #1a1a1a; }
+
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 2px;
+      font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .badge-new { background: rgba(184,150,90,0.15); color: var(--gold); }
+    .badge-qualified { background: rgba(39,174,96,0.15); color: var(--green); }
+    .badge-converted { background: rgba(39,174,96,0.3); color: var(--green); }
+    .badge-dropped { background: rgba(231,76,60,0.15); color: var(--red); }
+    .badge-active { background: rgba(39,174,96,0.15); color: var(--green); }
+    .badge-escalation { background: rgba(231,76,60,0.2); color: var(--red); }
+
+    .empty-state {
+      text-align: center; padding: 40px; color: rgba(255,255,255,0.2);
+      font-size: 14px;
+    }
+    .loading { text-align: center; padding: 60px; color: rgba(255,255,255,0.3); }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .content { padding: 16px; }
+      table { font-size: 12px; }
+      th, td { padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- AUTH SCREEN -->
+  <div class="auth-screen" id="authScreen">
+    <h1>FBM Dashboard</h1>
+    <input type="password" id="authInput" placeholder="Enter admin password" autofocus>
+    <button onclick="doLogin()">ENTER</button>
+    <div class="auth-error" id="authError">Invalid password</div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard" id="dashboard">
+    <div class="top-bar">
+      <h1>Fitness by Maddy — Ops Dashboard</h1>
+      <button onclick="doLogout()">Logout</button>
+    </div>
+    <div class="content">
+      <div class="loading" id="loadingState">Loading dashboard data...</div>
+      <div id="dashContent" style="display:none">
+
+        <!-- STAT CARDS -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="label">Leads Today</div>
+            <div class="value" id="leadsToday">—</div>
+            <div class="sub" id="leadsWeek">this week: —</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Conversion Rate</div>
+            <div class="value" id="convRate">—</div>
+            <div class="sub">lead → paid</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Active Clients</div>
+            <div class="value" id="activeClients">—</div>
+            <div class="sub" id="clientsByProgram"></div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Pending Check-Ins</div>
+            <div class="value" id="pendingCheckins">—</div>
+            <div class="sub">this week</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Programs Generated</div>
+            <div class="value" id="programsGenerated">—</div>
+            <div class="sub">this week</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Escalations</div>
+            <div class="value" id="escalationCount">—</div>
+            <div class="sub">awaiting review</div>
+          </div>
+        </div>
+
+        <!-- RECENT LEADS -->
+        <div class="section-block">
+          <div class="section-title">Recent Leads</div>
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Phone</th><th>Market</th><th>Interest</th><th>Status</th><th>Created</th></tr>
+            </thead>
+            <tbody id="leadsTable"></tbody>
+          </table>
+        </div>
+
+        <!-- ACTIVE CLIENTS -->
+        <div class="section-block">
+          <div class="section-title">Active Clients</div>
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Program</th><th>Started</th><th>Ends</th><th>Status</th></tr>
+            </thead>
+            <tbody id="clientsTable"></tbody>
+          </table>
+        </div>
+
+        <!-- RECENT ESCALATIONS -->
+        <div class="section-block">
+          <div class="section-title">Escalations</div>
+          <table>
+            <thead>
+              <tr><th>Time</th><th>Phone</th><th>Message</th></tr>
+            </thead>
+            <tbody id="escalationsTable"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var SUPABASE_URL = '';
+    var SUPABASE_ANON_KEY = '';
+    var supabase = null;
+
+    function doLogin() {
+      var pw = document.getElementById('authInput').value;
+      if (!pw) return;
+      try {
+        var parts = atob(pw).split('|');
+        SUPABASE_URL = parts[0];
+        SUPABASE_ANON_KEY = parts[1];
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('bad');
+        sessionStorage.setItem('fbm_auth', pw);
+        showDashboard();
+      } catch (e) {
+        document.getElementById('authError').style.display = 'block';
+      }
+    }
+
+    function doLogout() {
+      sessionStorage.removeItem('fbm_auth');
+      location.reload();
+    }
+
+    function showDashboard() {
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadData();
+    }
+
+    function checkAuth() {
+      var saved = sessionStorage.getItem('fbm_auth');
+      if (saved) {
+        document.getElementById('authInput').value = saved;
+        doLogin();
+      }
+    }
+
+    function maskPhone(p) {
+      if (!p || p.length < 6) return '***';
+      return p.slice(0, 3) + 'XXX...' + p.slice(-3);
+    }
+
+    function fmtDate(d) {
+      if (!d) return '—';
+      return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    async function sbQuery(table, opts) {
+      var url = SUPABASE_URL + '/rest/v1/' + table;
+      var params = [];
+      if (opts.select) params.push('select=' + opts.select);
+      if (opts.filters) opts.filters.forEach(function(f) { params.push(f); });
+      if (opts.order) params.push('order=' + opts.order);
+      if (opts.limit) params.push('limit=' + opts.limit);
+      if (params.length) url += '?' + params.join('&');
+
+      var res = await fetch(url, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'count=exact'
+        }
+      });
+      var count = res.headers.get('content-range');
+      var data = await res.json();
+      return { data: data, count: count ? parseInt(count.split('/')[1]) : data.length };
+    }
+
+    async function loadData() {
+      try {
+        var today = new Date(); today.setHours(0,0,0,0);
+        var todayISO = today.toISOString();
+        var weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+
+        var leadsAll = await sbQuery('leads', { select: '*', order: 'created_at.desc', limit: 50 });
+        var leadsToday = leadsAll.data.filter(function(l) { return l.created_at >= todayISO; });
+        var leadsWeek = leadsAll.data.filter(function(l) { return l.created_at >= weekAgo; });
+
+        document.getElementById('leadsToday').textContent = leadsToday.length;
+        document.getElementById('leadsWeek').textContent = 'this week: ' + leadsWeek.length;
+
+        var totalLeads = leadsAll.count || leadsAll.data.length;
+        var converted = leadsAll.data.filter(function(l) { return l.status === 'converted'; }).length;
+        var rate = totalLeads > 0 ? Math.round((converted / totalLeads) * 100) : 0;
+        document.getElementById('convRate').textContent = rate + '%';
+
+        var clients = await sbQuery('clients', { select: '*', order: 'created_at.desc', limit: 50 });
+        var activeClients = clients.data.filter(function(c) { return c.status === 'active'; });
+        document.getElementById('activeClients').textContent = activeClients.length;
+
+        var programCounts = {};
+        activeClients.forEach(function(c) {
+          programCounts[c.program] = (programCounts[c.program] || 0) + 1;
+        });
+        var programSummary = Object.keys(programCounts).map(function(k) {
+          return k + ': ' + programCounts[k];
+        }).join(' · ');
+        document.getElementById('clientsByProgram').textContent = programSummary || 'none';
+
+        var programs = await sbQuery('programs', {
+          select: '*',
+          filters: ['generated_at=gte.' + weekAgo],
+          limit: 100
+        });
+        document.getElementById('programsGenerated').textContent = programs.data.length;
+
+        var pendingCount = 0;
+        activeClients.forEach(function(c) {
+          var started = new Date(c.program_started_at);
+          var week = Math.ceil((Date.now() - started.getTime()) / (7 * 86400000));
+          if (week >= 1) pendingCount++;
+        });
+        document.getElementById('pendingCheckins').textContent = pendingCount;
+
+        var escMessages = await sbQuery('messages', {
+          select: '*',
+          filters: ['direction=eq.out', 'template_name=eq.escalation_alert'],
+          order: 'sent_at.desc',
+          limit: 10
+        });
+        document.getElementById('escalationCount').textContent = escMessages.data.length;
+
+        var leadsHtml = '';
+        leadsAll.data.slice(0, 20).forEach(function(l) {
+          leadsHtml += '<tr>' +
+            '<td>' + (l.name || '—') + '</td>' +
+            '<td>' + maskPhone(l.phone) + '</td>' +
+            '<td>' + (l.market || '—') + '</td>' +
+            '<td>' + (l.program_interest || '—') + '</td>' +
+            '<td><span class="badge badge-' + l.status + '">' + l.status + '</span></td>' +
+            '<td>' + fmtDate(l.created_at) + '</td></tr>';
+        });
+        document.getElementById('leadsTable').innerHTML = leadsHtml || '<tr><td colspan="6" class="empty-state">No leads yet</td></tr>';
+
+        var clientsHtml = '';
+        clients.data.slice(0, 20).forEach(function(c) {
+          clientsHtml += '<tr>' +
+            '<td>' + (c.name || '—') + '</td>' +
+            '<td>' + (c.program || '—') + '</td>' +
+            '<td>' + fmtDate(c.program_started_at) + '</td>' +
+            '<td>' + fmtDate(c.program_ends_at) + '</td>' +
+            '<td><span class="badge badge-' + c.status + '">' + c.status + '</span></td></tr>';
+        });
+        document.getElementById('clientsTable').innerHTML = clientsHtml || '<tr><td colspan="5" class="empty-state">No clients yet</td></tr>';
+
+        var escHtml = '';
+        escMessages.data.forEach(function(m) {
+          escHtml += '<tr>' +
+            '<td>' + fmtDate(m.sent_at) + '</td>' +
+            '<td>' + maskPhone(m.phone) + '</td>' +
+            '<td>' + (m.body || '—') + '</td></tr>';
+        });
+        document.getElementById('escalationsTable').innerHTML = escHtml || '<tr><td colspan="3" class="empty-state">No escalations</td></tr>';
+
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('dashContent').style.display = 'block';
+      } catch (e) {
+        document.getElementById('loadingState').textContent = 'Failed to load data. Check credentials.';
+      }
+    }
+
+    document.getElementById('authInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') doLogin();
+    });
+
+    checkAuth();
+  </script>
+</body>
+</html>
