@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in | Fitness by Maddy</title>
+  <meta name="description" content="Submit your weekly check-in to track your progress.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --sand: #F0EAE0; --gold: #B8965A;
+      --gold-light: #D4AF7A; --charcoal: #2C2C2C; --mid-grey: #6B6B6B;
+      --light-grey: #E8E3DC; --white: #FFFFFF;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); }
+
+    .form-header {
+      background: var(--charcoal); padding: 40px 24px; text-align: center;
+    }
+    .form-header h1 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--white);
+      letter-spacing: 3px; margin-bottom: 8px;
+    }
+    .form-header p { font-size: 13px; color: var(--gold-light); letter-spacing: 1px; }
+    .week-badge {
+      display: inline-block; background: var(--gold); color: var(--white); padding: 4px 16px;
+      font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px;
+      border-radius: 2px; margin-top: 12px;
+    }
+
+    .form-container { max-width: 500px; margin: 0 auto; padding: 32px 24px 60px; }
+    .form-section { margin-bottom: 32px; }
+    .form-section-title {
+      font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px;
+      color: var(--charcoal); margin-bottom: 16px; padding-bottom: 8px;
+      border-bottom: 2px solid var(--gold);
+    }
+    .form-group { margin-bottom: 20px; }
+    .form-label {
+      display: block; font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px;
+    }
+    .form-input, .form-textarea {
+      width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px;
+      font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--charcoal);
+      background: var(--white); outline: none; transition: border-color 0.3s;
+    }
+    .form-input:focus, .form-textarea:focus { border-color: var(--gold); }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    .form-hint { font-size: 11px; color: var(--mid-grey); margin-top: 4px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* Slider */
+    .slider-group { margin-bottom: 20px; }
+    .slider-row { display: flex; align-items: center; gap: 16px; }
+    .slider-row input[type="range"] {
+      flex: 1; accent-color: var(--gold); height: 6px;
+    }
+    .slider-value {
+      font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--gold);
+      min-width: 36px; text-align: center;
+    }
+    .slider-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--mid-grey); margin-top: 4px; }
+
+    /* Photo upload */
+    .photo-upload {
+      border: 2px dashed var(--light-grey); border-radius: 4px; padding: 32px;
+      text-align: center; cursor: pointer; transition: border-color 0.3s;
+    }
+    .photo-upload:hover { border-color: var(--gold); }
+    .photo-upload input { display: none; }
+    .photo-upload-icon { font-size: 32px; margin-bottom: 8px; }
+    .photo-upload-text { font-size: 13px; color: var(--mid-grey); }
+    .photo-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .photo-preview img { width: 80px; height: 80px; object-fit: cover; border-radius: 2px; border: 1px solid var(--light-grey); }
+
+    .submit-btn {
+      width: 100%; padding: 16px; background: var(--charcoal); color: white; border: none;
+      font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px;
+      cursor: pointer; border-radius: 2px; transition: background 0.3s; margin-top: 8px;
+    }
+    .submit-btn:hover { background: var(--gold); }
+    .submit-btn:disabled { background: var(--mid-grey); cursor: not-allowed; }
+
+    .success-msg { display: none; text-align: center; padding: 60px 24px; }
+    .success-msg h2 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--gold);
+      letter-spacing: 2px; margin-bottom: 12px;
+    }
+    .success-msg p { font-size: 14px; color: var(--mid-grey); line-height: 1.7; }
+    .error-msg {
+      background: #FFEBEE; color: #C62828; padding: 12px 16px; border-radius: 2px;
+      font-size: 13px; margin-bottom: 16px; display: none;
+    }
+
+    @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <div class="form-header">
+    <h1>Weekly Check-in</h1>
+    <p>Fitness by Maddy</p>
+    <div class="week-badge" id="weekBadge">WEEK --</div>
+  </div>
+
+  <div class="form-container">
+    <div class="error-msg" id="errorMsg"></div>
+
+    <form id="checkinForm" onsubmit="return handleSubmit(event)">
+
+      <div class="form-section">
+        <div class="form-section-title">Body Stats</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Weight (kg) *</label>
+            <input class="form-input" type="number" name="weight" step="0.1" required placeholder="70.5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Waist (cm)</label>
+            <input class="form-input" type="number" name="waist" step="0.1" placeholder="82">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Self Assessment</div>
+
+        <div class="slider-group">
+          <label class="form-label">Program Compliance</label>
+          <div class="slider-row">
+            <input type="range" name="compliance_score" min="1" max="10" value="7" oninput="this.parentNode.querySelector('.slider-value').textContent=this.value">
+            <div class="slider-value">7</div>
+          </div>
+          <div class="slider-labels"><span>Barely followed</span><span>Followed perfectly</span></div>
+        </div>
+
+        <div class="slider-group">
+          <label class="form-label">Energy Level</label>
+          <div class="slider-row">
+            <input type="range" name="energy" min="1" max="10" value="7" oninput="this.parentNode.querySelector('.slider-value').textContent=this.value">
+            <div class="slider-value">7</div>
+          </div>
+          <div class="slider-labels"><span>Very low</span><span>Very high</span></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Notes & Issues</div>
+        <div class="form-group">
+          <label class="form-label">Any issues or concerns this week?</label>
+          <textarea class="form-textarea" name="issues" placeholder="e.g., Felt fatigued on Day 4, had trouble with squats, diet was off on weekend..."></textarea>
+          <div class="form-hint">Be honest — this helps Maddy adjust your plan for next week.</div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Progress Photos</div>
+        <div class="form-group">
+          <div class="photo-upload" onclick="document.getElementById('photoInput').click()">
+            <input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhotos(this)">
+            <div class="photo-upload-icon">+</div>
+            <div class="photo-upload-text">Tap to upload 3 photos (front, side, back)</div>
+          </div>
+          <div class="photo-preview" id="photoPreview"></div>
+          <div class="form-hint">Photos help track visual progress. Same lighting and angle each week for best comparison.</div>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">SUBMIT CHECK-IN</button>
+    </form>
+
+    <div class="success-msg" id="successMsg">
+      <h2>Check-in Submitted!</h2>
+      <p>Great work staying consistent. Maddy will review your progress and your updated plan will be sent via WhatsApp.</p>
+    </div>
+  </div>
+
+<script>
+var clientId = new URLSearchParams(window.location.search).get('c') || '';
+var weekNo = new URLSearchParams(window.location.search).get('w') || '1';
+var uploadedPhotos = [];
+
+document.getElementById('weekBadge').textContent = 'WEEK ' + weekNo;
+
+function handlePhotos(input) {
+  var preview = document.getElementById('photoPreview');
+  preview.innerHTML = '';
+  uploadedPhotos = [];
+  var files = input.files;
+  for (var i = 0; i < Math.min(files.length, 3); i++) {
+    var reader = new FileReader();
+    reader.onload = (function(file) {
+      return function(e) {
+        var img = document.createElement('img');
+        img.src = e.target.result;
+        preview.appendChild(img);
+        uploadedPhotos.push(e.target.result);
+      };
+    })(files[i]);
+    reader.readAsDataURL(files[i]);
+  }
+}
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  var form = document.getElementById('checkinForm');
+  var btn = document.getElementById('submitBtn');
+  var errEl = document.getElementById('errorMsg');
+  errEl.style.display = 'none';
+
+  if (!clientId) {
+    errEl.textContent = 'Invalid check-in link. Please use the link sent to your WhatsApp.';
+    errEl.style.display = 'block';
+    return false;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'SUBMITTING...';
+
+  var fd = new FormData(form);
+  var body = {
+    client_id: clientId,
+    week_no: parseInt(weekNo),
+    weight: fd.get('weight'),
+    waist: fd.get('waist'),
+    compliance_score: fd.get('compliance_score'),
+    energy: fd.get('energy'),
+    issues: fd.get('issues'),
+    photos_urls: uploadedPhotos,
+  };
+
+  try {
+    var res = await fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    var data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Submission failed');
+    form.style.display = 'none';
+    document.getElementById('successMsg').style.display = 'block';
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'SUBMIT CHECK-IN';
+  }
+  return false;
+}
+</script>
+</body>
+</html>
