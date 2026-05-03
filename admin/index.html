@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+    :root {
+      --bg: #0F0F0F;
+      --card: #1A1A1A;
+      --border: #2A2A2A;
+      --gold: #B8965A;
+      --gold-dim: rgba(184,150,90,0.15);
+      --text: #E8E8E8;
+      --text-dim: #888;
+      --green: #4ADE80;
+      --red: #F87171;
+      --yellow: #FBBF24;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); }
+    .auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .auth-box { background: var(--card); border: 1px solid var(--border); padding: 48px; border-radius: 8px; width: 100%; max-width: 380px; text-align: center; }
+    .auth-box h1 { font-size: 20px; margin-bottom: 8px; letter-spacing: 1px; }
+    .auth-box p { font-size: 13px; color: var(--text-dim); margin-bottom: 24px; }
+    .auth-input { width: 100%; padding: 12px 16px; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-size: 14px; border-radius: 4px; outline: none; margin-bottom: 16px; font-family: inherit; }
+    .auth-input:focus { border-color: var(--gold); }
+    .auth-btn { width: 100%; padding: 12px; background: var(--gold); color: #000; border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 4px; }
+    .auth-btn:hover { opacity: 0.9; }
+
+    .dashboard { display: none; }
+    .dash-header { padding: 20px 32px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .dash-header h1 { font-size: 18px; letter-spacing: 1px; }
+    .dash-header .logout { font-size: 12px; color: var(--text-dim); cursor: pointer; letter-spacing: 1px; text-transform: uppercase; }
+    .dash-header .logout:hover { color: var(--gold); }
+    .dash-content { padding: 32px; max-width: 1200px; margin: 0 auto; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); padding: 24px; border-radius: 8px; }
+    .stat-card .label { font-size: 11px; color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+    .stat-card .value { font-size: 32px; font-weight: 600; color: var(--gold); }
+    .stat-card .sub { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+    .section-title { font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; }
+
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 32px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 12px 16px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+    td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-new { background: var(--gold-dim); color: var(--gold); }
+    .badge-qualified { background: rgba(74,222,128,0.15); color: var(--green); }
+    .badge-converted { background: rgba(74,222,128,0.25); color: var(--green); }
+    .badge-dropped { background: rgba(248,113,113,0.15); color: var(--red); }
+    .badge-active { background: rgba(74,222,128,0.15); color: var(--green); }
+    .badge-paused { background: rgba(251,191,36,0.15); color: var(--yellow); }
+    .badge-alert { background: rgba(248,113,113,0.2); color: var(--red); }
+    .empty-state { padding: 40px; text-align: center; color: var(--text-dim); font-size: 13px; }
+    .masked { font-family: monospace; font-size: 12px; color: var(--text-dim); }
+
+    @media (max-width: 700px) {
+      .dash-content { padding: 16px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .table-wrap { overflow-x: auto; }
+      table { min-width: 500px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-screen" id="authScreen">
+  <div class="auth-box">
+    <h1>ADMIN</h1>
+    <p>Fitness by Maddy Dashboard</p>
+    <input class="auth-input" type="email" id="authEmail" placeholder="Email">
+    <input class="auth-input" type="password" id="authPass" placeholder="Password">
+    <button class="auth-btn" id="loginBtn">Sign In</button>
+  </div>
+</div>
+
+<div class="dashboard" id="dashboard">
+  <div class="dash-header">
+    <h1>FITNESS BY MADDY</h1>
+    <span class="logout" id="logoutBtn">Logout</span>
+  </div>
+  <div class="dash-content">
+
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card"><div class="label">Leads Today</div><div class="value" id="leadsToday">-</div></div>
+      <div class="stat-card"><div class="label">Leads This Week</div><div class="value" id="leadsWeek">-</div></div>
+      <div class="stat-card"><div class="label">Conversion Rate</div><div class="value" id="convRate">-</div><div class="sub">Lead to paid</div></div>
+      <div class="stat-card"><div class="label">Active Clients</div><div class="value" id="activeClients">-</div></div>
+      <div class="stat-card"><div class="label">Pending Check-Ins</div><div class="value" id="pendingCheckins">-</div></div>
+      <div class="stat-card"><div class="label">Programs This Week</div><div class="value" id="programsWeek">-</div></div>
+    </div>
+
+    <div class="section-title">Escalations Awaiting Review</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Time</th><th>Phone</th><th>Reason</th><th>Message</th></tr></thead>
+        <tbody id="escalationsBody"><tr><td colspan="4" class="empty-state">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section-title">Recent Leads</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Time</th><th>Phone</th><th>Name</th><th>Interest</th><th>Status</th></tr></thead>
+        <tbody id="leadsBody"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section-title">Active Clients by Program</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Status</th></tr></thead>
+        <tbody id="clientsBody"><tr><td colspan="4" class="empty-state">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function() {
+  var SUPABASE_URL = '';
+  var SUPABASE_ANON_KEY = '';
+  var session = null;
+
+  function mask(phone) {
+    if (!phone || phone.length < 6) return '***';
+    return phone.slice(0, 3) + 'XXX...' + phone.slice(-3);
+  }
+
+  function fmtDate(d) {
+    if (!d) return '-';
+    var dt = new Date(d);
+    return dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function badgeClass(status) {
+    var map = { new: 'badge-new', qualified: 'badge-qualified', converted: 'badge-converted', dropped: 'badge-dropped', active: 'badge-active', paused: 'badge-paused' };
+    return map[status] || 'badge-new';
+  }
+
+  function apiGet(table, params) {
+    var url = SUPABASE_URL + '/rest/v1/' + table + '?' + params;
+    return fetch(url, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + session,
+        'Content-Type': 'application/json'
+      }
+    }).then(function(r) { return r.json(); });
+  }
+
+  function apiGetCount(table, params) {
+    var url = SUPABASE_URL + '/rest/v1/' + table + '?' + params;
+    return fetch(url, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + session,
+        'Content-Type': 'application/json',
+        'Prefer': 'count=exact'
+      }
+    }).then(function(r) {
+      var count = r.headers.get('content-range');
+      if (count) {
+        var parts = count.split('/');
+        return parseInt(parts[1]) || 0;
+      }
+      return 0;
+    });
+  }
+
+  async function loadDashboard() {
+    var today = new Date(); today.setHours(0,0,0,0);
+    var weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+
+    var todayIso = today.toISOString();
+    var weekIso = weekAgo.toISOString();
+
+    try {
+      var [leadsToday, leadsWeek, totalLeads, converted, activeCount, escalations, recentLeads, clients] = await Promise.all([
+        apiGetCount('leads', 'select=id&created_at=gte.' + todayIso),
+        apiGetCount('leads', 'select=id&created_at=gte.' + weekIso),
+        apiGetCount('leads', 'select=id'),
+        apiGetCount('leads', 'select=id&status=eq.converted'),
+        apiGetCount('clients', 'select=id&status=eq.active'),
+        apiGet('escalations', 'select=*&resolved=eq.false&order=created_at.desc&limit=10'),
+        apiGet('leads', 'select=*&order=created_at.desc&limit=15'),
+        apiGet('clients', 'select=*&status=eq.active&order=created_at.desc&limit=20')
+      ]);
+
+      document.getElementById('leadsToday').textContent = leadsToday;
+      document.getElementById('leadsWeek').textContent = leadsWeek;
+      document.getElementById('convRate').textContent = totalLeads > 0 ? Math.round((converted / totalLeads) * 100) + '%' : '0%';
+      document.getElementById('activeClients').textContent = activeCount;
+
+      var escBody = document.getElementById('escalationsBody');
+      if (!escalations || escalations.length === 0) {
+        escBody.innerHTML = '<tr><td colspan="4" class="empty-state">No pending escalations</td></tr>';
+      } else {
+        escBody.innerHTML = escalations.map(function(e) {
+          return '<tr><td>' + fmtDate(e.created_at) + '</td><td class="masked">' + mask(e.phone) + '</td><td><span class="badge badge-alert">' + e.reason + '</span></td><td>' + (e.message_body || '').slice(0, 100) + '</td></tr>';
+        }).join('');
+      }
+
+      var leadsBody = document.getElementById('leadsBody');
+      if (!recentLeads || recentLeads.length === 0) {
+        leadsBody.innerHTML = '<tr><td colspan="5" class="empty-state">No leads yet</td></tr>';
+      } else {
+        leadsBody.innerHTML = recentLeads.map(function(l) {
+          return '<tr><td>' + fmtDate(l.created_at) + '</td><td class="masked">' + mask(l.phone) + '</td><td>' + (l.name || '-') + '</td><td>' + (l.program_interest || '-') + '</td><td><span class="badge ' + badgeClass(l.status) + '">' + l.status + '</span></td></tr>';
+        }).join('');
+      }
+
+      var clientsBody = document.getElementById('clientsBody');
+      if (!clients || clients.length === 0) {
+        clientsBody.innerHTML = '<tr><td colspan="4" class="empty-state">No active clients</td></tr>';
+      } else {
+        clientsBody.innerHTML = clients.map(function(c) {
+          return '<tr><td>' + (c.name || '-') + '</td><td>' + (c.program || '-') + '</td><td>' + fmtDate(c.program_started_at) + '</td><td><span class="badge badge-active">' + c.status + '</span></td></tr>';
+        }).join('');
+      }
+
+    } catch(err) {
+      console.error('Dashboard load error:', err);
+    }
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', async function() {
+    var email = document.getElementById('authEmail').value;
+    var pass = document.getElementById('authPass').value;
+    if (!email || !pass) return;
+
+    try {
+      var res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: email, password: pass })
+      });
+      var data = await res.json();
+
+      if (data.access_token) {
+        session = data.access_token;
+        SUPABASE_URL = SUPABASE_URL;
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        loadDashboard();
+      } else {
+        alert('Invalid credentials');
+      }
+    } catch(err) {
+      alert('Login failed');
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', function() {
+    session = null;
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('authScreen').style.display = 'flex';
+  });
+
+  var meta = document.querySelector('meta[name="supabase-url"]');
+  var metaKey = document.querySelector('meta[name="supabase-anon-key"]');
+  if (meta) SUPABASE_URL = meta.content;
+  if (metaKey) SUPABASE_ANON_KEY = metaKey.content;
+
+  if (!SUPABASE_URL) {
+    fetch('/api/config')
+      .then(function(r) { return r.json(); })
+      .then(function(cfg) {
+        SUPABASE_URL = cfg.supabase_url || '';
+        SUPABASE_ANON_KEY = cfg.supabase_anon_key || '';
+      })
+      .catch(function() {});
+  }
+})();
+</script>
+</body>
+</html>
