@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4;
+      --gold: #B8965A;
+      --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C;
+      --mid-grey: #6B6B6B;
+      --light-grey: #E8E3DC;
+      --green: #2D8B4E;
+      --red: #C0392B;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--charcoal); color: white; min-height: 100vh; }
+    .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .login-card { background: #1a1a1a; padding: 48px 40px; border-radius: 8px; width: 100%; max-width: 400px; text-align: center; }
+    .login-card h1 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; margin-bottom: 8px; }
+    .login-card p { font-size: 13px; color: var(--mid-grey); margin-bottom: 32px; }
+    .login-card input { width: 100%; padding: 14px 16px; border: 1.5px solid #333; border-radius: 4px; font-size: 15px; font-family: 'DM Sans', sans-serif; color: white; background: #222; outline: none; margin-bottom: 16px; }
+    .login-card input:focus { border-color: var(--gold); }
+    .login-card button { width: 100%; padding: 14px; background: var(--gold); color: white; font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; border: none; border-radius: 4px; cursor: pointer; }
+    .dashboard { display: none; padding: 32px; max-width: 1200px; margin: 0 auto; }
+    .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+    .dash-header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; }
+    .dash-header button { padding: 10px 20px; background: transparent; border: 1px solid #444; color: var(--mid-grey); font-size: 12px; cursor: pointer; border-radius: 4px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card { background: #1a1a1a; padding: 28px 24px; border-radius: 8px; border: 1px solid #2a2a2a; }
+    .stat-card .label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card .value { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--gold); }
+    .stat-card .sub { font-size: 12px; color: var(--mid-grey); margin-top: 4px; }
+    .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; margin-bottom: 16px; color: var(--gold-light); }
+    .table-wrap { background: #1a1a1a; border-radius: 8px; overflow-x: auto; margin-bottom: 32px; border: 1px solid #2a2a2a; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 14px 16px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--mid-grey); border-bottom: 1px solid #2a2a2a; }
+    td { padding: 12px 16px; border-bottom: 1px solid #1f1f1f; color: #ccc; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 3px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; }
+    .badge-active { background: rgba(45,139,78,0.15); color: var(--green); }
+    .badge-new { background: rgba(184,150,90,0.15); color: var(--gold); }
+    .badge-dropped { background: rgba(192,57,43,0.15); color: var(--red); }
+    .badge-converted { background: rgba(45,139,78,0.15); color: var(--green); }
+    .empty { text-align: center; padding: 40px; color: var(--mid-grey); }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <h1>ADMIN DASHBOARD</h1>
+      <p>Fitness by Maddy Operations</p>
+      <input type="email" id="loginEmail" placeholder="Email">
+      <input type="password" id="loginPassword" placeholder="Password">
+      <button id="loginBtn" onclick="login()">SIGN IN</button>
+    </div>
+  </div>
+
+  <div class="dashboard" id="dashboard">
+    <div class="dash-header">
+      <h1>OPERATIONS DASHBOARD</h1>
+      <button onclick="logout()">Sign Out</button>
+    </div>
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="section-title">RECENT LEADS</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Market</th><th>Interest</th><th>Status</th><th>Created</th></tr>
+        </thead>
+        <tbody id="leadsTable"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section-title">ACTIVE CLIENTS</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Program</th><th>Started</th><th>Status</th></tr>
+        </thead>
+        <tbody id="clientsTable"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section-title">PENDING CHECK-INS</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Client</th><th>Week</th><th>Due Since</th></tr>
+        </thead>
+        <tbody id="pendingTable"><tr><td colspan="3" class="empty">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section-title">ESCALATIONS</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Type</th><th>Details</th><th>Time</th></tr>
+        </thead>
+        <tbody id="escalationsTable"><tr><td colspan="3" class="empty">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = window.__SUPABASE_URL || '';
+    const SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY || '';
+    let session = null;
+
+    async function login() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        session = data;
+        localStorage.setItem('admin_token', data.access_token);
+        showDashboard();
+      } else {
+        alert('Invalid credentials');
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('admin_token');
+      session = null;
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('dashboard').style.display = 'none';
+    }
+
+    async function showDashboard() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      await loadData();
+    }
+
+    async function query(table, options = {}) {
+      const token = localStorage.getItem('admin_token');
+      let url = SUPABASE_URL + '/rest/v1/' + table + '?select=*';
+      if (options.order) url += '&order=' + options.order;
+      if (options.limit) url += '&limit=' + options.limit;
+      if (options.filter) url += '&' + options.filter;
+
+      const res = await fetch(url, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + token
+        }
+      });
+      return res.ok ? res.json() : [];
+    }
+
+    async function loadData() {
+      const [leads, clients, checkins, programs] = await Promise.all([
+        query('leads', { order: 'created_at.desc', limit: 20 }),
+        query('clients', { order: 'program_started_at.desc' }),
+        query('checkins', { order: 'form_submitted_at.desc', limit: 50 }),
+        query('programs', { order: 'generated_at.desc', limit: 10 })
+      ]);
+
+      const today = new Date();
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay());
+
+      const leadsToday = leads.filter(l => new Date(l.created_at).toDateString() === today.toDateString()).length;
+      const leadsThisWeek = leads.filter(l => new Date(l.created_at) >= weekStart).length;
+      const activeClients = clients.filter(c => c.status === 'active');
+      const converted = leads.filter(l => l.status === 'converted').length;
+      const convRate = leads.length ? Math.round((converted / leads.length) * 100) : 0;
+
+      document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card"><div class="label">Leads Today</div><div class="value">${leadsToday}</div><div class="sub">${leadsThisWeek} this week</div></div>
+        <div class="stat-card"><div class="label">Conversion Rate</div><div class="value">${convRate}%</div><div class="sub">${converted} of ${leads.length} leads</div></div>
+        <div class="stat-card"><div class="label">Active Clients</div><div class="value">${activeClients.length}</div><div class="sub">${clients.length} total</div></div>
+        <div class="stat-card"><div class="label">Programs Generated</div><div class="value">${programs.length}</div><div class="sub">This week</div></div>
+      `;
+
+      document.getElementById('leadsTable').innerHTML = leads.length ? leads.slice(0, 10).map(l => `
+        <tr>
+          <td>${l.name || 'Unknown'}</td>
+          <td>${l.market || '-'}</td>
+          <td>${l.program_interest || '-'}</td>
+          <td><span class="badge badge-${l.status}">${l.status}</span></td>
+          <td>${new Date(l.created_at).toLocaleDateString()}</td>
+        </tr>
+      `).join('') : '<tr><td colspan="5" class="empty">No leads yet</td></tr>';
+
+      document.getElementById('clientsTable').innerHTML = activeClients.length ? activeClients.map(c => `
+        <tr>
+          <td>${c.name || 'Unknown'}</td>
+          <td>${c.program}</td>
+          <td>${new Date(c.program_started_at).toLocaleDateString()}</td>
+          <td><span class="badge badge-active">${c.status}</span></td>
+        </tr>
+      `).join('') : '<tr><td colspan="4" class="empty">No active clients</td></tr>';
+
+      document.getElementById('pendingTable').innerHTML = '<tr><td colspan="3" class="empty">Calculated on Sunday runs</td></tr>';
+    }
+
+    // Auto-login if token exists
+    (function() {
+      const token = localStorage.getItem('admin_token');
+      if (token) {
+        showDashboard();
+      }
+    })();
+  </script>
+</body>
+</html>
