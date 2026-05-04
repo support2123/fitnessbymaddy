@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .admin-wrap { padding: 100px 40px 60px; max-width: 1200px; margin: 0 auto; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+    .admin-title { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 400; }
+    .admin-title em { color: var(--gold); }
+    .logout-btn { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); cursor: pointer; border: 1px solid var(--light-grey); padding: 8px 20px; border-radius: 2px; background: none; }
+    .logout-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card { background: white; padding: 28px 24px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border-left: 3px solid var(--light-grey); }
+    .stat-card.gold { border-left-color: var(--gold); }
+    .stat-card.green { border-left-color: #4CAF50; }
+    .stat-card.blue { border-left-color: #2196F3; }
+    .stat-card.red { border-left-color: #f44336; }
+    .stat-card-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card-value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--charcoal); }
+    .stat-card-sub { font-size: 12px; color: var(--mid-grey); margin-top: 4px; }
+
+    .section-card { background: white; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 24px; overflow: hidden; }
+    .section-card-header { padding: 20px 24px; border-bottom: 1px solid var(--light-grey); display: flex; justify-content: space-between; align-items: center; }
+    .section-card-title { font-size: 14px; font-weight: 600; letter-spacing: 0.5px; color: var(--charcoal); }
+    .section-card-body { padding: 20px 24px; }
+
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--mid-grey); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--light-grey); }
+    .data-table td { font-size: 13px; color: var(--charcoal); padding: 12px; border-bottom: 1px solid var(--light-grey); }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .badge { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; }
+    .badge-new { background: #E3F2FD; color: #1976D2; }
+    .badge-qualified { background: #FFF3E0; color: #E65100; }
+    .badge-converted { background: #E8F5E9; color: #2E7D32; }
+    .badge-dropped { background: #FFEBEE; color: #C62828; }
+    .badge-active { background: #E8F5E9; color: #2E7D32; }
+    .badge-completed { background: #F3E5F5; color: #6A1B9A; }
+
+    .login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--cream); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+    .login-box { background: white; padding: 48px; border-radius: 4px; box-shadow: 0 8px 40px rgba(0,0,0,0.1); max-width: 400px; width: 100%; text-align: center; }
+    .login-box h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 24px; }
+    .login-box .form-input { margin-bottom: 16px; }
+    .login-box .form-submit { margin-top: 8px; }
+    .login-error { color: #C62828; font-size: 12px; margin-top: 8px; display: none; }
+
+    .escalation-item { padding: 12px 0; border-bottom: 1px solid var(--light-grey); }
+    .escalation-item:last-child { border-bottom: none; }
+    .escalation-text { font-size: 13px; color: var(--charcoal); }
+    .escalation-time { font-size: 11px; color: var(--mid-grey); margin-top: 4px; }
+    .empty-state { text-align: center; padding: 40px; color: var(--mid-grey); font-size: 13px; }
+
+    @media (max-width: 768px) { .admin-wrap { padding: 80px 16px 40px; } .stats-grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="../index.html">Fitness by Maddy</a>
+</nav>
+
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h2>Admin Login</h2>
+    <input class="form-input" type="email" id="loginEmail" placeholder="Email">
+    <input class="form-input" type="password" id="loginPassword" placeholder="Password">
+    <button class="form-submit" onclick="login()">Sign In</button>
+    <p class="login-error" id="loginError">Invalid credentials</p>
+  </div>
+</div>
+
+<div class="page-wrap">
+  <div class="admin-wrap" id="dashboard" style="display:none">
+    <div class="admin-header">
+      <h1 class="admin-title">Ops <em>Dashboard</em></h1>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card gold">
+        <div class="stat-card-label">New Leads Today</div>
+        <div class="stat-card-value" id="leadsToday">-</div>
+        <div class="stat-card-sub" id="leadsWeek">- this week</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-card-label">Conversion Rate</div>
+        <div class="stat-card-value" id="conversionRate">-</div>
+        <div class="stat-card-sub">Lead → Paid</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-card-label">Active Clients</div>
+        <div class="stat-card-value" id="activeClients">-</div>
+        <div class="stat-card-sub" id="clientsByProgram"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Pending Check-Ins</div>
+        <div class="stat-card-value" id="pendingCheckins">-</div>
+        <div class="stat-card-sub">This week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Programs Generated</div>
+        <div class="stat-card-value" id="programsGenerated">-</div>
+        <div class="stat-card-sub">This week</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-card-label">Escalations</div>
+        <div class="stat-card-value" id="escalationCount">-</div>
+        <div class="stat-card-sub">Awaiting review</div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-header">
+        <span class="section-card-title">Recent Leads</span>
+      </div>
+      <div class="section-card-body">
+        <table class="data-table">
+          <thead>
+            <tr><th>Name</th><th>Phone</th><th>Source</th><th>Interest</th><th>Status</th><th>Date</th></tr>
+          </thead>
+          <tbody id="leadsTable"></tbody>
+        </table>
+        <div class="empty-state" id="leadsEmpty">No leads yet</div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-header">
+        <span class="section-card-title">Active Clients</span>
+      </div>
+      <div class="section-card-body">
+        <table class="data-table">
+          <thead>
+            <tr><th>Name</th><th>Program</th><th>Started</th><th>Paid</th><th>Status</th></tr>
+          </thead>
+          <tbody id="clientsTable"></tbody>
+        </table>
+        <div class="empty-state" id="clientsEmpty">No active clients</div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-header">
+        <span class="section-card-title">Escalations Awaiting Review</span>
+      </div>
+      <div class="section-card-body" id="escalationsBody">
+        <div class="empty-state" id="escalationsEmpty">No pending escalations</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var SUPABASE_URL = '';
+var SUPABASE_ANON_KEY = '';
+var supabase = null;
+var session = null;
+
+function initSupabase() {
+  var meta = document.querySelector('meta[name="supabase-url"]');
+  SUPABASE_URL = (meta && meta.content) || localStorage.getItem('sb_url') || '';
+  SUPABASE_ANON_KEY = localStorage.getItem('sb_key') || '';
+}
+
+async function login() {
+  var email = document.getElementById('loginEmail').value;
+  var password = document.getElementById('loginPassword').value;
+  var errorEl = document.getElementById('loginError');
+
+  if (!SUPABASE_URL) {
+    SUPABASE_URL = prompt('Supabase URL:');
+    SUPABASE_ANON_KEY = prompt('Supabase Anon Key:');
+    localStorage.setItem('sb_url', SUPABASE_URL);
+    localStorage.setItem('sb_key', SUPABASE_ANON_KEY);
+  }
+
+  try {
+    var res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ email: email, password: password })
+    });
+
+    var data = await res.json();
+    if (data.access_token) {
+      session = data;
+      localStorage.setItem('sb_session', JSON.stringify(data));
+      showDashboard();
+    } else {
+      errorEl.style.display = 'block';
+    }
+  } catch (e) {
+    errorEl.style.display = 'block';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('sb_session');
+  session = null;
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+}
+
+function showDashboard() {
+  document.getElementById('loginOverlay').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadData();
+}
+
+async function apiCall(table, query) {
+  var url = SUPABASE_URL + '/rest/v1/' + table + '?' + query;
+  var res = await fetch(url, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + session.access_token,
+      'Prefer': 'count=exact'
+    }
+  });
+  var count = res.headers.get('content-range');
+  var data = await res.json();
+  return { data: data, count: count ? parseInt(count.split('/')[1]) : data.length };
+}
+
+async function loadData() {
+  var today = new Date().toISOString().split('T')[0];
+  var weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  try {
+    var leadsToday = await apiCall('leads', 'created_at=gte.' + today + 'T00:00:00&select=*');
+    document.getElementById('leadsToday').textContent = leadsToday.data.length;
+
+    var leadsWeek = await apiCall('leads', 'created_at=gte.' + weekAgo + '&select=*');
+    document.getElementById('leadsWeek').textContent = leadsWeek.data.length + ' this week';
+
+    var allLeads = await apiCall('leads', 'select=*&order=created_at.desc&limit=20');
+    var convertedLeads = await apiCall('leads', 'status=eq.converted&select=id');
+    var totalLeads = await apiCall('leads', 'select=id');
+
+    var rate = totalLeads.data.length > 0 ? Math.round((convertedLeads.data.length / totalLeads.data.length) * 100) : 0;
+    document.getElementById('conversionRate').textContent = rate + '%';
+
+    var clients = await apiCall('clients', 'status=eq.active&select=*');
+    document.getElementById('activeClients').textContent = clients.data.length;
+
+    var programCounts = {};
+    clients.data.forEach(function(c) { programCounts[c.program] = (programCounts[c.program] || 0) + 1; });
+    document.getElementById('clientsByProgram').textContent = Object.entries(programCounts).map(function(e) { return e[0] + ': ' + e[1]; }).join(', ');
+
+    var programs = await apiCall('programs', 'generated_at=gte.' + weekAgo + '&select=id');
+    document.getElementById('programsGenerated').textContent = programs.data.length;
+
+    renderLeadsTable(allLeads.data);
+    renderClientsTable(clients.data);
+  } catch (e) {
+    console.error('Failed to load data:', e);
+  }
+}
+
+function renderLeadsTable(leads) {
+  var tbody = document.getElementById('leadsTable');
+  var empty = document.getElementById('leadsEmpty');
+
+  if (!leads || leads.length === 0) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = leads.map(function(l) {
+    var phone = l.phone ? l.phone.slice(0, 3) + 'XXX...' + l.phone.slice(-3) : '-';
+    var date = l.created_at ? new Date(l.created_at).toLocaleDateString() : '-';
+    return '<tr><td>' + (l.name || '-') + '</td><td>' + phone + '</td><td>' + (l.source || '-') + '</td><td>' + (l.program_interest || '-') + '</td><td><span class="badge badge-' + l.status + '">' + l.status + '</span></td><td>' + date + '</td></tr>';
+  }).join('');
+}
+
+function renderClientsTable(clients) {
+  var tbody = document.getElementById('clientsTable');
+  var empty = document.getElementById('clientsEmpty');
+
+  if (!clients || clients.length === 0) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = clients.map(function(c) {
+    var started = c.program_started_at ? new Date(c.program_started_at).toLocaleDateString() : '-';
+    return '<tr><td>' + (c.name || '-') + '</td><td>' + (c.program || '-') + '</td><td>' + started + '</td><td>$' + (c.paid_amount || 0) + '</td><td><span class="badge badge-' + c.status + '">' + c.status + '</span></td></tr>';
+  }).join('');
+}
+
+initSupabase();
+var saved = localStorage.getItem('sb_session');
+if (saved) {
+  try {
+    session = JSON.parse(saved);
+    SUPABASE_URL = localStorage.getItem('sb_url');
+    SUPABASE_ANON_KEY = localStorage.getItem('sb_key');
+    if (session && session.access_token) showDashboard();
+  } catch (e) { /* ignore */ }
+}
+</script>
+</body>
+</html>
