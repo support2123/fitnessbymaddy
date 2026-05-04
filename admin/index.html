@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #111111; --surface: #1a1a1a; --surface2: #222222;
+      --gold: #B8965A; --gold-light: #D4AF7A; --gold-dim: rgba(184,150,90,0.15);
+      --white: #ffffff; --grey: #888888; --light: #cccccc;
+      --red: #E74C3C; --green: #2ECC71; --blue: #3498DB;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--white); min-height: 100vh; }
+
+    /* Auth overlay */
+    .auth-overlay {
+      position: fixed; inset: 0; background: var(--bg); z-index: 9999;
+      display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px;
+    }
+    .auth-overlay.hidden { display: none; }
+    .auth-overlay h1 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 3px; color: var(--gold); }
+    .auth-overlay input {
+      width: 300px; padding: 14px 16px; border: 1.5px solid #333; border-radius: 3px;
+      font-size: 15px; font-family: 'DM Sans', sans-serif; color: var(--white); background: var(--surface);
+      outline: none; text-align: center;
+    }
+    .auth-overlay input:focus { border-color: var(--gold); }
+    .auth-overlay button {
+      padding: 12px 40px; background: var(--gold); color: var(--bg); border: none;
+      font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; cursor: pointer;
+      border-radius: 3px;
+    }
+    .auth-error { color: var(--red); font-size: 13px; }
+
+    /* Layout */
+    .header {
+      background: var(--surface); border-bottom: 1px solid #333; padding: 16px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .header-logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px; color: var(--gold); }
+    .header-meta { font-size: 12px; color: var(--grey); }
+    .main { padding: 32px; max-width: 1200px; margin: 0 auto; }
+
+    /* Cards grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid #333; border-radius: 6px; padding: 24px;
+      transition: border-color 0.3s;
+    }
+    .stat-card:hover { border-color: var(--gold); }
+    .stat-card .label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--grey); margin-bottom: 8px; }
+    .stat-card .value { font-family: 'Bebas Neue', sans-serif; font-size: 40px; color: var(--white); line-height: 1; }
+    .stat-card .sub { font-size: 12px; color: var(--gold); margin-top: 4px; }
+
+    /* Sections */
+    .section { background: var(--surface); border: 1px solid #333; border-radius: 6px; margin-bottom: 24px; overflow: hidden; }
+    .section-header {
+      padding: 16px 24px; border-bottom: 1px solid #333;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: var(--gold); }
+    .section-badge { font-size: 11px; background: var(--gold-dim); color: var(--gold); padding: 4px 10px; border-radius: 20px; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 12px 24px; font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--grey); background: var(--surface2); }
+    td { padding: 12px 24px; font-size: 13px; color: var(--light); border-bottom: 1px solid #2a2a2a; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* Program pills */
+    .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; letter-spacing: 0.5px; }
+    .pill-gold { background: var(--gold-dim); color: var(--gold); }
+    .pill-green { background: rgba(46,204,113,0.15); color: var(--green); }
+    .pill-red { background: rgba(231,76,60,0.15); color: var(--red); }
+    .pill-blue { background: rgba(52,152,219,0.15); color: var(--blue); }
+
+    /* Programs bar */
+    .programs-bar { padding: 20px 24px; }
+    .program-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .program-row .name { font-size: 13px; color: var(--light); min-width: 120px; }
+    .program-row .bar-bg { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+    .program-row .bar-fill { height: 100%; background: var(--gold); border-radius: 4px; transition: width 0.5s; }
+    .program-row .count { font-size: 13px; color: var(--gold); min-width: 30px; text-align: right; }
+
+    .loading { text-align: center; padding: 60px; color: var(--grey); font-size: 14px; }
+    .refresh-btn { background: none; border: 1px solid #333; color: var(--grey); padding: 6px 16px; font-size: 12px; cursor: pointer; border-radius: 3px; font-family: 'DM Sans', sans-serif; }
+    .refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    @media (max-width: 768px) {
+      .main { padding: 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .stat-card { padding: 16px; }
+      .stat-card .value { font-size: 28px; }
+      th, td { padding: 10px 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-overlay" id="authOverlay">
+    <h1>MADDY'S DASHBOARD</h1>
+    <input type="password" id="authKey" placeholder="Enter admin key" onkeydown="if(event.key==='Enter')authenticate()">
+    <button onclick="authenticate()">ACCESS</button>
+    <div class="auth-error" id="authError"></div>
+  </div>
+
+  <div id="app" style="display:none;">
+    <div class="header">
+      <div class="header-logo">MADDY'S OPS DASHBOARD</div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <span class="header-meta" id="lastUpdated"></span>
+        <button class="refresh-btn" onclick="loadDashboard()">Refresh</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="label">Leads Today</div><div class="value" id="leadsToday">—</div></div>
+        <div class="stat-card"><div class="label">Leads This Week</div><div class="value" id="leadsWeek">—</div></div>
+        <div class="stat-card"><div class="label">Conversion Rate</div><div class="value" id="convRate">—</div></div>
+        <div class="stat-card"><div class="label">Active Clients</div><div class="value" id="activeClients">—</div><div class="sub" id="totalLeads"></div></div>
+        <div class="stat-card"><div class="label">Programs This Week</div><div class="value" id="progsWeek">—</div></div>
+        <div class="stat-card"><div class="label">Open Escalations</div><div class="value" id="escCount">—</div></div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">CLIENTS BY PROGRAM</div>
+        </div>
+        <div class="programs-bar" id="programsBar">
+          <div class="loading">Loading...</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">PENDING CHECK-INS</div>
+          <span class="section-badge" id="pendingBadge">0</span>
+        </div>
+        <div id="pendingTable"><div class="loading">Loading...</div></div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">ESCALATIONS AWAITING REVIEW</div>
+          <span class="section-badge pill-red" id="escBadge">0</span>
+        </div>
+        <div id="escTable"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var API_KEY = '';
+
+    function authenticate() {
+      API_KEY = document.getElementById('authKey').value.trim();
+      if (!API_KEY) {
+        document.getElementById('authError').textContent = 'Please enter the admin key';
+        return;
+      }
+      document.getElementById('authOverlay').classList.add('hidden');
+      document.getElementById('app').style.display = 'block';
+      loadDashboard();
+    }
+
+    function loadDashboard() {
+      fetch('/api/admin-stats', {
+        headers: { 'Authorization': 'Bearer ' + API_KEY }
+      })
+      .then(function(r) {
+        if (r.status === 401) {
+          document.getElementById('authOverlay').classList.remove('hidden');
+          document.getElementById('app').style.display = 'none';
+          document.getElementById('authError').textContent = 'Invalid key. Try again.';
+          throw new Error('Unauthorized');
+        }
+        return r.json();
+      })
+      .then(function(d) { render(d); })
+      .catch(function(e) { if (e.message !== 'Unauthorized') console.error(e); });
+    }
+
+    function render(d) {
+      document.getElementById('leadsToday').textContent = d.leads_today;
+      document.getElementById('leadsWeek').textContent = d.leads_this_week;
+      document.getElementById('convRate').textContent = d.conversion_rate;
+      document.getElementById('activeClients').textContent = d.active_clients;
+      document.getElementById('totalLeads').textContent = d.total_leads + ' total leads';
+      document.getElementById('progsWeek').textContent = d.programs_generated_this_week;
+      document.getElementById('escCount').textContent = d.escalations.length;
+      document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+      renderPrograms(d.clients_by_program, d.active_clients);
+      renderPending(d.pending_checkins);
+      renderEscalations(d.escalations);
+    }
+
+    var PROGRAM_LABELS = {
+      '6wk_gym': '6-Week Gym', '6wk_home': '6-Week Home', '12wk': '12-Week Custom',
+      'pcos': 'PCOS Warrior', '40plus': '40+ Strong', 'zoom_trial': 'Zoom Trial', 'zoom_pack': 'Zoom Pack'
+    };
+
+    function renderPrograms(map, total) {
+      var el = document.getElementById('programsBar');
+      if (!map || Object.keys(map).length === 0) {
+        el.innerHTML = '<div style="padding:20px;color:#888;font-size:13px;">No active clients yet</div>';
+        return;
+      }
+      var html = '';
+      var maxVal = Math.max.apply(null, Object.values(map));
+      for (var key in map) {
+        var pct = maxVal > 0 ? (map[key] / maxVal * 100) : 0;
+        html += '<div class="program-row">' +
+          '<span class="name">' + (PROGRAM_LABELS[key] || key) + '</span>' +
+          '<div class="bar-bg"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+          '<span class="count">' + map[key] + '</span></div>';
+      }
+      el.innerHTML = html;
+    }
+
+    function renderPending(list) {
+      document.getElementById('pendingBadge').textContent = list.length;
+      var el = document.getElementById('pendingTable');
+      if (!list || list.length === 0) {
+        el.innerHTML = '<div style="padding:20px;color:#888;font-size:13px;">All check-ins submitted</div>';
+        return;
+      }
+      var html = '<table><thead><tr><th>Name</th><th>Phone</th><th>Program</th><th>Week</th></tr></thead><tbody>';
+      list.forEach(function(item) {
+        html += '<tr><td>' + (item.name || '—') + '</td>' +
+          '<td>' + item.phone + '</td>' +
+          '<td><span class="pill pill-gold">' + (PROGRAM_LABELS[item.program] || item.program) + '</span></td>' +
+          '<td>' + item.week_no + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      el.innerHTML = html;
+    }
+
+    function renderEscalations(list) {
+      document.getElementById('escBadge').textContent = list.length;
+      var el = document.getElementById('escTable');
+      if (!list || list.length === 0) {
+        el.innerHTML = '<div style="padding:20px;color:#888;font-size:13px;">No open escalations</div>';
+        return;
+      }
+      var html = '<table><thead><tr><th>Phone</th><th>Reason</th><th>Message</th><th>When</th></tr></thead><tbody>';
+      list.forEach(function(esc) {
+        var ago = timeAgo(new Date(esc.created_at));
+        html += '<tr><td>' + esc.phone + '</td>' +
+          '<td><span class="pill pill-red">' + esc.reason + '</span></td>' +
+          '<td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (esc.message || '—') + '</td>' +
+          '<td>' + ago + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      el.innerHTML = html;
+    }
+
+    function timeAgo(date) {
+      var diff = (Date.now() - date.getTime()) / 1000;
+      if (diff < 60) return 'just now';
+      if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+      if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+      return Math.floor(diff / 86400) + 'd ago';
+    }
+  </script>
+</body>
+</html>
