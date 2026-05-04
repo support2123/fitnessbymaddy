@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: #0f0f0f; color: #fff; min-height: 100vh; }
+    .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .login-box { max-width: 360px; width: 100%; text-align: center; }
+    .login-box h1 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: #D4AF7A; letter-spacing: 3px; margin-bottom: 24px; }
+    .login-box input { width: 100%; padding: 14px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 15px; margin-bottom: 12px; }
+    .login-box button { width: 100%; padding: 14px; background: #B8965A; border: none; border-radius: 8px; color: #1a1a1a; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; cursor: pointer; }
+    .dashboard { display: none; padding: 24px; max-width: 1200px; margin: 0 auto; }
+    .dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+    .dash-header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: #D4AF7A; letter-spacing: 2px; }
+    .dash-header button { background: none; border: 1px solid #333; color: #999; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: #1a1a1a; border-radius: 12px; padding: 24px; border: 1px solid #222; }
+    .stat-card .num { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: #D4AF7A; }
+    .stat-card .label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+    .section { background: #1a1a1a; border-radius: 12px; padding: 24px; margin-bottom: 20px; border: 1px solid #222; }
+    .section h2 { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #fff; letter-spacing: 1px; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; padding: 8px 12px; border-bottom: 1px solid #222; }
+    td { padding: 12px; font-size: 14px; color: #ccc; border-bottom: 1px solid #1f1f1f; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; text-transform: uppercase; }
+    .badge-new { background: #1a2a3a; color: #5ba3d9; }
+    .badge-qualified { background: #2a2a1a; color: #d4af7a; }
+    .badge-converted { background: #1a2a1a; color: #5bd97a; }
+    .badge-dropped { background: #2a1a1a; color: #d95b5b; }
+    .badge-active { background: #1a2a1a; color: #5bd97a; }
+    .empty { color: #444; text-align: center; padding: 32px; }
+    .escalation { background: #2a1a1a; border: 1px solid #4a2020; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; }
+    .escalation .reason { color: #d95b5b; font-weight: 500; font-size: 13px; }
+    .escalation .detail { color: #999; font-size: 12px; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <h1>FITNESSBYMADDY ADMIN</h1>
+      <input type="email" id="loginEmail" placeholder="Email">
+      <input type="password" id="loginPassword" placeholder="Password">
+      <button onclick="login()">LOGIN</button>
+      <p id="loginError" style="color:#d95b5b;font-size:13px;margin-top:12px;display:none;"></p>
+    </div>
+  </div>
+
+  <div class="dashboard" id="dashboard">
+    <div class="dash-header">
+      <h1>DASHBOARD</h1>
+      <button onclick="logout()">Logout</button>
+    </div>
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="section">
+      <h2>RECENT LEADS</h2>
+      <table id="leadsTable">
+        <thead><tr><th>Name</th><th>Phone</th><th>Source</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>ACTIVE CLIENTS</h2>
+      <table id="clientsTable">
+        <thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Status</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>PENDING ESCALATIONS</h2>
+      <div id="escalationsList"></div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = window.__SUPABASE_URL__ || '';
+    const SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY__ || '';
+    let session = null;
+
+    async function login() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const errEl = document.getElementById('loginError');
+
+      try {
+        const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json();
+        if (data.access_token) {
+          session = data;
+          localStorage.setItem('admin_session', JSON.stringify(data));
+          showDashboard();
+        } else {
+          errEl.textContent = 'Invalid credentials';
+          errEl.style.display = 'block';
+        }
+      } catch {
+        errEl.textContent = 'Connection error';
+        errEl.style.display = 'block';
+      }
+    }
+
+    function logout() {
+      session = null;
+      localStorage.removeItem('admin_session');
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+    }
+
+    async function showDashboard() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      await loadStats();
+      await loadLeads();
+      await loadClients();
+    }
+
+    async function supaFetch(table, query = '') {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + session.access_token,
+        },
+      });
+      return res.json();
+    }
+
+    async function loadStats() {
+      const leads = await supaFetch('leads', 'select=id,status,created_at');
+      const clients = await supaFetch('clients', 'select=id,status,program');
+      const programs = await supaFetch('programs', 'select=id,generated_at');
+      const checkins = await supaFetch('checkins', 'select=id,form_submitted_at');
+
+      const today = new Date().toISOString().split('T')[0];
+      const thisWeekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      const leadsToday = (leads || []).filter(l => l.created_at && l.created_at.startsWith(today)).length;
+      const leadsWeek = (leads || []).filter(l => l.created_at > thisWeekStart).length;
+      const converted = (leads || []).filter(l => l.status === 'converted').length;
+      const totalLeads = (leads || []).length;
+      const convRate = totalLeads > 0 ? Math.round((converted / totalLeads) * 100) : 0;
+      const activeClients = (clients || []).filter(c => c.status === 'active').length;
+      const programsWeek = (programs || []).filter(p => p.generated_at > thisWeekStart).length;
+      const pendingCheckins = activeClients - (checkins || []).filter(c => c.form_submitted_at > thisWeekStart).length;
+
+      document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card"><div class="num">${leadsToday}</div><div class="label">New Leads Today</div></div>
+        <div class="stat-card"><div class="num">${leadsWeek}</div><div class="label">Leads This Week</div></div>
+        <div class="stat-card"><div class="num">${convRate}%</div><div class="label">Conversion Rate</div></div>
+        <div class="stat-card"><div class="num">${activeClients}</div><div class="label">Active Clients</div></div>
+        <div class="stat-card"><div class="num">${programsWeek}</div><div class="label">Programs Generated</div></div>
+        <div class="stat-card"><div class="num">${Math.max(0, pendingCheckins)}</div><div class="label">Pending Check-ins</div></div>
+      `;
+    }
+
+    async function loadLeads() {
+      const leads = await supaFetch('leads', 'select=*&order=created_at.desc&limit=20');
+      const tbody = document.querySelector('#leadsTable tbody');
+
+      if (!leads || leads.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">No leads yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = leads.map(l => `
+        <tr>
+          <td>${l.name || '—'}</td>
+          <td>${maskPhone(l.phone)}</td>
+          <td>${l.source || '—'}</td>
+          <td><span class="badge badge-${l.status}">${l.status}</span></td>
+          <td>${new Date(l.created_at).toLocaleDateString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadClients() {
+      const clients = await supaFetch('clients', 'select=*&order=program_started_at.desc&limit=20');
+      const tbody = document.querySelector('#clientsTable tbody');
+
+      if (!clients || clients.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty">No clients yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = clients.map(c => `
+        <tr>
+          <td>${c.name || '—'}</td>
+          <td>${(c.program || '').replace(/_/g, ' ')}</td>
+          <td>${new Date(c.program_started_at).toLocaleDateString()}</td>
+          <td><span class="badge badge-${c.status}">${c.status}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    function maskPhone(phone) {
+      if (!phone || phone.length < 6) return '***';
+      return phone.slice(0, 4) + 'XXX...' + phone.slice(-3);
+    }
+
+    // Auto-login if session exists
+    const saved = localStorage.getItem('admin_session');
+    if (saved) {
+      session = JSON.parse(saved);
+      showDashboard();
+    }
+  </script>
+</body>
+</html>
