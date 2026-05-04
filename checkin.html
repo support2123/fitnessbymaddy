@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In | Fitness by Maddy</title>
+  <meta name="description" content="Submit your weekly progress check-in for your FitnessByMaddy coaching program.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="form-page">
+  <div class="form-container">
+
+    <div class="form-header">
+      <p class="section-eyebrow">Weekly Progress</p>
+      <h1 class="section-title">Week <em id="weekDisplay">—</em> Check-In</h1>
+      <p class="section-body">Track your progress so Maddy can fine-tune your program. Honest data = better results.</p>
+    </div>
+
+    <div class="form-error" id="formError"></div>
+
+    <form id="checkinForm" class="form-card">
+      <input type="hidden" id="clientId" name="client_id">
+      <input type="hidden" id="weekNo" name="week_no">
+
+      <h3 class="form-section-title">Body Metrics</h3>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Current Weight (kg) <span class="required">*</span></label>
+          <input class="form-input" type="number" name="weight" required min="30" max="250" step="0.1" placeholder="e.g. 71.2">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Waist (cm)</label>
+          <input class="form-input" type="number" name="waist" min="40" max="200" step="0.1" placeholder="e.g. 78.5">
+        </div>
+      </div>
+
+      <h3 class="form-section-title">How Was This Week?</h3>
+
+      <div class="form-range-group">
+        <label class="form-label">Compliance Score <span class="required">*</span> <span class="range-value" id="complianceVal">5</span></label>
+        <input class="form-range" type="range" name="compliance_score" min="1" max="10" value="5" id="complianceRange">
+        <div class="form-range-labels">
+          <span>Barely followed</span>
+          <span>Nailed everything</span>
+        </div>
+      </div>
+
+      <div class="form-range-group">
+        <label class="form-label">Energy Level <span class="required">*</span> <span class="range-value" id="energyVal">5</span></label>
+        <input class="form-range" type="range" name="energy" min="1" max="10" value="5" id="energyRange">
+        <div class="form-range-labels">
+          <span>Exhausted</span>
+          <span>Full of energy</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Any Issues, Struggles, or Questions?</label>
+        <textarea class="form-textarea" name="issues" rows="3" placeholder="e.g. shoulder felt tight during presses, struggled with meal prep on Thursday, slept badly..."></textarea>
+      </div>
+
+      <h3 class="form-section-title">Progress Photos</h3>
+
+      <div class="form-photos" id="photoDrop">
+        <div class="form-photos-icon">&#128247;</div>
+        <div class="form-photos-text">Tap to upload 3 photos (front, side, back)</div>
+        <input type="file" class="form-photos-input" id="photoInput" accept="image/*" multiple>
+      </div>
+      <div class="photo-preview" id="photoPreview"></div>
+
+      <div style="margin-top: 24px;">
+        <button type="submit" class="form-submit" id="submitBtn">Submit Check-In</button>
+        <p style="font-size: 11px; color: var(--mid-grey); text-align: center; margin-top: 12px;">Your check-in data is private and only visible to your coach.</p>
+      </div>
+    </form>
+
+    <div class="form-success" id="formSuccess">
+      <div class="form-success-icon">&#10003;</div>
+      <h2>Check-In Complete!</h2>
+      <p>Great job staying on track. Maddy will review your progress and your updated program will be sent via WhatsApp.</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w');
+
+  if (clientId) document.getElementById('clientId').value = clientId;
+  if (weekNo) {
+    document.getElementById('weekNo').value = weekNo;
+    document.getElementById('weekDisplay').textContent = weekNo;
+  }
+
+  // Range sliders
+  var compRange = document.getElementById('complianceRange');
+  var compVal = document.getElementById('complianceVal');
+  compRange.addEventListener('input', function() { compVal.textContent = this.value; });
+
+  var energyRange = document.getElementById('energyRange');
+  var energyVal = document.getElementById('energyVal');
+  energyRange.addEventListener('input', function() { energyVal.textContent = this.value; });
+
+  // Photo upload
+  var photoDrop = document.getElementById('photoDrop');
+  var photoInput = document.getElementById('photoInput');
+  var photoPreview = document.getElementById('photoPreview');
+  var uploadedUrls = [];
+
+  photoDrop.addEventListener('click', function() { photoInput.click(); });
+
+  photoInput.addEventListener('change', function() {
+    photoPreview.innerHTML = '';
+    var files = this.files;
+    for (var i = 0; i < Math.min(files.length, 3); i++) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = document.createElement('img');
+        img.src = e.target.result;
+        photoPreview.appendChild(img);
+      };
+      reader.readAsDataURL(files[i]);
+    }
+  });
+
+  // Form submit
+  document.getElementById('checkinForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('submitBtn');
+    var errorEl = document.getElementById('formError');
+    btn.disabled = true;
+    btn.textContent = 'SUBMITTING...';
+    errorEl.classList.remove('visible');
+
+    var formData = new FormData(this);
+    var data = {};
+    formData.forEach(function(value, key) {
+      if (key !== 'photos') data[key] = value;
+    });
+    data.photos_urls = uploadedUrls;
+
+    fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(function(res) { return res.json().then(function(j) { return { ok: res.ok, body: j }; }); })
+    .then(function(result) {
+      if (result.ok && result.body.success) {
+        document.getElementById('checkinForm').style.display = 'none';
+        document.getElementById('formSuccess').classList.add('visible');
+      } else {
+        throw new Error(result.body.error || 'Submission failed');
+      }
+    })
+    .catch(function(err) {
+      errorEl.textContent = err.message || 'Something went wrong. Please try again.';
+      errorEl.classList.add('visible');
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT CHECK-IN';
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
