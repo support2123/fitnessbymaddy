@@ -56,11 +56,11 @@ module.exports = async function handler(req, res) {
       week_no,
       weight,
       waist,
-      compliance_score,
-      energy,
       issues,
       photos,
     } = body;
+    const compliance_score = body.compliance_score || body.training_compliance;
+    const energy = body.energy || body.energy_level;
 
     /* ── 2. Verify client exists and is active ── */
     const { data: client, error: clientErr } = await supabase

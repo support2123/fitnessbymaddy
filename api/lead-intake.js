@@ -15,24 +15,34 @@ module.exports = async function handler(req, res) {
     const body = await parseBody(req);
 
     // Validate required fields
-    const missing = validateFields(body, ["lead_id", "name", "email"]);
-    if (missing.length > 0) {
+    const name = body.name || body.full_name;
+    const email = body.email;
+    const leadId = body.lead_id;
+
+    if (!leadId || !name || !email) {
+      const missing = [];
+      if (!leadId) missing.push("lead_id");
+      if (!name) missing.push("name");
+      if (!email) missing.push("email");
       return respond(res, 400, {
         error: "Missing required fields",
         fields: missing,
       });
     }
 
-    const { lead_id, name, email, age, goal, injuries, diet_pref, schedule, experience_level } = body;
+    const lead_id = leadId;
 
-    // Build the intake data jsonb payload (all optional fields)
     const intakeData = {
-      age: age || null,
-      goal: goal || null,
-      injuries: injuries || null,
-      diet_pref: diet_pref || null,
-      schedule: schedule || null,
-      experience_level: experience_level || null,
+      age: body.age || null,
+      gender: body.gender || null,
+      goal: body.goal || body.primary_goal || null,
+      injuries: body.injuries || null,
+      diet_pref: body.diet_pref || body.diet_preference || null,
+      schedule: body.schedule || body.training_days || null,
+      experience_level: body.experience_level || null,
+      gym_access: body.gym_access || null,
+      additional_notes: body.additional_notes || null,
+      phone: body.phone || null,
       submitted_at: new Date().toISOString(),
     };
 
