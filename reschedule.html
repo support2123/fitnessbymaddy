@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+  <div class="form-container">
+    <div class="form-header">
+      <h1>Reschedule Your Session</h1>
+      <p>Life happens! Pick a new time that works for you.</p>
+    </div>
+
+    <form id="rescheduleForm" novalidate>
+      <input type="hidden" id="clientId" name="client_id">
+
+      <div class="form-section">
+        <div class="field">
+          <label for="reason">Reason for Rescheduling</label>
+          <select id="reason" name="reason">
+            <option value="">Select</option>
+            <option value="sick">Feeling unwell</option>
+            <option value="work">Work conflict</option>
+            <option value="travel">Travelling</option>
+            <option value="personal">Personal commitment</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="preferred_date">Preferred Date *</label>
+          <input type="date" id="preferred_date" name="preferred_date" required>
+        </div>
+        <div class="field">
+          <label for="preferred_time">Preferred Time *</label>
+          <select id="preferred_time" name="preferred_time" required>
+            <option value="">Select</option>
+            <option value="06:00">6:00 AM</option>
+            <option value="07:00">7:00 AM</option>
+            <option value="08:00">8:00 AM</option>
+            <option value="09:00">9:00 AM</option>
+            <option value="10:00">10:00 AM</option>
+            <option value="17:00">5:00 PM</option>
+            <option value="18:00">6:00 PM</option>
+            <option value="19:00">7:00 PM</option>
+            <option value="20:00">8:00 PM</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="notes">Anything else?</label>
+          <textarea id="notes" name="notes" rows="2" placeholder="Optional notes..."></textarea>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit">Request Reschedule</button>
+      <div id="formMessage" class="form-message"></div>
+    </form>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById('clientId').value = params.get('c') || '';
+
+    const dateInput = document.getElementById('preferred_date');
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    dateInput.min = tomorrow.toISOString().split('T')[0];
+
+    document.getElementById('rescheduleForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn = this.querySelector('.btn-submit');
+      const msg = document.getElementById('formMessage');
+      btn.disabled = true;
+      btn.textContent = 'Requesting...';
+      msg.textContent = '';
+
+      const formData = new FormData(this);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const res = await fetch('/api/reschedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (res.ok) {
+          msg.textContent = 'Reschedule requested! You\'ll get a confirmation on WhatsApp.';
+          msg.className = 'form-message success';
+          this.reset();
+        } else {
+          throw new Error(result.error || 'Request failed');
+        }
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.className = 'form-message error';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Request Reschedule';
+      }
+    });
+  </script>
+</body>
+</html>

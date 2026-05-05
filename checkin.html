@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+  <div class="form-container">
+    <div class="form-header">
+      <h1>Weekly Check-in</h1>
+      <p>Quick update so we can dial in your next week perfectly.</p>
+    </div>
+
+    <form id="checkinForm" novalidate>
+      <input type="hidden" id="clientId" name="client_id">
+      <input type="hidden" id="weekNo" name="week_no">
+
+      <div class="week-badge" id="weekBadge">Week —</div>
+
+      <div class="form-section">
+        <h2>Body Stats</h2>
+        <div class="field-row">
+          <div class="field">
+            <label for="weight">Weight (kg) *</label>
+            <input type="number" id="weight" name="weight" step="0.1" min="30" max="250" required>
+          </div>
+          <div class="field">
+            <label for="waist">Waist (inches)</label>
+            <input type="number" id="waist" name="waist" step="0.1" min="20" max="60">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h2>How Was Your Week?</h2>
+        <div class="field">
+          <label for="compliance_score">Workout Compliance (1-10) *</label>
+          <input type="range" id="compliance_score" name="compliance_score" min="1" max="10" value="7" required>
+          <div class="range-labels"><span>Missed most</span><span>Nailed all</span></div>
+        </div>
+        <div class="field">
+          <label for="energy">Energy Level (1-10) *</label>
+          <input type="range" id="energy" name="energy" min="1" max="10" value="6" required>
+          <div class="range-labels"><span>Drained</span><span>Fired up</span></div>
+        </div>
+        <div class="field">
+          <label for="issues">Any issues, pain, or challenges?</label>
+          <textarea id="issues" name="issues" rows="3" placeholder="Sore knee, bad sleep, skipped meals, work stress..."></textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h2>Progress Photos</h2>
+        <p class="section-note">Front, side, back — same lighting as last week if possible.</p>
+        <div class="field">
+          <label for="photos">Upload Photos (max 3)</label>
+          <input type="file" id="photos" name="photos" accept="image/*" multiple>
+          <div id="photoPreview" class="photo-preview"></div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit">Submit Check-in</button>
+      <div id="formMessage" class="form-message"></div>
+    </form>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const clientId = params.get('c') || '';
+    const weekNo = params.get('w') || '';
+    document.getElementById('clientId').value = clientId;
+    document.getElementById('weekNo').value = weekNo;
+    document.getElementById('weekBadge').textContent = 'Week ' + (weekNo || '—');
+
+    document.getElementById('photos').addEventListener('change', function() {
+      const preview = document.getElementById('photoPreview');
+      preview.innerHTML = '';
+      for (const file of this.files) {
+        if (preview.children.length >= 3) break;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.getElementById('checkinForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn = this.querySelector('.btn-submit');
+      const msg = document.getElementById('formMessage');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+      msg.textContent = '';
+
+      try {
+        let photoUrls = [];
+        const files = document.getElementById('photos').files;
+        if (files.length > 0) {
+          for (let i = 0; i < Math.min(files.length, 3); i++) {
+            const formData = new FormData();
+            formData.append('file', files[i]);
+            formData.append('client_id', clientId);
+            formData.append('week_no', weekNo);
+            const uploadRes = await fetch('/api/upload-photo', {
+              method: 'POST',
+              body: formData
+            });
+            if (uploadRes.ok) {
+              const { url } = await uploadRes.json();
+              photoUrls.push(url);
+            }
+          }
+        }
+
+        const data = {
+          client_id: clientId,
+          week_no: weekNo,
+          weight: document.getElementById('weight').value,
+          waist: document.getElementById('waist').value || null,
+          compliance_score: document.getElementById('compliance_score').value,
+          energy: document.getElementById('energy').value,
+          issues: document.getElementById('issues').value || null,
+          photos_urls: photoUrls
+        };
+
+        const res = await fetch('/api/checkin-submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (res.ok) {
+          msg.textContent = 'Check-in submitted! Your updated program is on its way.';
+          msg.className = 'form-message success';
+          this.reset();
+          document.getElementById('photoPreview').innerHTML = '';
+        } else {
+          throw new Error(result.error || 'Submission failed');
+        }
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.className = 'form-message error';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit Check-in';
+      }
+    });
+  </script>
+</body>
+</html>
