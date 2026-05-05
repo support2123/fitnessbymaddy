@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: #111; color: #fff; min-height: 100vh; }
+    .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-box { background: #1a1a1a; padding: 48px; border-radius: 8px; width: 100%; max-width: 360px; text-align: center; }
+    .login-box h1 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: #B8965A; letter-spacing: 3px; margin-bottom: 24px; }
+    .login-input { width: 100%; padding: 14px 16px; background: #222; border: 1.5px solid #333; border-radius: 4px; font-size: 15px; font-family: 'DM Sans', sans-serif; color: #fff; outline: none; margin-bottom: 16px; }
+    .login-input:focus { border-color: #B8965A; }
+    .login-btn { width: 100%; padding: 14px; background: #B8965A; color: #111; border: none; border-radius: 4px; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; cursor: pointer; }
+    .login-btn:hover { opacity: 0.9; }
+
+    .dashboard { display: none; padding: 24px; max-width: 1200px; margin: 0 auto; }
+    .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid #222; }
+    .dash-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: #B8965A; letter-spacing: 3px; }
+    .dash-logout { background: none; border: 1px solid #333; color: #999; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; letter-spacing: 1px; }
+    .dash-logout:hover { border-color: #B8965A; color: #B8965A; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: #1a1a1a; padding: 24px; border-radius: 8px; border: 1px solid #222; }
+    .stat-card .value { font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: #B8965A; line-height: 1; }
+    .stat-card .label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 8px; }
+
+    .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #fff; letter-spacing: 2px; margin: 32px 0 16px; }
+    .data-table { width: 100%; border-collapse: collapse; background: #1a1a1a; border-radius: 8px; overflow: hidden; }
+    .data-table th { text-align: left; padding: 12px 16px; background: #222; color: #B8965A; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+    .data-table td { padding: 12px 16px; border-bottom: 1px solid #222; font-size: 13px; color: #ccc; }
+    .data-table tr:hover td { background: #1f1f1f; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-new { background: #1a3a1a; color: #4ade80; }
+    .badge-qualified { background: #1a2a3a; color: #60a5fa; }
+    .badge-converted { background: #2a2a1a; color: #B8965A; }
+    .badge-dropped { background: #2a1a1a; color: #f87171; }
+    .badge-active { background: #1a3a1a; color: #4ade80; }
+
+    .escalation-card { background: #2a1515; border: 1px solid #4a2020; padding: 16px; border-radius: 8px; margin-bottom: 12px; }
+    .escalation-card .esc-type { font-size: 11px; color: #f87171; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+    .escalation-card .esc-details { font-size: 13px; color: #ccc; margin-top: 4px; }
+    .escalation-card .esc-time { font-size: 11px; color: #666; margin-top: 4px; }
+
+    .empty-state { text-align: center; padding: 40px; color: #666; font-size: 14px; }
+    .refresh-btn { background: #222; border: 1px solid #333; color: #999; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .refresh-btn:hover { border-color: #B8965A; color: #B8965A; }
+  </style>
+</head>
+<body>
+  <!-- Login Screen -->
+  <div class="login-screen" id="login-screen">
+    <div class="login-box">
+      <h1>MADDY ADMIN</h1>
+      <input type="password" class="login-input" id="admin-pass" placeholder="Enter admin password">
+      <button class="login-btn" onclick="login()">ACCESS DASHBOARD</button>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="dashboard" id="dashboard">
+    <div class="dash-header">
+      <div class="dash-title">COACHING DASHBOARD</div>
+      <div>
+        <button class="refresh-btn" onclick="loadDashboard()">Refresh</button>
+        <button class="dash-logout" onclick="logout()">LOGOUT</button>
+      </div>
+    </div>
+
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="value" id="stat-leads-today">—</div><div class="label">New Leads Today</div></div>
+      <div class="stat-card"><div class="value" id="stat-leads-week">—</div><div class="label">Leads This Week</div></div>
+      <div class="stat-card"><div class="value" id="stat-conversion">—</div><div class="label">Conversion Rate</div></div>
+      <div class="stat-card"><div class="value" id="stat-active">—</div><div class="label">Active Clients</div></div>
+      <div class="stat-card"><div class="value" id="stat-checkins">—</div><div class="label">Pending Check-ins</div></div>
+      <div class="stat-card"><div class="value" id="stat-programs">—</div><div class="label">Programs This Week</div></div>
+    </div>
+
+    <div class="section-title">ESCALATIONS</div>
+    <div id="escalations-list"><div class="empty-state">No escalations</div></div>
+
+    <div class="section-title">RECENT LEADS</div>
+    <table class="data-table">
+      <thead><tr><th>Phone</th><th>Name</th><th>Status</th><th>Program</th><th>Market</th><th>Date</th></tr></thead>
+      <tbody id="leads-table"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
+    </table>
+
+    <div class="section-title">ACTIVE CLIENTS</div>
+    <table class="data-table">
+      <thead><tr><th>Name</th><th>Program</th><th>Week</th><th>Last Check-in</th><th>Status</th></tr></thead>
+      <tbody id="clients-table"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+    </table>
+  </div>
+
+  <script>
+    const SUPABASE_URL = '%%SUPABASE_URL%%';
+    const SUPABASE_ANON_KEY = '%%SUPABASE_ANON_KEY%%';
+    let supabaseClient = null;
+
+    function login() {
+      const pass = document.getElementById('admin-pass').value;
+      if (pass === 'maddy2024admin') {
+        sessionStorage.setItem('admin_auth', 'true');
+        showDashboard();
+      } else {
+        alert('Invalid password');
+      }
+    }
+
+    function logout() {
+      sessionStorage.removeItem('admin_auth');
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'flex';
+    }
+
+    function showDashboard() {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadDashboard();
+    }
+
+    async function loadDashboard() {
+      try {
+        const res = await fetch('/api/admin/stats', {
+          headers: { 'x-admin-key': sessionStorage.getItem('admin_auth') ? 'maddy2024admin' : '' }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        document.getElementById('stat-leads-today').textContent = data.leads_today || 0;
+        document.getElementById('stat-leads-week').textContent = data.leads_week || 0;
+        document.getElementById('stat-conversion').textContent = (data.conversion_rate || 0) + '%';
+        document.getElementById('stat-active').textContent = data.active_clients || 0;
+        document.getElementById('stat-checkins').textContent = data.pending_checkins || 0;
+        document.getElementById('stat-programs').textContent = data.programs_week || 0;
+
+        // Render leads
+        const leadsBody = document.getElementById('leads-table');
+        if (data.recent_leads && data.recent_leads.length > 0) {
+          leadsBody.innerHTML = data.recent_leads.map(l => `
+            <tr>
+              <td>${maskPhone(l.phone)}</td>
+              <td>${l.name || '—'}</td>
+              <td><span class="badge badge-${l.status}">${l.status}</span></td>
+              <td>${l.program_interest || '—'}</td>
+              <td>${l.market || '—'}</td>
+              <td>${new Date(l.created_at).toLocaleDateString()}</td>
+            </tr>
+          `).join('');
+        } else {
+          leadsBody.innerHTML = '<tr><td colspan="6" class="empty-state">No leads yet</td></tr>';
+        }
+
+        // Render clients
+        const clientsBody = document.getElementById('clients-table');
+        if (data.active_clients_list && data.active_clients_list.length > 0) {
+          clientsBody.innerHTML = data.active_clients_list.map(c => `
+            <tr>
+              <td>${c.name || maskPhone(c.phone)}</td>
+              <td>${c.program}</td>
+              <td>Week ${c.current_week || '—'}</td>
+              <td>${c.last_checkin ? new Date(c.last_checkin).toLocaleDateString() : 'Never'}</td>
+              <td><span class="badge badge-active">${c.status}</span></td>
+            </tr>
+          `).join('');
+        } else {
+          clientsBody.innerHTML = '<tr><td colspan="5" class="empty-state">No active clients</td></tr>';
+        }
+
+        // Render escalations
+        const escList = document.getElementById('escalations-list');
+        if (data.escalations && data.escalations.length > 0) {
+          escList.innerHTML = data.escalations.map(e => `
+            <div class="escalation-card">
+              <div class="esc-type">${e.template_name || 'Alert'}</div>
+              <div class="esc-details">${e.body || ''}</div>
+              <div class="esc-time">${new Date(e.sent_at).toLocaleString()}</div>
+            </div>
+          `).join('');
+        } else {
+          escList.innerHTML = '<div class="empty-state">No escalations - all clear!</div>';
+        }
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+      }
+    }
+
+    function maskPhone(phone) {
+      if (!phone || phone.length < 6) return '***';
+      return phone.slice(0, 3) + 'XXX...' + phone.slice(-3);
+    }
+
+    // Auto-login if session exists
+    if (sessionStorage.getItem('admin_auth')) {
+      showDashboard();
+    }
+  </script>
+</body>
+</html>
