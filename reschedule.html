@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session — Fitness by Maddy</title>
+  <meta name="description" content="Reschedule your missed or upcoming session.">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<div class="form-page">
+  <div class="form-header">
+    <a class="form-logo" href="index.html">Fitness by Maddy</a>
+    <h1 class="form-title">Reschedule <em>Session</em></h1>
+    <p class="form-subtitle">Missed a session or need to move one? No worries — pick a new time that works for you.</p>
+  </div>
+
+  <div id="formMessage" class="form-message"></div>
+
+  <form id="rescheduleForm" novalidate>
+    <input type="hidden" id="clientId" name="client_id">
+
+    <div class="form-section">
+      <div class="form-section-title">Your Details</div>
+      <div class="field">
+        <label>Name <span class="required">*</span></label>
+        <input type="text" name="name" required placeholder="Your name">
+      </div>
+      <div class="field">
+        <label>Phone Number <span class="required">*</span></label>
+        <input type="tel" name="phone" required placeholder="+91 98765 43210">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Reschedule Details</div>
+      <div class="field">
+        <label>Session Type</label>
+        <select name="session_type">
+          <option value="">Select</option>
+          <option value="zoom_1on1">1-on-1 Zoom Session</option>
+          <option value="zoom_trial">Trial Zoom Session</option>
+          <option value="checkin_call">Check-In Call</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Preferred Date <span class="required">*</span></label>
+        <input type="date" name="preferred_date" required>
+      </div>
+      <div class="field">
+        <label>Preferred Time (IST) <span class="required">*</span></label>
+        <select name="preferred_time" required>
+          <option value="">Select time slot</option>
+          <option value="07:00">7:00 AM</option>
+          <option value="08:00">8:00 AM</option>
+          <option value="09:00">9:00 AM</option>
+          <option value="10:00">10:00 AM</option>
+          <option value="11:00">11:00 AM</option>
+          <option value="16:00">4:00 PM</option>
+          <option value="17:00">5:00 PM</option>
+          <option value="18:00">6:00 PM</option>
+          <option value="19:00">7:00 PM</option>
+          <option value="20:00">8:00 PM</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Reason (Optional)</label>
+        <textarea name="reason" placeholder="E.g., work conflict, wasn't feeling well..."></textarea>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-submit" id="submitBtn">Request Reschedule</button>
+  </form>
+
+  <div id="successScreen" class="success-screen">
+    <div class="success-icon">📅</div>
+    <h2 class="success-title">Request Sent!</h2>
+    <p class="success-text">We've received your reschedule request. You'll get a confirmation on WhatsApp within 24 hours.</p>
+  </div>
+
+  <div class="form-footer">
+    <p>© 2025 Fitness by Maddy · fitnessbymaddy.com</p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  if (clientId) document.getElementById('clientId').value = clientId;
+
+  var dateInput = document.querySelector('input[name="preferred_date"]');
+  var today = new Date().toISOString().split('T')[0];
+  dateInput.setAttribute('min', today);
+
+  var form = document.getElementById('rescheduleForm');
+  var msg = document.getElementById('formMessage');
+  var btn = document.getElementById('submitBtn');
+  var success = document.getElementById('successScreen');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    msg.className = 'form-message';
+    msg.style.display = 'none';
+
+    var data = {};
+    var formData = new FormData(form);
+    formData.forEach(function(val, key) { data[key] = val; });
+
+    if (!data.name || !data.phone || !data.preferred_date || !data.preferred_time) {
+      msg.textContent = 'Please fill in all required fields.';
+      msg.className = 'form-message error';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+
+    fetch('/api/send-whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: '+917082478374',
+        text: 'Reschedule Request:\nClient: ' + data.name + '\nPhone: ' + data.phone + '\nSession: ' + (data.session_type || 'N/A') + '\nDate: ' + data.preferred_date + '\nTime: ' + data.preferred_time + '\nReason: ' + (data.reason || 'N/A'),
+        force: true
+      })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+      if (result.ok) {
+        form.style.display = 'none';
+        success.classList.add('visible');
+      } else {
+        msg.textContent = 'Something went wrong. Please try again.';
+        msg.className = 'form-message error';
+        btn.disabled = false;
+        btn.textContent = 'Request Reschedule';
+      }
+    })
+    .catch(function() {
+      msg.textContent = 'Network error. Please check your connection.';
+      msg.className = 'form-message error';
+      btn.disabled = false;
+      btn.textContent = 'Request Reschedule';
+    });
+  });
+})();
+</script>
+</body>
+</html>
