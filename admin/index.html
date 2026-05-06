@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; }
+    .auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .auth-box { background: #1a1a1a; padding: 48px; border-radius: 12px; width: 100%; max-width: 380px; text-align: center; }
+    .auth-box h1 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: #D4AF7A; margin-bottom: 8px; }
+    .auth-box p { font-size: 13px; color: #999; margin-bottom: 32px; }
+    .auth-box input { width: 100%; padding: 14px 16px; background: #111; border: 1.5px solid #333; border-radius: 6px; color: #fff; font-size: 14px; margin-bottom: 12px; outline: none; font-family: 'DM Sans', sans-serif; }
+    .auth-box input:focus { border-color: #D4AF7A; }
+    .auth-box button { width: 100%; padding: 14px; background: #D4AF7A; color: #111; font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; border: none; border-radius: 6px; cursor: pointer; margin-top: 8px; }
+
+    .dashboard { display: none; }
+    .top-bar { background: #111; border-bottom: 1px solid #222; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+    .top-bar h1 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #D4AF7A; letter-spacing: 1px; }
+    .top-bar button { background: none; border: 1px solid #333; color: #999; padding: 8px 16px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 32px; }
+    .stat-card { background: #1a1a1a; border-radius: 8px; padding: 24px; border-left: 3px solid #D4AF7A; }
+    .stat-card .num { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: #fff; }
+    .stat-card .label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    .section { padding: 0 32px 32px; }
+    .section-header { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #D4AF7A; margin-bottom: 16px; letter-spacing: 1px; }
+
+    .table-wrap { background: #1a1a1a; border-radius: 8px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 12px 16px; color: #D4AF7A; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #333; background: #111; }
+    td { padding: 12px 16px; border-bottom: 1px solid #222; color: #ccc; }
+    tr:hover td { background: #222; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-new { background: #1a3a4a; color: #5bc0de; }
+    .badge-qualified { background: #1a3a1a; color: #5cb85c; }
+    .badge-converted { background: #3a2a1a; color: #D4AF7A; }
+    .badge-dropped { background: #3a1a1a; color: #d9534f; }
+    .badge-active { background: #1a3a1a; color: #5cb85c; }
+    .badge-escalation { background: #4a1a1a; color: #ff6b6b; }
+
+    .escalation-list { list-style: none; }
+    .escalation-list li { background: #1a1a1a; border-left: 3px solid #ff6b6b; padding: 16px; margin-bottom: 8px; border-radius: 0 6px 6px 0; }
+    .escalation-list li .esc-reason { font-size: 13px; color: #ff6b6b; font-weight: 500; }
+    .escalation-list li .esc-detail { font-size: 12px; color: #999; margin-top: 4px; }
+    .empty-state { text-align: center; padding: 40px; color: #666; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+  <div class="auth-screen" id="authScreen">
+    <div class="auth-box">
+      <h1>Fitness By Maddy</h1>
+      <p>Admin Dashboard</p>
+      <input type="email" id="authEmail" placeholder="Email">
+      <input type="password" id="authPassword" placeholder="Password">
+      <button onclick="login()">Sign In</button>
+    </div>
+  </div>
+
+  <div class="dashboard" id="dashboard">
+    <div class="top-bar">
+      <h1>Dashboard</h1>
+      <button onclick="logout()">Sign Out</button>
+    </div>
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="section">
+      <div class="section-header">Recent Leads</div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Program</th><th>Market</th><th>Created</th></tr></thead>
+        <tbody id="leadsTable"></tbody></table>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">Active Clients</div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Status</th><th>Paid</th></tr></thead>
+        <tbody id="clientsTable"></tbody></table>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">Pending Escalations</div>
+      <ul class="escalation-list" id="escalationsList"></ul>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = window.__SUPABASE_URL || '';
+    const SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY || '';
+    let supabase;
+    let session = null;
+
+    function initSupabase() {
+      const meta = document.querySelector('meta[name="supabase-url"]');
+      const url = SUPABASE_URL || (meta && meta.content) || localStorage.getItem('sb_url') || '';
+      const key = SUPABASE_ANON_KEY || localStorage.getItem('sb_key') || '';
+      if (!url || !key) return null;
+      return window.supabase.createClient(url, key);
+    }
+
+    async function login() {
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+      if (!supabase) supabase = initSupabase();
+      if (!supabase) { alert('Supabase not configured'); return; }
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) { alert(error.message); return; }
+      session = data.session;
+      showDashboard();
+    }
+
+    function logout() {
+      if (supabase) supabase.auth.signOut();
+      session = null;
+      document.getElementById('authScreen').style.display = 'flex';
+      document.getElementById('dashboard').style.display = 'none';
+    }
+
+    async function showDashboard() {
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      await loadStats();
+      await loadLeads();
+      await loadClients();
+      await loadEscalations();
+    }
+
+    async function loadStats() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const weekAgo = new Date(today);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+
+      const { data: leadsToday } = await supabase.from('leads').select('id', { count: 'exact' }).gte('created_at', today.toISOString());
+      const { data: leadsWeek } = await supabase.from('leads').select('id', { count: 'exact' }).gte('created_at', weekAgo.toISOString());
+      const { data: allLeads } = await supabase.from('leads').select('id, status');
+      const { data: activeClients } = await supabase.from('clients').select('id').eq('status', 'active');
+      const { data: pendingCheckins } = await supabase.from('clients').select('id').eq('status', 'active');
+      const { data: programsThisWeek } = await supabase.from('programs').select('id').gte('generated_at', weekAgo.toISOString());
+
+      const converted = (allLeads || []).filter(l => l.status === 'converted').length;
+      const total = (allLeads || []).length;
+      const convRate = total > 0 ? Math.round((converted / total) * 100) : 0;
+
+      const stats = [
+        { num: (leadsToday || []).length, label: 'Leads Today' },
+        { num: (leadsWeek || []).length, label: 'Leads This Week' },
+        { num: convRate + '%', label: 'Conversion Rate' },
+        { num: (activeClients || []).length, label: 'Active Clients' },
+        { num: (programsThisWeek || []).length, label: 'Programs Generated' }
+      ];
+
+      document.getElementById('statsGrid').innerHTML = stats.map(s =>
+        `<div class="stat-card"><div class="num">${s.num}</div><div class="label">${s.label}</div></div>`
+      ).join('');
+    }
+
+    async function loadLeads() {
+      const { data } = await supabase.from('leads').select('*').order('created_at', { ascending: false }).limit(20);
+      const tbody = document.getElementById('leadsTable');
+      if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No leads yet</td></tr>'; return; }
+      tbody.innerHTML = (data || []).map(l => `<tr>
+        <td>${l.name || '—'}</td>
+        <td>${maskPhone(l.phone)}</td>
+        <td><span class="badge badge-${l.status}">${l.status}</span></td>
+        <td>${l.program_interest || '—'}</td>
+        <td>${l.market || '—'}</td>
+        <td>${new Date(l.created_at).toLocaleDateString()}</td>
+      </tr>`).join('');
+    }
+
+    async function loadClients() {
+      const { data } = await supabase.from('clients').select('*').order('program_started_at', { ascending: false }).limit(20);
+      const tbody = document.getElementById('clientsTable');
+      if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No clients yet</td></tr>'; return; }
+      tbody.innerHTML = (data || []).map(c => `<tr>
+        <td>${c.name || '—'}</td>
+        <td>${(c.program || '').replace('_', ' ')}</td>
+        <td>${new Date(c.program_started_at).toLocaleDateString()}</td>
+        <td><span class="badge badge-${c.status}">${c.status}</span></td>
+        <td>$${c.paid_amount || 0}</td>
+      </tr>`).join('');
+    }
+
+    async function loadEscalations() {
+      const { data } = await supabase.from('messages').select('*').eq('direction', 'out').like('template_name', 'escalation%').order('sent_at', { ascending: false }).limit(10);
+      const list = document.getElementById('escalationsList');
+      if (!data || data.length === 0) { list.innerHTML = '<li class="empty-state">No escalations pending</li>'; return; }
+      list.innerHTML = (data || []).map(m => `<li>
+        <div class="esc-reason">${m.body || 'Escalation'}</div>
+        <div class="esc-detail">${maskPhone(m.phone)} · ${new Date(m.sent_at).toLocaleString()}</div>
+      </li>`).join('');
+    }
+
+    function maskPhone(phone) {
+      if (!phone || phone.length < 6) return '***';
+      return phone.slice(0, 3) + 'XXX...' + phone.slice(-3);
+    }
+
+    (async function init() {
+      supabase = initSupabase();
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        if (data && data.session) { session = data.session; showDashboard(); }
+      }
+    })();
+  </script>
+</body>
+</html>
