@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+  <div class="form-page">
+    <div class="form-header">
+      <div class="form-logo">Fitness by Maddy</div>
+      <h1 class="form-title">Weekly Check-in</h1>
+      <p class="form-subtitle" id="weekLabel">Let's see how your week went!</p>
+    </div>
+
+    <div id="alert" class="alert"></div>
+
+    <form id="checkinForm">
+      <div class="form-section">
+        <div class="form-section-title">Body Stats</div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Weight (kg) <span class="required">*</span></label>
+            <input type="number" name="weight" step="0.1" required placeholder="65.5">
+          </div>
+          <div class="field">
+            <label>Waist (cm)</label>
+            <input type="number" name="waist" step="0.1" placeholder="78">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">How You're Doing</div>
+
+        <div class="field">
+          <label>Workout Compliance <span class="required">*</span></label>
+          <p style="font-size: 12px; color: var(--mid-grey); margin-bottom: 8px;">How well did you follow the program this week?</p>
+          <div class="slider-field">
+            <span style="font-size: 11px; color: var(--mid-grey);">Low</span>
+            <input type="range" name="compliance_score" min="1" max="10" value="7" oninput="this.nextElementSibling.textContent = this.value">
+            <span class="slider-value">7</span>
+            <span style="font-size: 11px; color: var(--mid-grey);">High</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Energy Level <span class="required">*</span></label>
+          <p style="font-size: 12px; color: var(--mid-grey); margin-bottom: 8px;">How was your energy this week overall?</p>
+          <div class="slider-field">
+            <span style="font-size: 11px; color: var(--mid-grey);">Low</span>
+            <input type="range" name="energy" min="1" max="10" value="7" oninput="this.nextElementSibling.textContent = this.value">
+            <span class="slider-value">7</span>
+            <span style="font-size: 11px; color: var(--mid-grey);">High</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Notes</div>
+
+        <div class="field">
+          <label>Issues or Concerns</label>
+          <textarea name="issues" placeholder="Any pain, discomfort, schedule issues, or questions? Leave blank if none."></textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Progress Photos</div>
+        <p class="form-subtitle" style="margin-bottom: 12px;">Photos make a huge difference in tracking real progress.</p>
+        <div class="photo-upload">
+          <div class="photo-box" onclick="this.querySelector('input').click()">
+            <input type="file" accept="image/*" name="photo_front" onchange="previewPhoto(this)">
+            <span class="icon">+</span>
+            <span class="label">Front</span>
+          </div>
+          <div class="photo-box" onclick="this.querySelector('input').click()">
+            <input type="file" accept="image/*" name="photo_side" onchange="previewPhoto(this)">
+            <span class="icon">+</span>
+            <span class="label">Side</span>
+          </div>
+          <div class="photo-box" onclick="this.querySelector('input').click()">
+            <input type="file" accept="image/*" name="photo_back" onchange="previewPhoto(this)">
+            <span class="icon">+</span>
+            <span class="label">Back</span>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">Submit Check-in</button>
+    </form>
+
+    <div id="successScreen" class="success-screen">
+      <div class="success-icon">&#10003;</div>
+      <h2>Check-in Received!</h2>
+      <p>Great job staying consistent. Your updated program will be sent to you on WhatsApp soon!</p>
+    </div>
+
+    <div class="form-footer">
+      <p>Fitness by Maddy &bull; <a href="https://fitnessbymaddy.com">fitnessbymaddy.com</a></p>
+    </div>
+  </div>
+
+  <script>
+    function previewPhoto(input) {
+      if (!input.files || !input.files[0]) return;
+      var reader = new FileReader();
+      var box = input.closest('.photo-box');
+      reader.onload = function(e) {
+        var existing = box.querySelector('img');
+        if (existing) existing.remove();
+        var img = document.createElement('img');
+        img.src = e.target.result;
+        box.appendChild(img);
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+
+    function showAlert(type, msg) {
+      var el = document.getElementById('alert');
+      el.className = 'alert alert-' + type + ' show';
+      el.textContent = msg;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function getParams() {
+      var params = new URLSearchParams(window.location.search);
+      return {
+        client_id: params.get('c'),
+        week_no: params.get('w')
+      };
+    }
+
+    var p = getParams();
+    if (p.week_no) {
+      document.getElementById('weekLabel').textContent = 'Week ' + p.week_no + ' check-in — let\'s see how it went!';
+    }
+    if (!p.client_id) {
+      showAlert('error', 'Invalid check-in link. Please use the link sent to your WhatsApp.');
+      document.getElementById('submitBtn').disabled = true;
+    }
+
+    document.getElementById('checkinForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var params = getParams();
+      if (!params.client_id) return;
+
+      var btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading-spinner"></span>Submitting...';
+
+      var form = e.target;
+      var data = {
+        client_id: params.client_id,
+        week_no: params.week_no || 1,
+        weight: form.weight.value,
+        waist: form.waist.value,
+        compliance_score: form.compliance_score.value,
+        energy: form.energy.value,
+        issues: form.issues.value,
+        photos_urls: []
+      };
+
+      fetch('/api/checkin-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(result) {
+        if (result.ok) {
+          form.style.display = 'none';
+          document.getElementById('successScreen').classList.add('show');
+        } else {
+          showAlert('error', result.error || 'Something went wrong. Please try again.');
+          btn.disabled = false;
+          btn.textContent = 'Submit Check-in';
+        }
+      })
+      .catch(function() {
+        showAlert('error', 'Network error. Please check your connection and try again.');
+        btn.disabled = false;
+        btn.textContent = 'Submit Check-in';
+      });
+    });
+  </script>
+</body>
+</html>
