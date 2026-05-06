@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --sand: #F0EAE0; --gold: #B8965A;
+      --gold-light: #D4AF7A; --charcoal: #2C2C2C; --mid-grey: #6B6B6B;
+      --light-grey: #E8E3DC;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); }
+    .login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .login-card { background: white; padding: 48px 40px; border-radius: 4px; box-shadow: 0 8px 40px rgba(0,0,0,0.06); max-width: 380px; width: 100%; text-align: center; }
+    .login-card h1 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 8px; }
+    .login-card p { font-size: 13px; color: var(--mid-grey); margin-bottom: 28px; }
+    .login-input { width: 100%; padding: 14px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; margin-bottom: 16px; outline: none; }
+    .login-input:focus { border-color: var(--gold); }
+    .login-btn { width: 100%; padding: 14px; background: var(--charcoal); color: white; border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; }
+    .login-btn:hover { background: var(--gold); }
+
+    .dashboard { display: none; min-height: 100vh; }
+    .dash-header { background: var(--charcoal); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+    .dash-brand { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: white; letter-spacing: 2px; text-transform: uppercase; }
+    .dash-logout { font-size: 11px; color: var(--gold-light); cursor: pointer; letter-spacing: 1px; text-transform: uppercase; background: none; border: none; }
+    .dash-content { padding: 32px; max-width: 1200px; margin: 0 auto; }
+    .dash-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; margin-bottom: 8px; }
+    .dash-subtitle { font-size: 13px; color: var(--mid-grey); margin-bottom: 32px; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card { background: white; padding: 24px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .stat-card .label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card .value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--charcoal); }
+    .stat-card .sub { font-size: 11px; color: var(--gold); margin-top: 4px; }
+
+    .section-header { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--light-grey); }
+    .table-wrap { background: white; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 32px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); padding: 12px 16px; background: var(--sand); border-bottom: 1px solid var(--light-grey); }
+    td { font-size: 13px; padding: 12px 16px; border-bottom: 1px solid var(--light-grey); }
+    tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-new { background: #e3f2fd; color: #1565c0; }
+    .badge-qualified { background: #fff3e0; color: #e65100; }
+    .badge-converted { background: #e8f5e9; color: #2e7d32; }
+    .badge-dropped { background: #fce4ec; color: #c62828; }
+    .badge-active { background: #e8f5e9; color: #2e7d32; }
+    .badge-paused { background: #fff3e0; color: #e65100; }
+    .empty-state { text-align: center; padding: 40px; color: var(--mid-grey); font-size: 13px; }
+    .loading { text-align: center; padding: 20px; color: var(--mid-grey); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <h1>Admin Access</h1>
+      <p>Enter the admin password to access the dashboard</p>
+      <input type="password" class="login-input" id="passwordInput" placeholder="Password">
+      <button class="login-btn" id="loginBtn">Access Dashboard</button>
+    </div>
+  </div>
+
+  <div class="dashboard" id="dashboard">
+    <div class="dash-header">
+      <div class="dash-brand">Fitness by Maddy — Admin</div>
+      <button class="dash-logout" id="logoutBtn">Logout</button>
+    </div>
+    <div class="dash-content">
+      <h1 class="dash-title">Dashboard</h1>
+      <p class="dash-subtitle" id="dateDisplay"></p>
+
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="label">New Leads Today</div><div class="value" id="leadsToday">-</div></div>
+        <div class="stat-card"><div class="label">Leads This Week</div><div class="value" id="leadsWeek">-</div></div>
+        <div class="stat-card"><div class="label">Active Clients</div><div class="value" id="activeClients">-</div></div>
+        <div class="stat-card"><div class="label">Conversion Rate</div><div class="value" id="conversionRate">-</div><div class="sub">lead → paid</div></div>
+        <div class="stat-card"><div class="label">Pending Check-ins</div><div class="value" id="pendingCheckins">-</div></div>
+        <div class="stat-card"><div class="label">Programs This Week</div><div class="value" id="programsWeek">-</div></div>
+      </div>
+
+      <div class="section-header">Recent Leads</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Phone</th><th>Name</th><th>Source</th><th>Status</th><th>Interest</th><th>Date</th></tr></thead>
+          <tbody id="leadsTable"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="section-header">Active Clients by Program</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Phone</th><th>Program</th><th>Started</th><th>Status</th></tr></thead>
+          <tbody id="clientsTable"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="section-header">Escalations</div>
+      <div class="table-wrap" id="escalationsWrap">
+        <div class="empty-state">No escalations pending</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var SUPABASE_URL = '';
+      var SUPABASE_ANON_KEY = '';
+      var ADMIN_PASS = 'maddy2024admin';
+
+      var loginScreen = document.getElementById('loginScreen');
+      var dashboard = document.getElementById('dashboard');
+
+      if (sessionStorage.getItem('admin_auth')) {
+        showDashboard();
+      }
+
+      document.getElementById('loginBtn').addEventListener('click', function() {
+        var pass = document.getElementById('passwordInput').value;
+        if (pass === ADMIN_PASS) {
+          sessionStorage.setItem('admin_auth', '1');
+          showDashboard();
+        } else {
+          alert('Incorrect password');
+        }
+      });
+
+      document.getElementById('passwordInput').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') document.getElementById('loginBtn').click();
+      });
+
+      document.getElementById('logoutBtn').addEventListener('click', function() {
+        sessionStorage.removeItem('admin_auth');
+        loginScreen.style.display = 'flex';
+        dashboard.style.display = 'none';
+      });
+
+      function showDashboard() {
+        loginScreen.style.display = 'none';
+        dashboard.style.display = 'block';
+        document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        loadData();
+      }
+
+      function maskPhone(phone) {
+        if (!phone || phone.length < 6) return '***';
+        return phone.slice(0, 3) + 'XXX...' + phone.slice(-3);
+      }
+
+      function badgeClass(status) {
+        return 'badge badge-' + (status || 'new');
+      }
+
+      async function loadData() {
+        try {
+          var res = await fetch('/api/admin/stats');
+          if (!res.ok) throw new Error('Failed to load');
+          var data = await res.json();
+
+          document.getElementById('leadsToday').textContent = data.leads_today || 0;
+          document.getElementById('leadsWeek').textContent = data.leads_week || 0;
+          document.getElementById('activeClients').textContent = data.active_clients || 0;
+          document.getElementById('conversionRate').textContent = (data.conversion_rate || 0) + '%';
+          document.getElementById('pendingCheckins').textContent = data.pending_checkins || 0;
+          document.getElementById('programsWeek').textContent = data.programs_week || 0;
+
+          var leadsHtml = '';
+          if (data.recent_leads && data.recent_leads.length > 0) {
+            data.recent_leads.forEach(function(l) {
+              leadsHtml += '<tr><td>' + maskPhone(l.phone) + '</td><td>' + (l.name || '-') + '</td><td>' + (l.source || '-') + '</td><td><span class="' + badgeClass(l.status) + '">' + l.status + '</span></td><td>' + (l.program_interest || '-') + '</td><td>' + new Date(l.created_at).toLocaleDateString() + '</td></tr>';
+            });
+          } else {
+            leadsHtml = '<tr><td colspan="6" class="empty-state">No leads yet</td></tr>';
+          }
+          document.getElementById('leadsTable').innerHTML = leadsHtml;
+
+          var clientsHtml = '';
+          if (data.active_clients_list && data.active_clients_list.length > 0) {
+            data.active_clients_list.forEach(function(c) {
+              clientsHtml += '<tr><td>' + (c.name || '-') + '</td><td>' + maskPhone(c.phone) + '</td><td>' + (c.program || '-') + '</td><td>' + new Date(c.program_started_at).toLocaleDateString() + '</td><td><span class="' + badgeClass(c.status) + '">' + c.status + '</span></td></tr>';
+            });
+          } else {
+            clientsHtml = '<tr><td colspan="5" class="empty-state">No active clients</td></tr>';
+          }
+          document.getElementById('clientsTable').innerHTML = clientsHtml;
+        } catch (err) {
+          console.error('Dashboard load error:', err);
+          document.getElementById('leadsTable').innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load data</td></tr>';
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
