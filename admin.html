@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/forms.css">
+  <style>
+    body { background: #1a1a1a; color: #FAF8F4; }
+    .dash-wrap { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+    .dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .dash-logo { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #B8965A; }
+    .dash-title { font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 300; color: rgba(255,255,255,0.5); margin-top: 4px; }
+    .dash-auth { display: flex; gap: 12px; align-items: center; }
+    .dash-auth input { padding: 10px 16px; border: 1px solid rgba(255,255,255,0.15); border-radius: 2px; background: rgba(255,255,255,0.05); color: white; font-family: 'DM Sans', sans-serif; font-size: 13px; width: 280px; }
+    .dash-auth button { padding: 10px 20px; background: #B8965A; color: white; border: none; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; border-radius: 2px; font-family: 'DM Sans', sans-serif; }
+    .dash-auth button:hover { background: #D4AF7A; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); padding: 24px; border-radius: 4px; }
+    .stat-card-num { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: #B8965A; line-height: 1; }
+    .stat-card-label { font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 1px; text-transform: uppercase; margin-top: 8px; }
+
+    .dash-section { margin-bottom: 40px; }
+    .dash-section-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 400; color: #FAF8F4; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+    .dash-table { width: 100%; border-collapse: collapse; }
+    .dash-table th { text-align: left; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: #B8965A; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .dash-table td { font-size: 13px; color: rgba(255,255,255,0.7); padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .dash-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-new { background: rgba(184,150,90,0.15); color: #D4AF7A; }
+    .badge-qualified { background: rgba(52,152,219,0.15); color: #5DADE2; }
+    .badge-converted { background: rgba(39,174,96,0.15); color: #58D68D; }
+    .badge-dropped { background: rgba(192,57,43,0.15); color: #EC7063; }
+    .badge-active { background: rgba(39,174,96,0.15); color: #58D68D; }
+    .badge-paused { background: rgba(243,156,18,0.15); color: #F4D03F; }
+    .badge-completed { background: rgba(149,165,166,0.15); color: #AEB6BF; }
+
+    .escalation-item { background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.2); padding: 16px; border-radius: 4px; margin-bottom: 12px; }
+    .escalation-item p { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+    .escalation-item .esc-meta { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 8px; }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.3); font-size: 13px; }
+
+    .hidden { display: none; }
+
+    #loginScreen { text-align: center; padding: 120px 20px; }
+    #loginScreen .form-title { color: #FAF8F4; }
+    #loginScreen .form-subtitle { color: rgba(255,255,255,0.5); }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .dash-table { display: block; overflow-x: auto; }
+      .dash-header { flex-direction: column; gap: 16px; align-items: flex-start; }
+      .dash-auth input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="dash-wrap">
+  <div id="loginScreen">
+    <div class="form-header">
+      <div class="dash-logo">Fitness by Maddy</div>
+      <h1 class="form-title" style="margin-top:32px">Admin <em>Dashboard</em></h1>
+      <p class="form-subtitle" style="margin-bottom:32px">Enter your Supabase credentials to access the dashboard.</p>
+    </div>
+    <div class="dash-auth" style="justify-content:center;flex-wrap:wrap;">
+      <input type="url" id="supaUrl" placeholder="Supabase URL">
+      <input type="password" id="supaKey" placeholder="Service Key">
+      <button onclick="initDashboard()">Connect</button>
+    </div>
+  </div>
+
+  <div id="dashContent" class="hidden">
+    <div class="dash-header">
+      <div>
+        <div class="dash-logo">Fitness by Maddy</div>
+        <div class="dash-title">Operations Dashboard</div>
+      </div>
+      <button onclick="refreshAll()" style="padding:10px 20px;background:#B8965A;color:white;border:none;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border-radius:2px;font-family:'DM Sans',sans-serif;">Refresh</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-card-num" id="statLeadsToday">-</div><div class="stat-card-label">Leads Today</div></div>
+      <div class="stat-card"><div class="stat-card-num" id="statLeadsWeek">-</div><div class="stat-card-label">Leads This Week</div></div>
+      <div class="stat-card"><div class="stat-card-num" id="statConversion">-</div><div class="stat-card-label">Conversion Rate</div></div>
+      <div class="stat-card"><div class="stat-card-num" id="statActiveClients">-</div><div class="stat-card-label">Active Clients</div></div>
+      <div class="stat-card"><div class="stat-card-num" id="statPendingCheckins">-</div><div class="stat-card-label">Pending Check-Ins</div></div>
+      <div class="stat-card"><div class="stat-card-num" id="statProgramsWeek">-</div><div class="stat-card-label">Programs This Week</div></div>
+    </div>
+
+    <div class="dash-section">
+      <div class="dash-section-title">Active Clients by Program</div>
+      <div id="clientsByProgram"></div>
+    </div>
+
+    <div class="dash-section">
+      <div class="dash-section-title">Recent Leads</div>
+      <table class="dash-table">
+        <thead><tr><th>Name</th><th>Phone</th><th>Market</th><th>Interest</th><th>Status</th><th>When</th></tr></thead>
+        <tbody id="leadsTable"></tbody>
+      </table>
+    </div>
+
+    <div class="dash-section">
+      <div class="dash-section-title">Escalations</div>
+      <div id="escalations"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var sb = null;
+
+function initDashboard() {
+  var url = document.getElementById('supaUrl').value.trim();
+  var key = document.getElementById('supaKey').value.trim();
+  if (!url || !key) return alert('Enter both URL and key.');
+
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  connectAndLoad(url, key);
+}
+
+function connectAndLoad(url, key) {
+  sb = { url: url.replace(/\/$/, ''), key: key };
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('dashContent').classList.remove('hidden');
+  refreshAll();
+}
+
+function q(path, opts) {
+  var headers = { apikey: sb.key, Authorization: 'Bearer ' + sb.key, 'Content-Type': 'application/json' };
+  if (opts && opts.count) headers['Prefer'] = 'count=exact';
+  return fetch(sb.url + '/rest/v1/' + path, { headers: headers }).then(function(r) {
+    var count = r.headers.get('content-range');
+    return r.json().then(function(d) { return { data: d, count: count ? parseInt(count.split('/')[1]) : null }; });
+  });
+}
+
+function refreshAll() {
+  var today = new Date(); today.setHours(0,0,0,0);
+  var todayISO = today.toISOString();
+  var weekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+
+  q('leads?select=id&created_at=gte.' + todayISO, {count:true}).then(function(r) {
+    document.getElementById('statLeadsToday').textContent = r.data.length;
+  });
+
+  q('leads?select=id&created_at=gte.' + weekAgo, {count:true}).then(function(r) {
+    document.getElementById('statLeadsWeek').textContent = r.data.length;
+  });
+
+  Promise.all([
+    q('leads?select=id', {count:true}),
+    q('leads?select=id&status=eq.converted', {count:true})
+  ]).then(function(results) {
+    var total = results[0].data.length;
+    var conv = results[1].data.length;
+    var rate = total > 0 ? Math.round((conv / total) * 100) : 0;
+    document.getElementById('statConversion').textContent = rate + '%';
+  });
+
+  q('clients?select=id,program&status=eq.active').then(function(r) {
+    document.getElementById('statActiveClients').textContent = r.data.length;
+    var byProg = {};
+    r.data.forEach(function(c) { byProg[c.program] = (byProg[c.program] || 0) + 1; });
+    var html = '<table class="dash-table"><thead><tr><th>Program</th><th>Clients</th></tr></thead><tbody>';
+    var names = {'6wk_gym':'6-Week Gym','6wk_home':'6-Week Home','12wk':'12-Week Custom','pcos':'PCOS Warrior','40plus':'40+ Strong','zoom_trial':'Zoom Trial','zoom_pack':'Zoom Pack'};
+    Object.keys(byProg).forEach(function(k) {
+      html += '<tr><td>' + (names[k]||k) + '</td><td>' + byProg[k] + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('clientsByProgram').innerHTML = r.data.length ? html : '<div class="empty-state">No active clients yet</div>';
+  });
+
+  q('leads?select=name,phone,market,program_interest,status,created_at&order=created_at.desc&limit=20').then(function(r) {
+    var tbody = document.getElementById('leadsTable');
+    if (!r.data.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No leads yet</td></tr>'; return; }
+    tbody.innerHTML = r.data.map(function(l) {
+      var masked = l.phone ? l.phone.slice(0,3) + 'XXX...' + l.phone.slice(-3) : '-';
+      var ago = timeAgo(l.created_at);
+      return '<tr><td>' + (l.name||'-') + '</td><td>' + masked + '</td><td>' + (l.market||'-') + '</td><td>' + (l.program_interest||'-') + '</td><td><span class="badge badge-' + l.status + '">' + l.status + '</span></td><td>' + ago + '</td></tr>';
+    }).join('');
+  });
+
+  q('programs?select=id&generated_at=gte.' + weekAgo).then(function(r) {
+    document.getElementById('statProgramsWeek').textContent = r.data.length;
+  });
+
+  q('clients?select=id&status=eq.active').then(function(activeRes) {
+    var ids = activeRes.data.map(function(c) { return c.id; });
+    if (!ids.length) { document.getElementById('statPendingCheckins').textContent = '0'; return; }
+    var currentWeekStart = new Date(); currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay());
+    currentWeekStart.setHours(0,0,0,0);
+    q('checkins?select=client_id&form_submitted_at=gte.' + currentWeekStart.toISOString()).then(function(checkinRes) {
+      var submitted = new Set(checkinRes.data.map(function(c) { return c.client_id; }));
+      var pending = ids.filter(function(id) { return !submitted.has(id); }).length;
+      document.getElementById('statPendingCheckins').textContent = pending;
+    });
+  });
+
+  q('messages?select=body,phone,sent_at&direction=eq.out&template_name=eq.escalation_alert&order=sent_at.desc&limit=10').then(function(r) {
+    var el = document.getElementById('escalations');
+    if (!r.data.length) { el.innerHTML = '<div class="empty-state">No escalations</div>'; return; }
+    el.innerHTML = r.data.map(function(m) {
+      return '<div class="escalation-item"><p>' + (m.body||'Escalation alert') + '</p><div class="esc-meta">' + timeAgo(m.sent_at) + '</div></div>';
+    }).join('');
+  });
+}
+
+function timeAgo(dateStr) {
+  var diff = Date.now() - new Date(dateStr).getTime();
+  var mins = Math.floor(diff / 60000);
+  if (mins < 60) return mins + 'm ago';
+  var hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  var days = Math.floor(hrs / 24);
+  return days + 'd ago';
+}
+
+(function() {
+  var url = localStorage.getItem('sb_url');
+  var key = localStorage.getItem('sb_key');
+  if (url && key) connectAndLoad(url, key);
+})();
+</script>
+</body>
+</html>
