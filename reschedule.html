@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+  <div class="form-page">
+    <div class="form-header">
+      <div class="form-logo">Fitness by Maddy</div>
+      <h1 class="form-title">Reschedule Session</h1>
+      <p class="form-subtitle">Life happens! Pick a new time that works for you.</p>
+    </div>
+
+    <div id="alert" class="alert"></div>
+
+    <form id="rescheduleForm">
+      <div class="form-section">
+        <div class="form-section-title">Your Details</div>
+
+        <div class="field">
+          <label>Phone (WhatsApp) <span class="required">*</span></label>
+          <input type="tel" name="phone" required placeholder="+91 98765 43210">
+        </div>
+
+        <div class="field">
+          <label>Name <span class="required">*</span></label>
+          <input type="text" name="name" required placeholder="Your name">
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">New Session Time</div>
+
+        <div class="field">
+          <label>Preferred Date <span class="required">*</span></label>
+          <input type="date" name="date" required>
+        </div>
+
+        <div class="field">
+          <label>Preferred Time (IST) <span class="required">*</span></label>
+          <select name="time" required>
+            <option value="">Select a time</option>
+            <option value="06:00">6:00 AM</option>
+            <option value="07:00">7:00 AM</option>
+            <option value="08:00">8:00 AM</option>
+            <option value="09:00">9:00 AM</option>
+            <option value="10:00">10:00 AM</option>
+            <option value="11:00">11:00 AM</option>
+            <option value="16:00">4:00 PM</option>
+            <option value="17:00">5:00 PM</option>
+            <option value="18:00">6:00 PM</option>
+            <option value="19:00">7:00 PM</option>
+            <option value="20:00">8:00 PM</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Reason (Optional)</label>
+          <textarea name="reason" placeholder="Why do you need to reschedule?"></textarea>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">Request Reschedule</button>
+    </form>
+
+    <div id="successScreen" class="success-screen">
+      <div class="success-icon">&#10003;</div>
+      <h2>Request Sent!</h2>
+      <p>We'll confirm your new session time on WhatsApp shortly.</p>
+    </div>
+
+    <div class="form-footer">
+      <p>Fitness by Maddy &bull; <a href="https://fitnessbymaddy.com">fitnessbymaddy.com</a></p>
+    </div>
+  </div>
+
+  <script>
+    // Set min date to today
+    var today = new Date().toISOString().split('T')[0];
+    document.querySelector('input[name="date"]').setAttribute('min', today);
+
+    function showAlert(type, msg) {
+      var el = document.getElementById('alert');
+      el.className = 'alert alert-' + type + ' show';
+      el.textContent = msg;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading-spinner"></span>Sending...';
+
+      var form = e.target;
+      var data = {
+        phone: form.phone.value,
+        name: form.name.value,
+        date: form.date.value,
+        time: form.time.value,
+        reason: form.reason.value
+      };
+
+      fetch('/api/send-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: '+917082478374',
+          text: 'Reschedule request from ' + data.name + ' (' + data.phone + '): ' + data.date + ' at ' + data.time + (data.reason ? '. Reason: ' + data.reason : ''),
+          force: true
+        })
+      })
+      .then(function() {
+        form.style.display = 'none';
+        document.getElementById('successScreen').classList.add('show');
+      })
+      .catch(function() {
+        showAlert('error', 'Network error. Please message us directly on WhatsApp.');
+        btn.disabled = false;
+        btn.textContent = 'Request Reschedule';
+      });
+    });
+  </script>
+</body>
+</html>
