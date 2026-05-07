@@ -8,7 +8,7 @@ const NUDGE_1_HOURS = 24;
 const NUDGE_2_HOURS = 48;
 
 module.exports = async function handler(req, res) {
-  // --- Cron auth ---
+  // ── Cron auth ───────────────────────────────────────────────────
   const authHeader = req.headers.authorization || '';
   if (authHeader !== 'Bearer ' + process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -23,11 +23,15 @@ module.exports = async function handler(req, res) {
   try {
     const now = new Date();
 
-    // =============================================
+    // =============================================================
     // PART 1: Re-engage dropped leads (7-day rule)
-    // =============================================
-    const droppedCutoff = new Date(now.getTime() - DROPPED_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
-    const cooldownCutoff = new Date(now.getTime() - COOLDOWN_HOURS * 60 * 60 * 1000).toISOString();
+    // =============================================================
+    const droppedCutoff = new Date(
+      now.getTime() - DROPPED_WINDOW_DAYS * 24 * 60 * 60 * 1000
+    ).toISOString();
+    const cooldownCutoff = new Date(
+      now.getTime() - COOLDOWN_HOURS * 60 * 60 * 1000
+    ).toISOString();
 
     const { data: droppedLeads, error: droppedErr } = await supabase
       .from('clients')
@@ -89,9 +93,9 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // =============================================
+    // =============================================================
     // PART 2: Check-in nudge reminders
-    // =============================================
+    // =============================================================
     const { data: pendingReminders, error: remindersErr } = await supabase
       .from('checkin_reminders')
       .select('id, client_id, week_no, form_sent_at, nudge_count')

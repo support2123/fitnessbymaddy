@@ -5,7 +5,7 @@ const BASE_URL = 'https://fitnessbymaddy.com';
 const CONSECUTIVE_MISSED_THRESHOLD = 2;
 
 module.exports = async function handler(req, res) {
-  // --- Cron auth ---
+  // ── Cron auth ───────────────────────────────────────────────────
   const authHeader = req.headers.authorization || '';
   if (authHeader !== 'Bearer ' + process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -14,7 +14,7 @@ module.exports = async function handler(req, res) {
   const summary = { sent: 0, skipped: 0, escalated: 0, errors: [] };
 
   try {
-    // --- Fetch all active clients ---
+    // ── Fetch all active clients ──────────────────────────────────
     const { data: clients, error: clientsErr } = await supabase
       .from('clients')
       .select('id, name, phone, program_started_at, program_duration_weeks, status')
@@ -33,7 +33,7 @@ module.exports = async function handler(req, res) {
 
     for (const client of clients) {
       try {
-        // --- Calculate current week_no ---
+        // ── Calculate current week_no ─────────────────────────────
         if (!client.program_started_at) {
           summary.skipped++;
           continue;
@@ -43,14 +43,14 @@ module.exports = async function handler(req, res) {
         const msElapsed = now.getTime() - startDate.getTime();
         const weekNo = Math.floor(msElapsed / (7 * 24 * 60 * 60 * 1000)) + 1;
 
-        // --- Skip if program ended ---
+        // ── Skip if program ended ─────────────────────────────────
         const durationWeeks = client.program_duration_weeks || 12;
         if (weekNo > durationWeeks) {
           summary.skipped++;
           continue;
         }
 
-        // --- Check if check-in already submitted this week ---
+        // ── Check if check-in already submitted this week ─────────
         const { data: existingCheckin } = await supabase
           .from('checkins')
           .select('id')
@@ -63,7 +63,7 @@ module.exports = async function handler(req, res) {
           continue;
         }
 
-        // --- Send check-in form link ---
+        // ── Send check-in form link ───────────────────────────────
         const checkinUrl = `${BASE_URL}/checkin?c=${client.id}&w=${weekNo}`;
 
         const result = await sendTemplate(client.phone, 'weekly_checkin', {
@@ -78,25 +78,27 @@ module.exports = async function handler(req, res) {
         if (result.success) {
           summary.sent++;
 
-          // --- Record that form was sent (for nudge scheduling) ---
-          await supabase.from('checkin_reminders').insert({
-            client_id: client.id,
-            week_no: weekNo,
-            form_sent_at: now.toISOString(),
-            nudge_count: 0,
-          }).then(({ error }) => {
-            if (error) {
-              console.error(
-                `Failed to record checkin reminder for ${maskPhone(client.phone)}:`,
-                error.message
-              );
-            }
-          });
+          // Record that form was sent (for nudge scheduling)
+          const { error: reminderErr } = await supabase
+            .from('checkin_reminders')
+            .insert({
+              client_id: client.id,
+              week_no: weekNo,
+              form_sent_at: now.toISOString(),
+              nudge_count: 0,
+            });
+
+          if (reminderErr) {
+            console.error(
+              `Failed to record checkin reminder for ${maskPhone(client.phone)}:`,
+              reminderErr.message
+            );
+          }
         } else {
           summary.skipped++;
         }
 
-        // --- Check for consecutive missed check-ins ---
+        // ── Check for consecutive missed check-ins ────────────────
         const recentWeeks = [];
         for (let w = weekNo - 1; w >= Math.max(1, weekNo - CONSECUTIVE_MISSED_THRESHOLD); w--) {
           recentWeeks.push(w);
@@ -115,13 +117,16 @@ module.exports = async function handler(req, res) {
           if (missedConsecutive) {
             // Escalate to Maddy
             try {
-              await sendTemplate(process.env.MADDY_PHONE, 'escalation_alert', {
-                userName: 'Maddy',
-                templateParams: [
-                  `Client ${client.name || maskPhone(client.phone)} has missed ${CONSECUTIVE_MISSED_THRESHOLD}+ consecutive check-ins`,
-                  maskPhone(client.phone),
-                ],
-              });
+              const maddyPhone = process.env.MADDY_PHONE;
+              if (maddyPhone) {
+                await sendTemplate(maddyPhone, 'escalation_alert', {
+                  userName: 'Maddy',
+                  templateParams: [
+                    `Client ${client.name || maskPhone(client.phone)} has missed ${CONSECUTIVE_MISSED_THRESHOLD}+ consecutive check-ins`,
+                    maskPhone(client.phone),
+                  ],
+                });
+              }
               summary.escalated++;
             } catch (escErr) {
               console.error(

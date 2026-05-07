@@ -2,6 +2,12 @@ const { supabase } = require('./_lib/supabase');
 const { sendTemplate, maskPhone } = require('./_lib/whatsapp');
 
 module.exports = async function handler(req, res) {
+  // CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -18,7 +24,7 @@ module.exports = async function handler(req, res) {
       photos,
     } = req.body || {};
 
-    // --- Validation ---
+    // ── Validation ────────────────────────────────────────────────
     if (!client_id || week_no == null) {
       return res.status(400).json({ error: 'client_id and week_no are required' });
     }
@@ -28,19 +34,25 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'week_no must be a positive integer' });
     }
 
-    if (compliance_score != null && (compliance_score < 1 || compliance_score > 10)) {
-      return res.status(400).json({ error: 'compliance_score must be between 1 and 10' });
+    if (compliance_score != null) {
+      const cs = parseInt(compliance_score, 10);
+      if (isNaN(cs) || cs < 1 || cs > 10) {
+        return res.status(400).json({ error: 'compliance_score must be between 1 and 10' });
+      }
     }
 
-    if (energy != null && (energy < 1 || energy > 10)) {
-      return res.status(400).json({ error: 'energy must be between 1 and 10' });
+    if (energy != null) {
+      const en = parseInt(energy, 10);
+      if (isNaN(en) || en < 1 || en > 10) {
+        return res.status(400).json({ error: 'energy must be between 1 and 10' });
+      }
     }
 
     if (photos != null && !Array.isArray(photos)) {
       return res.status(400).json({ error: 'photos must be an array of URLs' });
     }
 
-    // --- Check client exists and is active ---
+    // ── Check client exists and is active ─────────────────────────
     const { data: client, error: clientErr } = await supabase
       .from('clients')
       .select('id, name, phone, status, program_type')
@@ -60,7 +72,7 @@ module.exports = async function handler(req, res) {
       return res.status(403).json({ error: 'Client is not active' });
     }
 
-    // --- Prevent duplicate submission ---
+    // ── Prevent duplicate submission ──────────────────────────────
     const { data: existing, error: dupErr } = await supabase
       .from('checkins')
       .select('id')
@@ -77,7 +89,7 @@ module.exports = async function handler(req, res) {
       return res.status(409).json({ error: `Check-in already submitted for week ${weekNum}` });
     }
 
-    // --- Insert check-in ---
+    // ── Insert check-in ───────────────────────────────────────────
     const checkinRow = {
       client_id,
       week_no: weekNum,
@@ -101,7 +113,7 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to save check-in' });
     }
 
-    // --- Trigger program generation for 12-week program clients ---
+    // ── Trigger program generation for 12-week program clients ────
     if (client.program_type === '12_week') {
       try {
         const { generateProgram } = require('./generate-program');
@@ -117,7 +129,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // --- Send WhatsApp confirmation ---
+    // ── Send WhatsApp confirmation ────────────────────────────────
     if (client.phone) {
       try {
         await sendTemplate(client.phone, 'checkin_confirmation', {
