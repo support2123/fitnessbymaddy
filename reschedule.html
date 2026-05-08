@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4;
+      --gold: #B8965A;
+      --charcoal: #2C2C2C;
+      --mid-grey: #6B6B6B;
+      --light-grey: #E8E3DC;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--charcoal);
+      min-height: 100vh;
+    }
+    .header {
+      background: var(--charcoal);
+      padding: 24px;
+      text-align: center;
+    }
+    .header h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      color: var(--gold);
+      letter-spacing: 3px;
+    }
+    .header p { color: rgba(255,255,255,0.5); font-size: 13px; margin-top: 4px; }
+    .form-wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+    .info-box {
+      background: white;
+      border-left: 4px solid var(--gold);
+      padding: 20px;
+      border-radius: 4px;
+      margin-bottom: 32px;
+    }
+    .info-box p { font-size: 14px; color: var(--mid-grey); line-height: 1.6; }
+    .field { margin-bottom: 20px; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      margin-bottom: 6px;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid var(--light-grey);
+      border-radius: 4px;
+      font-size: 15px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--charcoal);
+      background: white;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .field select { appearance: none; }
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--charcoal);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin-top: 16px;
+    }
+    .submit-btn:hover { background: var(--gold); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .success-msg {
+      display: none;
+      text-align: center;
+      padding: 48px 24px;
+    }
+    .success-msg h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      color: var(--gold);
+      margin-bottom: 12px;
+    }
+    .success-msg p { color: var(--mid-grey); line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>FITNESS BY MADDY</h1>
+    <p>Reschedule Your Session</p>
+  </div>
+
+  <div class="form-wrap">
+    <div class="info-box">
+      <p>Missed a session? No stress. Pick a new time below and we'll get it sorted. Please reschedule at least 12 hours in advance.</p>
+    </div>
+
+    <form id="rescheduleForm">
+      <div class="field">
+        <label>Your Name *</label>
+        <input type="text" name="name" required>
+      </div>
+      <div class="field">
+        <label>Phone Number *</label>
+        <input type="tel" name="phone" placeholder="+91..." required>
+      </div>
+      <div class="field">
+        <label>Preferred Date *</label>
+        <input type="date" name="preferred_date" required>
+      </div>
+      <div class="field">
+        <label>Preferred Time (IST)</label>
+        <select name="preferred_time">
+          <option value="morning">Morning (7am - 10am)</option>
+          <option value="midday">Midday (11am - 2pm)</option>
+          <option value="afternoon">Afternoon (3pm - 5pm)</option>
+          <option value="evening">Evening (6pm - 9pm)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Reason for Reschedule</label>
+        <textarea name="reason" placeholder="Optional — let us know why you're rescheduling."></textarea>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">Request Reschedule</button>
+    </form>
+
+    <div class="success-msg" id="successMsg">
+      <h2>Request Sent!</h2>
+      <p>We've received your reschedule request. Someone from the team will confirm your new slot on WhatsApp within a few hours.</p>
+    </div>
+  </div>
+
+  <script>
+    var dateInput = document.querySelector('input[name="preferred_date"]');
+    var today = new Date();
+    today.setDate(today.getDate() + 1);
+    dateInput.min = today.toISOString().split('T')[0];
+
+    document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'SENDING...';
+
+      var formData = new FormData(this);
+      var data = {};
+      formData.forEach(function(v, k) { data[k] = v; });
+
+      fetch('/api/send-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: '+917082478374',
+          type: 'text',
+          text: 'Reschedule request from ' + data.name + ' (' + data.phone + '): ' + data.preferred_date + ' ' + data.preferred_time + '. Reason: ' + (data.reason || 'not specified')
+        })
+      })
+      .then(function() {
+        document.getElementById('rescheduleForm').style.display = 'none';
+        document.getElementById('successMsg').style.display = 'block';
+      })
+      .catch(function() {
+        btn.disabled = false;
+        btn.textContent = 'REQUEST RESCHEDULE';
+        alert('Something went wrong. Please try again or message us on WhatsApp.');
+      });
+    });
+  </script>
+</body>
+</html>
