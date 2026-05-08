@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-body { background: #1a1a1a; min-height: 100vh; }
+    .admin-nav { background: #111; border-bottom: 1px solid #2a2a2a; }
+    .admin-nav .nav-logo { color: #fff; }
+    .admin-wrap { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+    .admin-header { margin-bottom: 40px; }
+    .admin-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: #fff; }
+    .admin-header h1 em { color: var(--gold); font-style: italic; }
+    .admin-header p { font-size: 13px; color: #666; margin-top: 4px; }
+
+    .login-box { max-width: 400px; margin: 120px auto; text-align: center; }
+    .login-box h2 { font-family: 'Cormorant Garamond', serif; font-size: 32px; color: #fff; margin-bottom: 24px; }
+    .login-box .form-input { background: #222; border-color: #333; color: #fff; margin-bottom: 16px; }
+    .login-box .form-input:focus { border-color: var(--gold); }
+    .login-btn { width: 100%; padding: 16px; background: var(--gold); color: #1a1a1a; border: none; font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; font-family: 'DM Sans', sans-serif; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
+    .stat-card { background: #222; border-radius: 8px; padding: 28px 24px; border-left: 3px solid var(--gold); }
+    .stat-card-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #666; margin-bottom: 8px; }
+    .stat-card-value { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 600; color: #fff; line-height: 1; }
+    .stat-card-sub { font-size: 12px; color: var(--gold); margin-top: 4px; }
+
+    .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .panel { background: #222; border-radius: 8px; padding: 28px; }
+    .panel-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #fff; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #333; }
+    .panel-title em { color: var(--gold); font-style: italic; }
+
+    .program-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .program-bar-name { font-size: 13px; color: #aaa; width: 120px; flex-shrink: 0; }
+    .program-bar-track { flex: 1; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
+    .program-bar-fill { height: 100%; background: var(--gold); border-radius: 4px; transition: width 0.6s ease; }
+    .program-bar-count { font-size: 13px; color: #fff; width: 30px; text-align: right; }
+
+    .pending-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #2a2a2a; }
+    .pending-name { font-size: 14px; color: #ddd; }
+    .pending-detail { font-size: 12px; color: #666; }
+    .pending-badge { font-size: 11px; padding: 4px 10px; background: rgba(184,150,90,0.15); color: var(--gold); border-radius: 2px; letter-spacing: 1px; }
+    .pending-badge.overdue { background: rgba(220,60,60,0.15); color: #dc3c3c; }
+
+    .escalation-item { padding: 14px 0; border-bottom: 1px solid #2a2a2a; }
+    .escalation-body { font-size: 13px; color: #ccc; line-height: 1.5; }
+    .escalation-time { font-size: 11px; color: #555; margin-top: 6px; }
+
+    .empty-state { text-align: center; padding: 32px; color: #555; font-size: 13px; }
+
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .panels { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 500px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body class="admin-body">
+
+<nav class="admin-nav" style="background:#111;border-bottom:1px solid #2a2a2a;">
+  <a class="nav-logo" href="index.html" style="color:#fff;">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html" style="color:#666;">Site</a></li>
+    <li><a href="/admin" style="color:var(--gold);">Dashboard</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap" style="padding-top:72px;">
+
+  <!-- LOGIN -->
+  <div class="login-box" id="loginBox">
+    <h2>Dashboard Login</h2>
+    <input type="password" class="form-input" id="adminKey" placeholder="Enter admin key">
+    <button class="login-btn" onclick="doLogin()">ACCESS DASHBOARD</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="admin-wrap" id="dashboard" style="display:none;">
+    <div class="admin-header">
+      <h1>Ops <em>Dashboard</em></h1>
+      <p id="lastUpdated">Loading...</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-label">Leads Today</div>
+        <div class="stat-card-value" id="leadsToday">—</div>
+        <div class="stat-card-sub" id="leadsWeek">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Conversion Rate</div>
+        <div class="stat-card-value" id="convRate">—</div>
+        <div class="stat-card-sub" id="totalLeads">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Active Clients</div>
+        <div class="stat-card-value" id="activeClients">—</div>
+        <div class="stat-card-sub">Currently enrolled</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Programs This Week</div>
+        <div class="stat-card-value" id="progsWeek">—</div>
+        <div class="stat-card-sub">Generated & sent</div>
+      </div>
+    </div>
+
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-title">Clients by <em>Program</em></div>
+        <div id="programBars"><div class="empty-state">Loading...</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Pending <em>Check-Ins</em></div>
+        <div id="pendingList"><div class="empty-state">Loading...</div></div>
+      </div>
+      <div class="panel" style="grid-column: 1 / -1;">
+        <div class="panel-title">Recent <em>Escalations</em></div>
+        <div id="escalationList"><div class="empty-state">Loading...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var adminKey = '';
+
+function doLogin() {
+  adminKey = document.getElementById('adminKey').value.trim();
+  if (!adminKey) return;
+  document.getElementById('loginBox').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadDashboard();
+}
+
+function loadDashboard() {
+  fetch('/api/admin-stats', {
+    headers: { 'Authorization': 'Bearer ' + adminKey },
+  })
+  .then(function(res) {
+    if (res.status === 401) {
+      alert('Invalid admin key.');
+      document.getElementById('loginBox').style.display = 'block';
+      document.getElementById('dashboard').style.display = 'none';
+      return null;
+    }
+    return res.json();
+  })
+  .then(function(data) {
+    if (!data) return;
+    renderDashboard(data);
+  })
+  .catch(function() {
+    document.getElementById('lastUpdated').textContent = 'Error loading data';
+  });
+}
+
+var PROGRAM_LABELS = {
+  '6wk_gym': '6-Week Gym',
+  '6wk_home': '6-Week Home',
+  '12wk': '12-Week Custom',
+  'pcos': 'PCOS Warrior',
+  '40plus': '40+ Strong',
+  'zoom_trial': 'Zoom Trial',
+  'zoom_pack': 'Zoom Pack',
+};
+
+function renderDashboard(d) {
+  document.getElementById('lastUpdated').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+  document.getElementById('leadsToday').textContent = d.leads.today;
+  document.getElementById('leadsWeek').textContent = d.leads.thisWeek + ' this week';
+  document.getElementById('convRate').textContent = d.leads.conversionRate + '%';
+  document.getElementById('totalLeads').textContent = d.leads.total + ' total leads';
+  document.getElementById('activeClients').textContent = d.clients.active;
+  document.getElementById('progsWeek').textContent = d.programsThisWeek;
+
+  var maxCount = 0;
+  var programs = d.clients.byProgram || {};
+  Object.values(programs).forEach(function(v) { if (v > maxCount) maxCount = v; });
+
+  var barsHtml = '';
+  Object.keys(programs).forEach(function(key) {
+    var count = programs[key];
+    var pct = maxCount > 0 ? (count / maxCount * 100) : 0;
+    barsHtml += '<div class="program-bar">'
+      + '<div class="program-bar-name">' + (PROGRAM_LABELS[key] || key) + '</div>'
+      + '<div class="program-bar-track"><div class="program-bar-fill" style="width:' + pct + '%"></div></div>'
+      + '<div class="program-bar-count">' + count + '</div>'
+      + '</div>';
+  });
+  document.getElementById('programBars').innerHTML = barsHtml || '<div class="empty-state">No active clients yet</div>';
+
+  var pendingHtml = '';
+  (d.pendingCheckins || []).forEach(function(p) {
+    var overdue = p.currentWeek - p.lastCheckinWeek > 1;
+    pendingHtml += '<div class="pending-item">'
+      + '<div><div class="pending-name">' + (p.name || 'Unknown') + '</div>'
+      + '<div class="pending-detail">' + (PROGRAM_LABELS[p.program] || p.program) + ' · Week ' + p.currentWeek + '</div></div>'
+      + '<div class="pending-badge' + (overdue ? ' overdue' : '') + '">'
+      + (overdue ? 'OVERDUE' : 'PENDING') + '</div>'
+      + '</div>';
+  });
+  document.getElementById('pendingList').innerHTML = pendingHtml || '<div class="empty-state">All check-ins submitted</div>';
+
+  var escHtml = '';
+  (d.escalations || []).forEach(function(e) {
+    escHtml += '<div class="escalation-item">'
+      + '<div class="escalation-body">' + (e.body || '').replace(/</g, '&lt;') + '</div>'
+      + '<div class="escalation-time">' + new Date(e.sent_at).toLocaleString() + '</div>'
+      + '</div>';
+  });
+  document.getElementById('escalationList').innerHTML = escHtml || '<div class="empty-state">No escalations — all clear</div>';
+}
+</script>
+</body>
+</html>
