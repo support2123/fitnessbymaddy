@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --sand: #F0EAE0; --gold: #B8965A;
+      --gold-light: #D4AF7A; --charcoal: #2C2C2C; --mid-grey: #6B6B6B;
+      --light-grey: #E8E3DC; --green: #2D8A4E; --red: #C44B4B;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); }
+    .dash-nav { background: var(--charcoal); padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .dash-logo { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: white; letter-spacing: 2px; text-transform: uppercase; }
+    .dash-logout { font-size: 12px; color: var(--gold-light); cursor: pointer; letter-spacing: 1px; text-transform: uppercase; border: none; background: none; }
+    .dash-content { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
+    .dash-header { margin-bottom: 40px; }
+    .dash-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; }
+    .dash-header p { color: var(--mid-grey); font-size: 14px; margin-top: 8px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card { background: white; padding: 28px 24px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .stat-card-label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card-value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--charcoal); line-height: 1; }
+    .stat-card-sub { font-size: 12px; color: var(--mid-grey); margin-top: 4px; }
+    .dash-section { margin-bottom: 40px; }
+    .dash-section h2 { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 400; margin-bottom: 16px; }
+    .table-wrap { background: white; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--light-grey); background: var(--sand); }
+    td { font-size: 13px; padding: 14px 16px; border-bottom: 1px solid var(--light-grey); }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-new { background: #E8F5E9; color: var(--green); }
+    .badge-qualified { background: #FFF8E1; color: #B8860B; }
+    .badge-converted { background: #E3F2FD; color: #1565C0; }
+    .badge-dropped { background: #FFEBEE; color: var(--red); }
+    .badge-active { background: #E8F5E9; color: var(--green); }
+    .escalation-item { background: white; padding: 16px 20px; border-left: 3px solid var(--red); margin-bottom: 8px; border-radius: 0 4px 4px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .escalation-item p { font-size: 13px; color: var(--charcoal); }
+    .escalation-item small { font-size: 11px; color: var(--mid-grey); }
+    .login-overlay { position: fixed; inset: 0; background: var(--cream); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    .login-box { background: white; padding: 48px 40px; border-radius: 4px; box-shadow: 0 8px 40px rgba(0,0,0,0.08); max-width: 380px; width: 100%; text-align: center; }
+    .login-box h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 8px; }
+    .login-box p { font-size: 13px; color: var(--mid-grey); margin-bottom: 24px; }
+    .login-input { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; margin-bottom: 16px; outline: none; }
+    .login-input:focus { border-color: var(--gold); }
+    .login-btn { width: 100%; padding: 14px; background: var(--charcoal); color: white; border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; }
+    .login-btn:hover { background: var(--gold); }
+    .hidden { display: none !important; }
+    .empty-state { text-align: center; padding: 40px; color: var(--mid-grey); font-size: 14px; }
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .table-wrap { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h2>Dashboard</h2>
+    <p>Fitness by Maddy — Admin Access</p>
+    <input class="login-input" type="email" id="loginEmail" placeholder="Email">
+    <input class="login-input" type="password" id="loginPassword" placeholder="Password">
+    <button class="login-btn" id="loginBtn">Sign In</button>
+  </div>
+</div>
+
+<div class="hidden" id="dashboard">
+  <nav class="dash-nav">
+    <span class="dash-logo">Fitness by Maddy</span>
+    <button class="dash-logout" id="logoutBtn">Logout</button>
+  </nav>
+
+  <div class="dash-content">
+    <div class="dash-header">
+      <h1>Operations Dashboard</h1>
+      <p id="dashDate"></p>
+    </div>
+
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card"><div class="stat-card-label">New Leads Today</div><div class="stat-card-value" id="leadsToday">—</div></div>
+      <div class="stat-card"><div class="stat-card-label">Leads This Week</div><div class="stat-card-value" id="leadsWeek">—</div></div>
+      <div class="stat-card"><div class="stat-card-label">Conversion Rate</div><div class="stat-card-value" id="convRate">—</div><div class="stat-card-sub">lead → paid</div></div>
+      <div class="stat-card"><div class="stat-card-label">Active Clients</div><div class="stat-card-value" id="activeClients">—</div></div>
+      <div class="stat-card"><div class="stat-card-label">Pending Check-ins</div><div class="stat-card-value" id="pendingCheckins">—</div></div>
+      <div class="stat-card"><div class="stat-card-label">Programs This Week</div><div class="stat-card-value" id="programsWeek">—</div></div>
+    </div>
+
+    <div class="dash-section">
+      <h2>Recent Leads</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Phone</th><th>Name</th><th>Source</th><th>Status</th><th>Interest</th><th>Created</th></tr></thead>
+          <tbody id="leadsTable"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="dash-section">
+      <h2>Active Clients</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Ends</th><th>Status</th></tr></thead>
+          <tbody id="clientsTable"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="dash-section">
+      <h2>Escalations</h2>
+      <div id="escalationsBox"><p class="empty-state">Loading...</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var SUPABASE_URL = '';
+  var SUPABASE_ANON_KEY = '';
+  var session = null;
+
+  var loginOverlay = document.getElementById('loginOverlay');
+  var dashboard = document.getElementById('dashboard');
+  var loginBtn = document.getElementById('loginBtn');
+  var logoutBtn = document.getElementById('logoutBtn');
+
+  // Check stored session
+  var stored = localStorage.getItem('fbm_session');
+  if (stored) {
+    try {
+      session = JSON.parse(stored);
+      showDashboard();
+    } catch(e) { localStorage.removeItem('fbm_session'); }
+  }
+
+  loginBtn.addEventListener('click', function() {
+    var email = document.getElementById('loginEmail').value;
+    var password = document.getElementById('loginPassword').value;
+    if (!email || !password) return;
+
+    fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+      body: JSON.stringify({ email: email, password: password })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.access_token) {
+        session = data;
+        localStorage.setItem('fbm_session', JSON.stringify(data));
+        showDashboard();
+      } else {
+        alert('Invalid credentials');
+      }
+    })
+    .catch(function() { alert('Login failed'); });
+  });
+
+  logoutBtn.addEventListener('click', function() {
+    session = null;
+    localStorage.removeItem('fbm_session');
+    loginOverlay.classList.remove('hidden');
+    dashboard.classList.add('hidden');
+  });
+
+  function showDashboard() {
+    loginOverlay.classList.add('hidden');
+    dashboard.classList.remove('hidden');
+    document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    loadData();
+  }
+
+  function apiCall(path, query) {
+    var url = SUPABASE_URL + '/rest/v1/' + path;
+    if (query) url += '?' + query;
+    return fetch(url, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + session.access_token,
+        'Prefer': 'count=exact'
+      }
+    }).then(function(r) {
+      var count = r.headers.get('content-range');
+      return r.json().then(function(data) { return { data: data, count: count }; });
+    });
+  }
+
+  function loadData() {
+    var today = new Date(); today.setHours(0,0,0,0);
+    var weekAgo = new Date(today.getTime() - 7*24*60*60*1000);
+
+    // Leads today
+    apiCall('leads', 'select=*&created_at=gte.' + today.toISOString() + '&order=created_at.desc')
+    .then(function(r) { document.getElementById('leadsToday').textContent = r.data.length; });
+
+    // Leads this week
+    apiCall('leads', 'select=*&created_at=gte.' + weekAgo.toISOString())
+    .then(function(r) { document.getElementById('leadsWeek').textContent = r.data.length; });
+
+    // Conversion rate
+    Promise.all([
+      apiCall('leads', 'select=id'),
+      apiCall('leads', 'select=id&status=eq.converted')
+    ]).then(function(results) {
+      var total = results[0].data.length;
+      var converted = results[1].data.length;
+      var rate = total > 0 ? Math.round((converted / total) * 100) : 0;
+      document.getElementById('convRate').textContent = rate + '%';
+    });
+
+    // Active clients
+    apiCall('clients', 'select=*&status=eq.active')
+    .then(function(r) {
+      document.getElementById('activeClients').textContent = r.data.length;
+      renderClients(r.data);
+    });
+
+    // Programs this week
+    apiCall('programs', 'select=id&generated_at=gte.' + weekAgo.toISOString())
+    .then(function(r) { document.getElementById('programsWeek').textContent = r.data.length; });
+
+    // Recent leads table
+    apiCall('leads', 'select=*&order=created_at.desc&limit=20')
+    .then(function(r) { renderLeads(r.data); });
+
+    // Pending check-ins (active clients without this week's checkin)
+    document.getElementById('pendingCheckins').textContent = '—';
+
+    // Escalations (messages with escalation keywords to Maddy)
+    apiCall('messages', 'select=*&phone=eq.+917082478374&direction=eq.out&body=ilike.*ESCALATION*&order=sent_at.desc&limit=10')
+    .then(function(r) { renderEscalations(r.data); })
+    .catch(function() { document.getElementById('escalationsBox').innerHTML = '<p class="empty-state">No escalations</p>'; });
+  }
+
+  function maskPhone(phone) {
+    if (!phone || phone.length < 6) return '***';
+    return phone.slice(0, 4) + '...' + phone.slice(-3);
+  }
+
+  function renderLeads(leads) {
+    var tbody = document.getElementById('leadsTable');
+    if (!leads.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No leads yet</td></tr>'; return; }
+    tbody.innerHTML = leads.map(function(l) {
+      var badgeClass = 'badge-' + l.status;
+      return '<tr><td>' + maskPhone(l.phone) + '</td><td>' + (l.name || '—') + '</td><td>' + (l.source || '—') +
+        '</td><td><span class="badge ' + badgeClass + '">' + l.status + '</span></td><td>' +
+        (l.program_interest || '—') + '</td><td>' + new Date(l.created_at).toLocaleDateString() + '</td></tr>';
+    }).join('');
+  }
+
+  function renderClients(clients) {
+    var tbody = document.getElementById('clientsTable');
+    if (!clients.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No active clients</td></tr>'; return; }
+    tbody.innerHTML = clients.map(function(c) {
+      return '<tr><td>' + (c.name || maskPhone(c.phone)) + '</td><td>' + c.program +
+        '</td><td>' + new Date(c.program_started_at).toLocaleDateString() +
+        '</td><td>' + (c.program_ends_at ? new Date(c.program_ends_at).toLocaleDateString() : '—') +
+        '</td><td><span class="badge badge-active">' + c.status + '</span></td></tr>';
+    }).join('');
+  }
+
+  function renderEscalations(messages) {
+    var box = document.getElementById('escalationsBox');
+    if (!messages || !messages.length) { box.innerHTML = '<p class="empty-state">No recent escalations</p>'; return; }
+    box.innerHTML = messages.map(function(m) {
+      return '<div class="escalation-item"><p>' + (m.body || '—') + '</p><small>' + new Date(m.sent_at).toLocaleString() + '</small></div>';
+    }).join('');
+  }
+})();
+</script>
+</body>
+</html>
