@@ -93,4 +93,4 @@ function maskPhone(phone) {
   return "XXX...";
 }
 
-export { sendTemplate, sendText, maskPhone, markOptedIn };
+module.exports = { sendTemplate, sendText, maskPhone, markOptedIn };

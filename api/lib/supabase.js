@@ -110,4 +110,4 @@ async function uploadFile(bucket, path, buffer, contentType) {
   return res.json();
 }
 
-export { query, insert, update, rpc, uploadFile };
+module.exports = { query, insert, update, rpc, uploadFile };

@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS leads (
   market TEXT DEFAULT 'GLOBAL' CHECK (market IN ('IN', 'UAE', 'UK', 'GLOBAL')),
   profile JSONB DEFAULT '{}'::jsonb,
   nudge_sent BOOLEAN DEFAULT FALSE,
+  intake_completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(phone)
 );
@@ -66,6 +67,7 @@ CREATE TABLE IF NOT EXISTS programs (
   nutrition_plan JSONB,
   notes TEXT,
   needs_review BOOLEAN DEFAULT FALSE,
+  safety_flags TEXT[],
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(client_id, week_no)
 );

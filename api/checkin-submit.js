@@ -97,8 +97,8 @@ module.exports = async function handler(req, res) {
       compliance_score: complianceNum,
       energy: energyNum,
       issues: issues || null,
-      photo_urls: photoUrls.length > 0 ? photoUrls : null,
-      submitted_at: new Date().toISOString(),
+      photos_urls: photoUrls.length > 0 ? photoUrls : null,
+      form_submitted_at: new Date().toISOString(),
     };
 
     const [inserted] = await insert("checkins", checkinData);
@@ -127,13 +127,13 @@ module.exports = async function handler(req, res) {
     // ── 12-week program: trigger program generation ─────────────────
     try {
       const clients = await query("clients", {
-        select: "program_type",
+        select: "program",
         filters: { id: `eq.${client_id}` },
         limit: 1,
       });
 
       const client = clients[0];
-      if (client && client.program_type === "12wk") {
+      if (client && client.program === "12wk") {
         console.log(
           `[checkin-submit] 12-week client — triggering program generation for week ${weekNum + 1}`
         );
