@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body class="form-page">
+  <div class="form-container">
+    <div class="form-header">
+      <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+      <h1 class="form-title">Weekly Check-In</h1>
+      <p class="form-subtitle">Track your progress. Honest data = better adjustments to your program.</p>
+      <div class="week-badge" id="weekBadge">Week —</div>
+    </div>
+
+    <form id="checkinForm" class="brand-form">
+      <input type="hidden" id="clientId" name="client_id">
+      <input type="hidden" id="weekNo" name="week_no">
+
+      <div class="form-section">
+        <h2 class="form-section-title">Body Stats</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Current Weight (kg) *</label>
+            <input type="number" name="weight" class="form-input" step="0.1" min="30" max="250" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Waist (cm)</label>
+            <input type="number" name="waist" class="form-input" step="0.1" min="40" max="200">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h2 class="form-section-title">Self-Assessment</h2>
+        <div class="form-group">
+          <label class="form-label">Workout Compliance (1-10) *</label>
+          <p class="form-hint">10 = followed every session perfectly, 1 = barely trained</p>
+          <div class="rating-group" id="complianceRating">
+            <input type="hidden" name="compliance_score" id="complianceValue" required>
+            <button type="button" class="rating-btn" data-value="1">1</button>
+            <button type="button" class="rating-btn" data-value="2">2</button>
+            <button type="button" class="rating-btn" data-value="3">3</button>
+            <button type="button" class="rating-btn" data-value="4">4</button>
+            <button type="button" class="rating-btn" data-value="5">5</button>
+            <button type="button" class="rating-btn" data-value="6">6</button>
+            <button type="button" class="rating-btn" data-value="7">7</button>
+            <button type="button" class="rating-btn" data-value="8">8</button>
+            <button type="button" class="rating-btn" data-value="9">9</button>
+            <button type="button" class="rating-btn" data-value="10">10</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Energy Level (1-10) *</label>
+          <p class="form-hint">10 = incredible energy all week, 1 = constantly exhausted</p>
+          <div class="rating-group" id="energyRating">
+            <input type="hidden" name="energy" id="energyValue" required>
+            <button type="button" class="rating-btn" data-value="1">1</button>
+            <button type="button" class="rating-btn" data-value="2">2</button>
+            <button type="button" class="rating-btn" data-value="3">3</button>
+            <button type="button" class="rating-btn" data-value="4">4</button>
+            <button type="button" class="rating-btn" data-value="5">5</button>
+            <button type="button" class="rating-btn" data-value="6">6</button>
+            <button type="button" class="rating-btn" data-value="7">7</button>
+            <button type="button" class="rating-btn" data-value="8">8</button>
+            <button type="button" class="rating-btn" data-value="9">9</button>
+            <button type="button" class="rating-btn" data-value="10">10</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h2 class="form-section-title">Feedback</h2>
+        <div class="form-group">
+          <label class="form-label">Any issues, pain, or challenges this week?</label>
+          <textarea name="issues" class="form-input form-textarea" rows="3" placeholder="e.g., Shoulder felt tight during presses, struggled with meal prep on weekdays, sleep was poor..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">What went well?</label>
+          <textarea name="wins" class="form-input form-textarea" rows="2" placeholder="e.g., Hit all sessions, nailed my protein target, felt stronger on squats..."></textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h2 class="form-section-title">Progress Photos</h2>
+        <p class="form-hint">Front, side, and back. Same lighting and time of day if possible.</p>
+        <div class="form-group">
+          <label class="form-label">Upload Photos</label>
+          <input type="file" name="photos" class="form-input form-file" accept="image/*" multiple>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary form-submit">Submit Check-In</button>
+      <div id="formMessage" class="form-message"></div>
+    </form>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const clientId = params.get('c');
+    const weekNo = params.get('w');
+
+    if (clientId) document.getElementById('clientId').value = clientId;
+    if (weekNo) {
+      document.getElementById('weekNo').value = weekNo;
+      document.getElementById('weekBadge').textContent = 'Week ' + weekNo;
+    }
+
+    document.querySelectorAll('.rating-group').forEach(group => {
+      const hiddenInput = group.querySelector('input[type="hidden"]');
+      group.querySelectorAll('.rating-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          group.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          hiddenInput.value = this.dataset.value;
+        });
+      });
+    });
+
+    document.getElementById('checkinForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn = this.querySelector('.form-submit');
+      const msg = document.getElementById('formMessage');
+
+      if (!document.getElementById('complianceValue').value || !document.getElementById('energyValue').value) {
+        msg.className = 'form-message error';
+        msg.textContent = 'Please rate your compliance and energy levels.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      const formData = new FormData(this);
+      const data = Object.fromEntries(formData.entries());
+      delete data.photos;
+      delete data.wins;
+
+      try {
+        const res = await fetch('/api/checkin-submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json();
+        if (res.ok) {
+          msg.className = 'form-message success';
+          msg.textContent = 'Check-in submitted! Your updated program will be sent shortly.';
+          this.reset();
+          document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('active'));
+        } else {
+          throw new Error(result.error || 'Submission failed');
+        }
+      } catch (err) {
+        msg.className = 'form-message error';
+        msg.textContent = err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit Check-In';
+      }
+    });
+  </script>
+</body>
+</html>
