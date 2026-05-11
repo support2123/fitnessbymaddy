@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+    :root { --gold: #B8965A; --gold-light: #D4AF7A; --charcoal: #2C2C2C; --dark: #1a1a1a; --card: #222; --border: #333; --text: #eee; --muted: #999; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--dark); color: var(--text); min-height: 100vh; }
+
+    .login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    .login-box { background: var(--card); padding: 48px; border-radius: 8px; width: 100%; max-width: 400px; border: 1px solid var(--border); }
+    .login-box h1 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--gold); letter-spacing: 2px; margin-bottom: 8px; }
+    .login-box p { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+    .login-input { width: 100%; padding: 14px 16px; background: var(--dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 14px; margin-bottom: 16px; outline: none; font-family: inherit; }
+    .login-input:focus { border-color: var(--gold); }
+    .login-btn { width: 100%; padding: 16px; background: var(--gold); color: white; border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 4px; }
+    .login-btn:hover { background: var(--gold-light); }
+
+    .dashboard { display: none; }
+    .dash-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 20px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .dash-logo { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--gold); letter-spacing: 2px; }
+    .dash-logout { background: none; border: 1px solid var(--border); color: var(--muted); padding: 8px 16px; font-size: 12px; cursor: pointer; border-radius: 4px; font-family: inherit; }
+    .dash-logout:hover { border-color: var(--gold); color: var(--gold); }
+
+    .dash-content { padding: 32px; max-width: 1200px; margin: 0 auto; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; }
+    .stat-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+    .stat-card .value { font-family: 'Bebas Neue', sans-serif; font-size: 40px; color: var(--gold); line-height: 1; }
+    .stat-card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--gold); letter-spacing: 1px; margin-bottom: 16px; margin-top: 32px; }
+    .data-table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    .data-table th { background: var(--dark); padding: 12px 16px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); text-align: left; }
+    .data-table td { padding: 12px 16px; font-size: 13px; border-top: 1px solid var(--border); color: var(--text); }
+    .data-table tr:hover td { background: rgba(184,150,90,0.05); }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-active { background: rgba(76,175,80,0.2); color: #81c784; }
+    .badge-new { background: rgba(33,150,243,0.2); color: #64b5f6; }
+    .badge-dropped { background: rgba(244,67,54,0.2); color: #e57373; }
+    .badge-converted { background: rgba(184,150,90,0.2); color: var(--gold); }
+    .badge-qualified { background: rgba(156,39,176,0.2); color: #ce93d8; }
+
+    .escalation-card { background: var(--card); border: 1px solid #e57373; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+    .escalation-card .esc-reason { color: #e57373; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+    .escalation-card .esc-detail { color: var(--muted); font-size: 12px; }
+
+    .hidden { display: none; }
+    @media (max-width: 768px) { .dash-content { padding: 16px; } .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+
+<div class="login-page" id="login-page">
+  <div class="login-box">
+    <h1>FITNESS BY MADDY</h1>
+    <p>Admin Dashboard — Enter your credentials</p>
+    <input class="login-input" type="email" id="login-email" placeholder="Email">
+    <input class="login-input" type="password" id="login-password" placeholder="Password">
+    <button class="login-btn" id="login-btn">Sign In</button>
+  </div>
+</div>
+
+<div class="dashboard hidden" id="dashboard">
+  <div class="dash-header">
+    <div class="dash-logo">FITNESS BY MADDY — ADMIN</div>
+    <button class="dash-logout" id="logout-btn">Logout</button>
+  </div>
+  <div class="dash-content">
+    <div class="stats-grid" id="stats-grid"></div>
+
+    <div class="section-title">Escalations Awaiting Review</div>
+    <div id="escalations"></div>
+
+    <div class="section-title">Recent Leads</div>
+    <table class="data-table" id="leads-table">
+      <thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Program Interest</th><th>Market</th><th>Created</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="section-title">Active Clients</div>
+    <table class="data-table" id="clients-table">
+      <thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Status</th><th>Paid</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="section-title">Pending Check-ins</div>
+    <table class="data-table" id="checkins-table">
+      <thead><tr><th>Client</th><th>Week</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function() {
+  var SUPABASE_URL = '';
+  var SUPABASE_ANON_KEY = '';
+
+  var metaUrl = document.querySelector('meta[name="supabase-url"]');
+  var metaKey = document.querySelector('meta[name="supabase-key"]');
+  if (metaUrl) SUPABASE_URL = metaUrl.content;
+  if (metaKey) SUPABASE_ANON_KEY = metaKey.content;
+
+  if (!SUPABASE_URL) SUPABASE_URL = window.__SUPABASE_URL || '';
+  if (!SUPABASE_ANON_KEY) SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY || '';
+
+  var sb = null;
+  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+
+  var loginBtn = document.getElementById('login-btn');
+  var logoutBtn = document.getElementById('logout-btn');
+
+  loginBtn.addEventListener('click', async function() {
+    if (!sb) { alert('Supabase not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY.'); return; }
+    var email = document.getElementById('login-email').value;
+    var password = document.getElementById('login-password').value;
+    var { error } = await sb.auth.signInWithPassword({ email: email, password: password });
+    if (error) { alert('Login failed: ' + error.message); return; }
+    showDashboard();
+  });
+
+  logoutBtn.addEventListener('click', async function() {
+    if (sb) await sb.auth.signOut();
+    document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('login-page').classList.remove('hidden');
+  });
+
+  async function checkSession() {
+    if (!sb) return;
+    var { data } = await sb.auth.getSession();
+    if (data.session) showDashboard();
+  }
+
+  async function showDashboard() {
+    document.getElementById('login-page').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    await loadStats();
+    await loadLeads();
+    await loadClients();
+    await loadPendingCheckins();
+  }
+
+  async function loadStats() {
+    var grid = document.getElementById('stats-grid');
+    var today = new Date(); today.setHours(0,0,0,0);
+    var weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+
+    var { count: leadsToday } = await sb.from('leads').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString());
+    var { count: leadsWeek } = await sb.from('leads').select('*', { count: 'exact', head: true }).gte('created_at', weekAgo.toISOString());
+    var { count: totalLeads } = await sb.from('leads').select('*', { count: 'exact', head: true });
+    var { count: converted } = await sb.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'converted');
+    var { count: activeClients } = await sb.from('clients').select('*', { count: 'exact', head: true }).eq('status', 'active');
+    var { count: programsWeek } = await sb.from('programs').select('*', { count: 'exact', head: true }).gte('generated_at', weekAgo.toISOString());
+
+    var rate = totalLeads > 0 ? Math.round((converted / totalLeads) * 100) : 0;
+
+    grid.innerHTML = [
+      statCard('Leads Today', leadsToday || 0, ''),
+      statCard('Leads This Week', leadsWeek || 0, ''),
+      statCard('Conversion Rate', rate + '%', converted + ' of ' + totalLeads + ' leads'),
+      statCard('Active Clients', activeClients || 0, ''),
+      statCard('Programs This Week', programsWeek || 0, 'Generated'),
+    ].join('');
+  }
+
+  function statCard(label, value, sub) {
+    return '<div class="stat-card"><div class="label">' + label + '</div><div class="value">' + value + '</div>' + (sub ? '<div class="sub">' + sub + '</div>' : '') + '</div>';
+  }
+
+  async function loadLeads() {
+    var { data } = await sb.from('leads').select('*').order('created_at', { ascending: false }).limit(20);
+    var tbody = document.querySelector('#leads-table tbody');
+    tbody.innerHTML = (data || []).map(function(l) {
+      return '<tr><td>' + (l.name || '—') + '</td><td>' + maskPhone(l.phone) + '</td><td>' + badge(l.status) + '</td><td>' + (l.program_interest || '—') + '</td><td>' + (l.market || '—') + '</td><td>' + formatDate(l.created_at) + '</td></tr>';
+    }).join('');
+  }
+
+  async function loadClients() {
+    var { data } = await sb.from('clients').select('*').order('program_started_at', { ascending: false }).limit(20);
+    var tbody = document.querySelector('#clients-table tbody');
+    tbody.innerHTML = (data || []).map(function(c) {
+      return '<tr><td>' + (c.name || '—') + '</td><td>' + (c.program || '—') + '</td><td>' + formatDate(c.program_started_at) + '</td><td>' + badge(c.status) + '</td><td>$' + (c.paid_amount || 0) + '</td></tr>';
+    }).join('');
+  }
+
+  async function loadPendingCheckins() {
+    var { data: clients } = await sb.from('clients').select('id, name, program_started_at').eq('status', 'active');
+    var tbody = document.querySelector('#checkins-table tbody');
+    var rows = [];
+
+    for (var c of (clients || [])) {
+      var startDate = new Date(c.program_started_at);
+      var now = new Date();
+      var weekNo = Math.ceil((now - startDate) / (7 * 24 * 60 * 60 * 1000));
+      if (weekNo < 1) continue;
+
+      var { data: checkin } = await sb.from('checkins').select('form_submitted_at').eq('client_id', c.id).eq('week_no', weekNo).maybeSingle();
+      if (!checkin || !checkin.form_submitted_at) {
+        rows.push('<tr><td>' + (c.name || '—') + '</td><td>Week ' + weekNo + '</td><td><span class="badge badge-dropped">Pending</span></td></tr>');
+      }
+    }
+    tbody.innerHTML = rows.join('') || '<tr><td colspan="3" style="color:var(--muted)">All check-ins submitted</td></tr>';
+  }
+
+  function badge(status) {
+    var cls = 'badge-' + (status || 'new');
+    return '<span class="badge ' + cls + '">' + (status || 'new') + '</span>';
+  }
+
+  function maskPhone(phone) {
+    if (!phone || phone.length < 6) return phone || '—';
+    return phone.substring(0, 4) + '***' + phone.slice(-3);
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  }
+
+  checkSession();
+})();
+</script>
+</body>
+</html>
