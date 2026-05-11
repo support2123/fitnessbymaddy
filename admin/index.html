@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: #111; color: #fff; min-height: 100vh; }
+    .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    .login-box { background: #1a1a1a; padding: 48px; border-radius: 8px; width: 100%; max-width: 380px; border: 1px solid #333; }
+    .login-box h1 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: #B8965A; text-align: center; letter-spacing: 3px; margin-bottom: 32px; }
+    .login-box input { width: 100%; padding: 14px 16px; background: #222; border: 1.5px solid #333; border-radius: 4px; color: #fff; font-size: 14px; margin-bottom: 16px; outline: none; font-family: 'DM Sans', sans-serif; }
+    .login-box input:focus { border-color: #B8965A; }
+    .login-box button { width: 100%; padding: 14px; background: #B8965A; color: #111; border: none; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; cursor: pointer; border-radius: 4px; }
+
+    .dashboard { display: none; }
+    .topbar { background: #1a1a1a; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
+    .topbar h1 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #B8965A; letter-spacing: 3px; }
+    .topbar button { background: #333; color: #888; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .content { padding: 32px; max-width: 1200px; margin: 0 auto; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card { background: #1a1a1a; border: 1px solid #222; border-radius: 8px; padding: 24px; }
+    .stat-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #666; margin-bottom: 8px; }
+    .stat-card .value { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: #B8965A; }
+    .stat-card .sub { font-size: 12px; color: #555; margin-top: 4px; }
+
+    .section { margin-bottom: 40px; }
+    .section h2 { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #B8965A; letter-spacing: 2px; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; background: #1a1a1a; border-radius: 8px; overflow: hidden; }
+    th { background: #222; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; padding: 12px 16px; text-align: left; }
+    td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid #222; color: #ccc; }
+    tr:hover td { background: #1f1f1f; }
+    .badge { padding: 4px 8px; border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-new { background: #1a3a2a; color: #4ade80; }
+    .badge-qualified { background: #1a2a3a; color: #60a5fa; }
+    .badge-converted { background: #3a2a1a; color: #B8965A; }
+    .badge-active { background: #1a3a2a; color: #4ade80; }
+    .badge-dropped { background: #3a1a1a; color: #f87171; }
+    .escalation-item { background: #2a1a1a; border: 1px solid #3a2222; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+    .escalation-item .reason { color: #f87171; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+    .escalation-item .detail { color: #888; font-size: 12px; }
+    .empty-state { text-align: center; padding: 40px; color: #444; font-size: 14px; }
+    .refresh-btn { background: #222; color: #B8965A; border: 1px solid #333; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <h1>MADDY ADMIN</h1>
+      <input type="email" id="loginEmail" placeholder="Email">
+      <input type="password" id="loginPassword" placeholder="Password">
+      <button onclick="handleLogin()">LOGIN</button>
+    </div>
+  </div>
+
+  <div class="dashboard" id="dashboard">
+    <div class="topbar">
+      <h1>FITNESS BY MADDY — OPS</h1>
+      <div>
+        <button class="refresh-btn" onclick="loadDashboard()">REFRESH</button>
+        <button onclick="handleLogout()" style="margin-left:8px">LOGOUT</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <div class="section">
+        <h2>ESCALATIONS AWAITING REVIEW</h2>
+        <div id="escalations"><div class="empty-state">No escalations</div></div>
+      </div>
+
+      <div class="section">
+        <h2>RECENT LEADS</h2>
+        <table>
+          <thead><tr><th>Phone</th><th>Name</th><th>Status</th><th>Interest</th><th>Market</th><th>When</th></tr></thead>
+          <tbody id="leadsTable"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <h2>ACTIVE CLIENTS</h2>
+        <table>
+          <thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Week</th><th>Last Check-in</th></tr></thead>
+          <tbody id="clientsTable"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <h2>PENDING CHECK-INS</h2>
+        <table>
+          <thead><tr><th>Client</th><th>Week</th><th>Due Since</th></tr></thead>
+          <tbody id="pendingTable"><tr><td colspan="3" class="empty-state">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = window.__SUPABASE_URL__ || '';
+    const SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY__ || '';
+
+    let sb;
+    try { sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) {}
+
+    async function handleLogin() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      if (!sb) { alert('Supabase not configured'); return; }
+
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) { alert(error.message); return; }
+      showDashboard();
+    }
+
+    function handleLogout() {
+      if (sb) sb.auth.signOut();
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+    }
+
+    async function showDashboard() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      await loadDashboard();
+    }
+
+    async function loadDashboard() {
+      if (!sb) return;
+
+      const today = new Date(); today.setHours(0,0,0,0);
+      const weekAgo = new Date(today - 7*24*60*60*1000);
+
+      const [leadsRes, clientsRes, checkinsRes, programsRes] = await Promise.all([
+        sb.from('leads').select('*').order('created_at', { ascending: false }).limit(50),
+        sb.from('clients').select('*').order('created_at', { ascending: false }),
+        sb.from('checkins').select('*').order('form_submitted_at', { ascending: false }).limit(20),
+        sb.from('programs').select('*').gte('generated_at', weekAgo.toISOString()),
+      ]);
+
+      const leads = leadsRes.data || [];
+      const clients = clientsRes.data || [];
+      const checkins = checkinsRes.data || [];
+      const programs = programsRes.data || [];
+
+      const leadsToday = leads.filter(l => new Date(l.created_at) >= today).length;
+      const leadsWeek = leads.filter(l => new Date(l.created_at) >= weekAgo).length;
+      const activeClients = clients.filter(c => c.status === 'active');
+      const converted = leads.filter(l => l.status === 'converted').length;
+      const convRate = leads.length ? Math.round((converted / leads.length) * 100) : 0;
+
+      document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card"><div class="label">Leads Today</div><div class="value">${leadsToday}</div><div class="sub">${leadsWeek} this week</div></div>
+        <div class="stat-card"><div class="label">Conversion Rate</div><div class="value">${convRate}%</div><div class="sub">${converted} of ${leads.length} total</div></div>
+        <div class="stat-card"><div class="label">Active Clients</div><div class="value">${activeClients.length}</div><div class="sub">across all programs</div></div>
+        <div class="stat-card"><div class="label">Programs This Week</div><div class="value">${programs.length}</div><div class="sub">generated & sent</div></div>
+      `;
+
+      const byProgram = {};
+      activeClients.forEach(c => { byProgram[c.program] = (byProgram[c.program] || 0) + 1; });
+      const programStats = Object.entries(byProgram).map(([k,v]) =>
+        `<div class="stat-card"><div class="label">${k.replace('_',' ')}</div><div class="value">${v}</div></div>`
+      ).join('');
+      document.getElementById('statsGrid').innerHTML += programStats;
+
+      document.getElementById('leadsTable').innerHTML = leads.slice(0, 20).map(l => `
+        <tr>
+          <td>${l.phone.slice(0,5)}...${l.phone.slice(-3)}</td>
+          <td>${l.name || '—'}</td>
+          <td><span class="badge badge-${l.status}">${l.status}</span></td>
+          <td>${l.program_interest || '—'}</td>
+          <td>${l.market}</td>
+          <td>${timeAgo(l.created_at)}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" class="empty-state">No leads yet</td></tr>';
+
+      document.getElementById('clientsTable').innerHTML = activeClients.map(c => {
+        const week = Math.ceil((Date.now() - new Date(c.program_started_at)) / (7*24*60*60*1000));
+        const lastCheckin = checkins.find(ch => ch.client_id === c.id);
+        return `<tr>
+          <td>${c.name || '—'}</td>
+          <td>${c.program}</td>
+          <td>${new Date(c.program_started_at).toLocaleDateString()}</td>
+          <td>Week ${week}</td>
+          <td>${lastCheckin ? timeAgo(lastCheckin.form_submitted_at) : 'Never'}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="5" class="empty-state">No active clients</td></tr>';
+    }
+
+    function timeAgo(date) {
+      const diff = Date.now() - new Date(date);
+      const mins = Math.floor(diff / 60000);
+      if (mins < 60) return mins + 'm ago';
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return hrs + 'h ago';
+      return Math.floor(hrs / 24) + 'd ago';
+    }
+
+    (async () => {
+      if (!sb) return;
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) showDashboard();
+    })();
+  </script>
+</body>
+</html>
