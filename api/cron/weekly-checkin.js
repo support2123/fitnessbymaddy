@@ -6,7 +6,6 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Verify Vercel cron secret if configured
   const cronSecret = process.env.CRON_SECRET;
   if (cronSecret && req.headers['authorization'] !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -16,7 +15,6 @@ module.exports = async function handler(req, res) {
   const summary = { processed: 0, sent: 0, skipped: 0, completed: 0, errors: [] };
 
   try {
-    // Fetch all active clients
     const { data: clients, error: clientsErr } = await supabase
       .from('clients')
       .select('*')
@@ -39,7 +37,6 @@ module.exports = async function handler(req, res) {
         const programStart = new Date(client.program_started_at);
         const programEnd = new Date(client.program_ends_at);
 
-        // Check if program has ended
         if (now > programEnd) {
           await supabase
             .from('clients')
@@ -50,21 +47,10 @@ module.exports = async function handler(req, res) {
             client.name || 'there',
           ]);
 
-          // Log the outbound message
-          await supabase.from('messages').insert({
-            phone: client.phone,
-            direction: 'outbound',
-            body: null,
-            template_name: 'program_completed',
-            sent_at: new Date().toISOString(),
-            status: 'sent',
-          });
-
           summary.completed++;
           continue;
         }
 
-        // Calculate current week number (1-based)
         const msPerWeek = 7 * 24 * 60 * 60 * 1000;
         const weekNo = Math.floor((now - programStart) / msPerWeek) + 1;
 
@@ -73,7 +59,6 @@ module.exports = async function handler(req, res) {
           continue;
         }
 
-        // Check if a check-in already exists for this week
         const { data: existing, error: checkinErr } = await supabase
           .from('checkins')
           .select('id')
@@ -90,25 +75,13 @@ module.exports = async function handler(req, res) {
           continue;
         }
 
-        // Generate unique check-in form URL
         const formUrl = `https://fitnessbymaddy.com/checkin.html?c=${client.id}&w=${weekNo}`;
 
-        // Send WhatsApp template with the form link
         await sendTemplate(client.phone, 'weekly_checkin', [
           client.name || 'there',
           String(weekNo),
           formUrl,
         ]);
-
-        // Log the outbound message
-        await supabase.from('messages').insert({
-          phone: client.phone,
-          direction: 'outbound',
-          body: formUrl,
-          template_name: 'weekly_checkin',
-          sent_at: new Date().toISOString(),
-          status: 'sent',
-        });
 
         summary.sent++;
       } catch (err) {
