@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In | Fitness by Maddy</title>
+  <meta name="description" content="Submit your weekly progress check-in.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="form-page">
+  <div class="form-container">
+
+    <div class="form-header">
+      <p class="section-eyebrow">Weekly Progress</p>
+      <h1 class="section-title">Week <em id="week-display">—</em> Check-In</h1>
+      <p>Quick update on your progress — helps Maddy fine-tune your next week.</p>
+    </div>
+
+    <div id="checkin-form-wrap">
+      <form id="checkin-form" class="form-card">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Current Weight (kg) *</label>
+            <input class="form-input" type="number" name="weight" step="0.1" min="30" max="300" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Waist (inches)</label>
+            <input class="form-input" type="number" name="waist" step="0.1" min="15" max="80">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Plan Compliance (1 = barely followed, 10 = perfect) *</label>
+          <div class="range-group">
+            <input type="range" name="compliance_score" min="1" max="10" value="7" oninput="document.getElementById('comp-val').textContent=this.value">
+            <span class="range-value" id="comp-val">7</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Energy Level (1 = drained, 10 = amazing) *</label>
+          <div class="range-group">
+            <input type="range" name="energy" min="1" max="10" value="7" oninput="document.getElementById('energy-val').textContent=this.value">
+            <span class="range-value" id="energy-val">7</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Any Issues, Pain, or Concerns?</label>
+          <textarea class="form-textarea" name="issues" rows="3" placeholder="Anything you want Maddy to know — soreness, sleep, stress, digestion..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Progress Photos (front, side, back)</label>
+          <input class="form-file-input" type="file" name="photos" accept="image/*" multiple>
+          <p style="font-size:11px; color:var(--mid-grey); margin-top:6px;">Upload up to 3 photos. Same lighting & angle as last week for best comparison.</p>
+        </div>
+
+        <button type="submit" class="form-submit">Submit Check-In →</button>
+      </form>
+    </div>
+
+    <div id="checkin-success" class="form-success" style="display:none;">
+      <div class="check-icon">✓</div>
+      <h2 class="section-title">Check-In <em>Received!</em></h2>
+      <p style="color:var(--mid-grey); line-height:1.7;">Your Week <span id="success-week">—</span> progress has been logged. Your updated program will be sent to you on WhatsApp soon!</p>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+(function() {
+  var form = document.getElementById('checkin-form');
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w') || '1';
+
+  document.getElementById('week-display').textContent = weekNo;
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = form.querySelector('.form-submit');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    var data = {
+      client_id: clientId,
+      week_no: weekNo,
+      weight: form.weight.value,
+      waist: form.waist.value || null,
+      compliance_score: form.compliance_score.value,
+      energy: form.energy.value,
+      issues: form.issues.value || null,
+      photos_urls: []
+    };
+
+    // Handle file uploads via Supabase Storage would require auth
+    // For now, submit the form data and handle photos separately
+    var fileInput = form.querySelector('input[type="file"]');
+    if (fileInput.files.length > 0) {
+      // In production, upload to Supabase Storage first, then include URLs
+      // For now, note that photos were attached
+      data.photos_urls = Array.from(fileInput.files).map(function(f) { return f.name; });
+    }
+
+    fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(result) {
+      if (result.error) throw new Error(result.error);
+      document.getElementById('checkin-form-wrap').style.display = 'none';
+      document.getElementById('checkin-success').style.display = 'block';
+      document.getElementById('success-week').textContent = weekNo;
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.textContent = 'Submit Check-In →';
+      alert('Something went wrong: ' + err.message);
+    });
+  });
+})();
+</script>
+</body>
+</html>

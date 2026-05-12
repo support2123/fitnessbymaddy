@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <meta name="description" content="Reschedule your coaching session with Maddy.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="form-page">
+  <div class="form-container">
+
+    <div class="form-header">
+      <p class="section-eyebrow">Session Management</p>
+      <h1 class="section-title">Reschedule Your <em>Session</em></h1>
+      <p>Need to move your Zoom session? Pick a new slot below — reschedules are allowed up to 12 hours before your session.</p>
+    </div>
+
+    <div id="reschedule-form-wrap">
+      <form id="reschedule-form" class="form-card">
+        <div class="form-group">
+          <label class="form-label">Your Name *</label>
+          <input class="form-input" type="text" name="name" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Phone or Email *</label>
+          <input class="form-input" type="text" name="contact" placeholder="+91... or your@email.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Original Session Date *</label>
+          <input class="form-input" type="date" name="original_date" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Preferred New Date *</label>
+          <input class="form-input" type="date" name="new_date" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Preferred Time Slot *</label>
+          <select class="form-select" name="time_slot" required>
+            <option value="">Select a time</option>
+            <option value="9am_ist">9:00 AM IST</option>
+            <option value="10am_ist">10:00 AM IST</option>
+            <option value="11am_ist">11:00 AM IST</option>
+            <option value="5pm_ist">5:00 PM IST</option>
+            <option value="6pm_ist">6:00 PM IST</option>
+            <option value="7pm_ist">7:00 PM IST</option>
+            <option value="8pm_ist">8:00 PM IST</option>
+            <option value="9pm_ist">9:00 PM IST</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Reason (optional)</label>
+          <textarea class="form-textarea" name="reason" rows="2" placeholder="Let us know why you're rescheduling..."></textarea>
+        </div>
+
+        <button type="submit" class="form-submit">Request Reschedule →</button>
+        <p style="font-size:11px; color:var(--mid-grey); text-align:center; margin-top:12px;">You'll receive a confirmation on WhatsApp within a few hours.</p>
+      </form>
+    </div>
+
+    <div id="reschedule-success" class="form-success" style="display:none;">
+      <div class="check-icon">✓</div>
+      <h2 class="section-title">Request <em>Submitted!</em></h2>
+      <p style="color:var(--mid-grey); line-height:1.7;">Your reschedule request has been sent to Maddy's team. You'll receive a WhatsApp confirmation once the new slot is confirmed.</p>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+(function() {
+  var form = document.getElementById('reschedule-form');
+
+  // Set min date to tomorrow
+  var tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  var minDate = tomorrow.toISOString().split('T')[0];
+  form.querySelector('[name="new_date"]').setAttribute('min', minDate);
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = form.querySelector('.form-submit');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    var data = {
+      name: form.name.value,
+      contact: form.contact.value,
+      original_date: form.original_date.value,
+      new_date: form.new_date.value,
+      time_slot: form.time_slot.value,
+      reason: form.reason.value || ''
+    };
+
+    // Send as a notification to Maddy (no dedicated API for reschedule — just notify)
+    fetch('/api/send-whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: '+917082478374',
+        body: 'Reschedule Request:\nName: ' + data.name + '\nContact: ' + data.contact + '\nOriginal: ' + data.original_date + '\nNew: ' + data.new_date + ' at ' + data.time_slot + '\nReason: ' + (data.reason || 'N/A'),
+        isClient: true
+      })
+    })
+    .then(function() {
+      document.getElementById('reschedule-form-wrap').style.display = 'none';
+      document.getElementById('reschedule-success').style.display = 'block';
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = 'Request Reschedule →';
+      alert('Something went wrong. Please message us on WhatsApp instead.');
+    });
+  });
+})();
+</script>
+</body>
+</html>

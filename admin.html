@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<!-- LOGIN VIEW -->
+<div id="login-view" class="login-page">
+  <div class="login-card">
+    <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+    <p style="font-size:12px; color:var(--mid-grey); letter-spacing:1px; text-transform:uppercase; margin-bottom:24px;">Admin Dashboard</p>
+    <form id="login-form">
+      <div class="form-group" style="text-align:left;">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" name="email" required>
+      </div>
+      <div class="form-group" style="text-align:left;">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" name="password" required>
+      </div>
+      <button type="submit" class="form-submit">Sign In →</button>
+      <p id="login-error" style="font-size:12px; color:#C62828; margin-top:12px; display:none;"></p>
+    </form>
+  </div>
+</div>
+
+<!-- DASHBOARD VIEW -->
+<div id="dashboard-view" class="admin-page" style="display:none;">
+  <nav>
+    <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+    <ul class="nav-links">
+      <li><a href="admin.html" class="active" style="color:var(--gold);">Dashboard</a></li>
+      <li><button class="admin-logout" id="logout-btn">Sign Out</button></li>
+    </ul>
+  </nav>
+
+  <div class="admin-container">
+    <div class="admin-header">
+      <h1 class="admin-title">Daily Ops Dashboard</h1>
+      <p style="font-size:12px; color:var(--mid-grey);" id="dashboard-date"></p>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-label">Leads Today</div>
+        <div class="stat-card-value" id="stat-leads-today">—</div>
+        <div class="stat-card-sub" id="stat-leads-week">— this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Conversion Rate</div>
+        <div class="stat-card-value" id="stat-conversion">—</div>
+        <div class="stat-card-sub" id="stat-total-leads">of — leads</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Active Clients</div>
+        <div class="stat-card-value" id="stat-active">—</div>
+        <div class="stat-card-sub">across all programs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Programs This Week</div>
+        <div class="stat-card-value" id="stat-programs">—</div>
+        <div class="stat-card-sub">generated & sent</div>
+      </div>
+    </div>
+
+    <!-- CLIENTS BY PROGRAM -->
+    <div class="admin-section">
+      <div class="admin-section-header">Active Clients by Program</div>
+      <div class="admin-section-body">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Program</th>
+              <th>Active Clients</th>
+            </tr>
+          </thead>
+          <tbody id="program-table-body">
+            <tr><td colspan="2" style="color:var(--mid-grey);">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PENDING CHECK-INS -->
+    <div class="admin-section">
+      <div class="admin-section-header">Pending Check-Ins</div>
+      <div class="admin-section-body">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Program</th>
+              <th>Week</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="checkin-table-body">
+            <tr><td colspan="4" style="color:var(--mid-grey);">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ESCALATIONS -->
+    <div class="admin-section">
+      <div class="admin-section-header">Recent Escalations</div>
+      <div class="admin-section-body">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Phone</th>
+              <th>Alert</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="escalation-table-body">
+            <tr><td colspan="3" style="color:var(--mid-grey);">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function() {
+  var SUPABASE_URL = '';  // Set via env or config
+  var loginView = document.getElementById('login-view');
+  var dashView = document.getElementById('dashboard-view');
+  var session = null;
+
+  // Check for existing session
+  var savedToken = localStorage.getItem('fbm_admin_token');
+  if (savedToken) {
+    session = { access_token: savedToken };
+    showDashboard();
+  }
+
+  // Login
+  document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var email = this.email.value;
+    var password = this.password.value;
+    var errEl = document.getElementById('login-error');
+    errEl.style.display = 'none';
+
+    // Use Supabase REST auth
+    var supabaseUrl = document.querySelector('meta[name="supabase-url"]');
+    var url = (supabaseUrl ? supabaseUrl.content : '') || window.__SUPABASE_URL || '/auth/v1/token?grant_type=password';
+
+    fetch('/api/admin/stats', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + btoa(email + ':' + password)
+      }
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Invalid credentials');
+      return r.json();
+    })
+    .then(function(data) {
+      session = { access_token: btoa(email + ':' + password) };
+      localStorage.setItem('fbm_admin_token', session.access_token);
+      showDashboard();
+      renderData(data);
+    })
+    .catch(function(err) {
+      errEl.textContent = err.message || 'Login failed';
+      errEl.style.display = 'block';
+    });
+  });
+
+  // Logout
+  document.getElementById('logout-btn').addEventListener('click', function() {
+    localStorage.removeItem('fbm_admin_token');
+    session = null;
+    dashView.style.display = 'none';
+    loginView.style.display = 'flex';
+  });
+
+  function showDashboard() {
+    loginView.style.display = 'none';
+    dashView.style.display = 'block';
+    document.getElementById('dashboard-date').textContent = new Date().toLocaleDateString('en-IN', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+    loadData();
+  }
+
+  function loadData() {
+    fetch('/api/admin/stats', {
+      headers: { 'Authorization': 'Bearer ' + (session ? session.access_token : '') }
+    })
+    .then(function(r) {
+      if (!r.ok) {
+        localStorage.removeItem('fbm_admin_token');
+        dashView.style.display = 'none';
+        loginView.style.display = 'flex';
+        throw new Error('Session expired');
+      }
+      return r.json();
+    })
+    .then(renderData)
+    .catch(function(err) { console.error('Dashboard load error:', err); });
+  }
+
+  function renderData(data) {
+    document.getElementById('stat-leads-today').textContent = data.leads_today;
+    document.getElementById('stat-leads-week').textContent = data.leads_this_week + ' this week';
+    document.getElementById('stat-conversion').textContent = data.conversion_rate + '%';
+    document.getElementById('stat-total-leads').textContent = 'of ' + data.total_leads + ' leads';
+    document.getElementById('stat-active').textContent = data.active_clients;
+    document.getElementById('stat-programs').textContent = data.programs_generated_this_week;
+
+    // Programs table
+    var programBody = document.getElementById('program-table-body');
+    var programs = data.clients_by_program || {};
+    var programNames = {
+      '6wk_gym': '6-Week Burn & Build (Gym)',
+      '6wk_home': '6-Week Burn & Build (Home)',
+      '12wk': '12-Week Flagship',
+      'pcos': 'PCOS Warrior',
+      '40plus': '40+ Strong',
+      'zoom_trial': 'Zoom Trial',
+      'zoom_pack': 'Zoom Pack'
+    };
+    var rows = '';
+    for (var key in programs) {
+      rows += '<tr><td>' + (programNames[key] || key) + '</td><td><span class="badge badge-gold">' + programs[key] + '</span></td></tr>';
+    }
+    programBody.innerHTML = rows || '<tr><td colspan="2" style="color:var(--mid-grey);">No active clients yet</td></tr>';
+
+    // Pending check-ins
+    var checkinBody = document.getElementById('checkin-table-body');
+    var checkins = data.pending_checkins || [];
+    rows = '';
+    for (var i = 0; i < checkins.length; i++) {
+      var c = checkins[i];
+      rows += '<tr><td>' + (c.name || c.phone) + '</td><td>' + (programNames[c.program] || c.program) + '</td><td>Week ' + c.week + '</td><td><span class="badge badge-red">Pending</span></td></tr>';
+    }
+    checkinBody.innerHTML = rows || '<tr><td colspan="4" style="color:var(--mid-grey);">All check-ins submitted!</td></tr>';
+
+    // Escalations
+    var escBody = document.getElementById('escalation-table-body');
+    var escalations = data.recent_escalations || [];
+    rows = '';
+    for (var j = 0; j < escalations.length; j++) {
+      var esc = escalations[j];
+      var time = new Date(esc.sent_at).toLocaleString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+      rows += '<tr><td>' + esc.phone + '</td><td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + esc.body + '</td><td>' + time + '</td></tr>';
+    }
+    escBody.innerHTML = rows || '<tr><td colspan="3" style="color:var(--mid-grey);">No escalations</td></tr>';
+  }
+})();
+</script>
+</body>
+</html>
