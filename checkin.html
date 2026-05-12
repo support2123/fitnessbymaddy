@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in | Fitness by Maddy</title>
+  <meta name="description" content="Submit your weekly check-in to track progress and keep your coach updated.">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ===== HERO ===== */
+    .checkin-hero {
+      text-align: center;
+      padding: 80px 24px 40px;
+      background: var(--sand);
+    }
+    .checkin-hero .section-eyebrow { margin-bottom: 16px; }
+    .checkin-hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 300;
+      line-height: 1.15;
+      color: var(--charcoal);
+      margin-bottom: 16px;
+    }
+    .checkin-hero h1 em { font-style: italic; color: var(--gold); }
+    .checkin-hero p {
+      font-size: 16px;
+      color: var(--mid-grey);
+      font-weight: 300;
+      line-height: 1.7;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    /* ===== FORM WRAPPER ===== */
+    .checkin-form-wrap {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    .checkin-form-wrap .form-group { margin-bottom: 28px; }
+    .checkin-form-wrap .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      margin-bottom: 8px;
+    }
+    .checkin-form-wrap .form-input,
+    .checkin-form-wrap .form-select {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid var(--light-grey);
+      border-radius: 2px;
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--charcoal);
+      background: var(--cream);
+      transition: border-color 0.3s;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .checkin-form-wrap .form-input:focus,
+    .checkin-form-wrap .form-select:focus { border-color: var(--gold); }
+    .checkin-form-wrap textarea.form-input {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* Weight row with unit selector */
+    .weight-row {
+      display: flex;
+      gap: 12px;
+    }
+    .weight-row .form-input { flex: 1; }
+    .weight-row .form-select { width: 100px; flex: none; }
+
+    /* ===== SCALE RADIO ===== */
+    .scale-group {
+      display: flex;
+      gap: 0;
+      flex-wrap: wrap;
+    }
+    .scale-group input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .scale-group label {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid var(--light-grey);
+      margin-left: -1.5px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--mid-grey);
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+    }
+    .scale-group label:first-of-type { margin-left: 0; border-radius: 2px 0 0 2px; }
+    .scale-group label:last-of-type { border-radius: 0 2px 2px 0; }
+    .scale-group input[type="radio"]:checked + label {
+      background: var(--gold);
+      color: white;
+      border-color: var(--gold);
+      z-index: 1;
+      position: relative;
+    }
+    .scale-group input[type="radio"]:focus-visible + label {
+      outline: 2px solid var(--gold);
+      outline-offset: 2px;
+    }
+    .scale-endpoints {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 10px;
+      color: var(--mid-grey);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      max-width: 440px;
+    }
+
+    /* ===== FILE UPLOAD ===== */
+    .photo-upload-area {
+      border: 2px dashed var(--light-grey);
+      border-radius: 4px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.3s, background 0.3s;
+      background: var(--cream);
+    }
+    .photo-upload-area:hover,
+    .photo-upload-area.dragover {
+      border-color: var(--gold);
+      background: rgba(184,150,90,0.04);
+    }
+    .photo-upload-area .upload-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+      color: var(--mid-grey);
+    }
+    .photo-upload-area p {
+      font-size: 13px;
+      color: var(--mid-grey);
+      line-height: 1.6;
+    }
+    .photo-upload-area .upload-hint {
+      font-size: 11px;
+      color: var(--light-grey);
+      margin-top: 4px;
+    }
+    .photo-upload-input {
+      display: none;
+    }
+    .photo-previews {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .photo-preview {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1.5px solid var(--light-grey);
+    }
+    .photo-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .photo-preview .remove-photo {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 22px;
+      height: 22px;
+      background: var(--charcoal);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    /* ===== SUBMIT ===== */
+    .checkin-submit-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--charcoal);
+      color: white;
+      border: none;
+      border-radius: 2px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 12px;
+    }
+    .checkin-submit-btn:hover { background: var(--gold); transform: translateY(-1px); }
+    .checkin-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .checkin-submit-btn .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== ERROR ===== */
+    .form-error {
+      background: #FFF0F0;
+      border: 1px solid #E8A0A0;
+      color: #8B3A3A;
+      padding: 14px 20px;
+      border-radius: 2px;
+      font-size: 13px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    /* ===== SUCCESS OVERLAY ===== */
+    .success-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(250,248,244,0.97);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      padding: 24px;
+    }
+    .success-overlay.visible { display: flex; }
+    .success-checkmark {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 32px;
+      animation: scaleIn 0.4s ease forwards;
+    }
+    .success-checkmark svg {
+      width: 36px;
+      height: 36px;
+      stroke: white;
+      stroke-width: 3;
+      fill: none;
+      stroke-dasharray: 50;
+      stroke-dashoffset: 50;
+      animation: drawCheck 0.5s ease 0.3s forwards;
+    }
+    @keyframes scaleIn {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    @keyframes drawCheck {
+      to { stroke-dashoffset: 0; }
+    }
+    .success-overlay h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      font-weight: 400;
+      color: var(--charcoal);
+      margin-bottom: 12px;
+    }
+    .success-overlay p {
+      font-size: 15px;
+      color: var(--mid-grey);
+      font-weight: 300;
+      max-width: 440px;
+    }
+
+    @media (max-width: 500px) {
+      .scale-group label {
+        width: 38px;
+        height: 38px;
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+    <li><a href="vip.html" class="nav-cta">Apply Now</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+
+  <div class="checkin-hero">
+    <p class="section-eyebrow animate-1">Weekly Progress</p>
+    <h1 class="animate-2">Week <em id="weekDisplay">-</em> Check-in</h1>
+    <p class="animate-3">Track your progress — every detail helps us optimize your program.</p>
+  </div>
+
+  <div class="checkin-form-wrap">
+    <div class="form-error" id="formError"></div>
+
+    <form id="checkinForm" novalidate>
+      <input type="hidden" id="clientId" value="">
+      <input type="hidden" id="weekNo" value="">
+
+      <!-- Current Weight -->
+      <div class="form-group">
+        <label class="form-label">Current Weight</label>
+        <div class="weight-row">
+          <input class="form-input" type="number" id="weight" placeholder="e.g. 72" step="0.1" min="20" max="300">
+          <select class="form-select" id="weightUnit">
+            <option value="kg">kg</option>
+            <option value="lbs">lbs</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Waist Measurement -->
+      <div class="form-group">
+        <label class="form-label" for="waist">Waist Measurement (cm)</label>
+        <input class="form-input" type="number" id="waist" placeholder="e.g. 78" step="0.1" min="30" max="200">
+      </div>
+
+      <!-- Compliance Score -->
+      <div class="form-group">
+        <label class="form-label">How well did you follow the plan?</label>
+        <div class="scale-group" id="complianceScale">
+          <input type="radio" name="compliance" id="c1" value="1"><label for="c1">1</label>
+          <input type="radio" name="compliance" id="c2" value="2"><label for="c2">2</label>
+          <input type="radio" name="compliance" id="c3" value="3"><label for="c3">3</label>
+          <input type="radio" name="compliance" id="c4" value="4"><label for="c4">4</label>
+          <input type="radio" name="compliance" id="c5" value="5"><label for="c5">5</label>
+          <input type="radio" name="compliance" id="c6" value="6"><label for="c6">6</label>
+          <input type="radio" name="compliance" id="c7" value="7"><label for="c7">7</label>
+          <input type="radio" name="compliance" id="c8" value="8"><label for="c8">8</label>
+          <input type="radio" name="compliance" id="c9" value="9"><label for="c9">9</label>
+          <input type="radio" name="compliance" id="c10" value="10"><label for="c10">10</label>
+        </div>
+        <div class="scale-endpoints"><span>Low</span><span>Perfect</span></div>
+      </div>
+
+      <!-- Energy Level -->
+      <div class="form-group">
+        <label class="form-label">How's your energy this week?</label>
+        <div class="scale-group" id="energyScale">
+          <input type="radio" name="energy" id="e1" value="1"><label for="e1">1</label>
+          <input type="radio" name="energy" id="e2" value="2"><label for="e2">2</label>
+          <input type="radio" name="energy" id="e3" value="3"><label for="e3">3</label>
+          <input type="radio" name="energy" id="e4" value="4"><label for="e4">4</label>
+          <input type="radio" name="energy" id="e5" value="5"><label for="e5">5</label>
+          <input type="radio" name="energy" id="e6" value="6"><label for="e6">6</label>
+          <input type="radio" name="energy" id="e7" value="7"><label for="e7">7</label>
+          <input type="radio" name="energy" id="e8" value="8"><label for="e8">8</label>
+          <input type="radio" name="energy" id="e9" value="9"><label for="e9">9</label>
+          <input type="radio" name="energy" id="e10" value="10"><label for="e10">10</label>
+        </div>
+        <div class="scale-endpoints"><span>Exhausted</span><span>Energized</span></div>
+      </div>
+
+      <!-- Issues / Concerns -->
+      <div class="form-group">
+        <label class="form-label" for="issues">Any Issues or Concerns</label>
+        <textarea class="form-input" id="issues" rows="3" placeholder="Anything you want your coach to know..."></textarea>
+      </div>
+
+      <!-- Progress Photos -->
+      <div class="form-group">
+        <label class="form-label">Progress Photos (max 3)</label>
+        <div class="photo-upload-area" id="uploadArea">
+          <div class="upload-icon">+</div>
+          <p>Upload up to 3 photos</p>
+          <span class="upload-hint">Click or drag — JPG, PNG accepted</span>
+        </div>
+        <input type="file" class="photo-upload-input" id="photoInput" accept="image/*" multiple>
+        <div class="photo-previews" id="photoPreviews"></div>
+      </div>
+
+      <button type="submit" class="checkin-submit-btn" id="submitBtn">
+        Submit Check-in &rarr;
+      </button>
+    </form>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>
+      <div class="footer-brand">Fitness by Maddy</div>
+      <p class="footer-tagline">Elite online fitness coaching for those serious about transformation.</p>
+    </div>
+    <div>
+      <div class="footer-heading">Programs</div>
+      <ul class="footer-links">
+        <li><a href="shred.html">6 Week Shred Challenge</a></li>
+        <li><a href="custom.html">12 Week Custom Program</a></li>
+        <li><a href="vip.html">1-on-1 Live Coaching</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-heading">Connect</div>
+      <ul class="footer-links">
+        <li><a href="https://instagram.com/fitnessbymaddy_" target="_blank">Instagram @fitnessbymaddy_</a></li>
+        <li><a href="https://www.fitnessbymaddy.com">fitnessbymaddy.com</a></li>
+      </ul>
+    </div>
+  </footer>
+  <div class="footer-bottom">
+    <span class="footer-copy">&copy; 2025 Fitness by Maddy. All rights reserved.</span>
+    <div class="social-links">
+      <a class="social-link" href="https://instagram.com/fitnessbymaddy_" target="_blank">IG</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- Success overlay -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-checkmark">
+    <svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"></polyline></svg>
+  </div>
+  <h2>Check-in Submitted!</h2>
+  <p>Your updated program will arrive within 24 hours.</p>
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+(function() {
+  // ── Read URL params ──
+  var params   = new URLSearchParams(window.location.search);
+  var clientId = params.get('c') || '';
+  var weekNo   = params.get('w') || '';
+
+  document.getElementById('clientId').value = clientId;
+  document.getElementById('weekNo').value   = weekNo;
+  document.getElementById('weekDisplay').textContent = weekNo || '-';
+
+  // ── Photo handling ──
+  var photoFiles   = [];
+  var photoBase64  = [];
+  var uploadArea   = document.getElementById('uploadArea');
+  var photoInput   = document.getElementById('photoInput');
+  var previewsWrap = document.getElementById('photoPreviews');
+
+  uploadArea.addEventListener('click', function() { photoInput.click(); });
+
+  uploadArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+  });
+  uploadArea.addEventListener('dragleave', function() {
+    uploadArea.classList.remove('dragover');
+  });
+  uploadArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+  });
+
+  photoInput.addEventListener('change', function() {
+    handleFiles(photoInput.files);
+    photoInput.value = '';
+  });
+
+  function handleFiles(fileList) {
+    var remaining = 3 - photoFiles.length;
+    if (remaining <= 0) return;
+    var files = Array.from(fileList).slice(0, remaining);
+    files.forEach(function(file) {
+      if (!file.type.startsWith('image/')) return;
+      photoFiles.push(file);
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var idx = photoBase64.length;
+        photoBase64.push(e.target.result);
+        addPreview(e.target.result, idx);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function addPreview(src, idx) {
+    var div = document.createElement('div');
+    div.className = 'photo-preview';
+    div.setAttribute('data-idx', idx);
+    div.innerHTML = '<img src="' + src + '" alt="Preview">' +
+      '<button type="button" class="remove-photo" title="Remove">&times;</button>';
+    div.querySelector('.remove-photo').addEventListener('click', function() {
+      photoFiles.splice(idx, 1);
+      photoBase64.splice(idx, 1);
+      renderPreviews();
+    });
+    previewsWrap.appendChild(div);
+    if (photoFiles.length >= 3) {
+      uploadArea.style.display = 'none';
+    }
+  }
+
+  function renderPreviews() {
+    previewsWrap.innerHTML = '';
+    photoBase64.forEach(function(src, i) { addPreview(src, i); });
+    uploadArea.style.display = photoFiles.length >= 3 ? 'none' : '';
+  }
+
+  // ── Form helpers ──
+  var form     = document.getElementById('checkinForm');
+  var btn      = document.getElementById('submitBtn');
+  var errorBox = document.getElementById('formError');
+  var overlay  = document.getElementById('successOverlay');
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.style.display = 'block';
+    errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function hideError() { errorBox.style.display = 'none'; }
+
+  function getRadioVal(name) {
+    var el = document.querySelector('input[name="' + name + '"]:checked');
+    return el ? parseInt(el.value, 10) : null;
+  }
+
+  // ── Submit ──
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    hideError();
+
+    if (!clientId) { showError('Missing client ID. Please use the link sent to you.'); return; }
+    if (!weekNo)   { showError('Missing week number. Please use the link sent to you.'); return; }
+
+    var weightVal = document.getElementById('weight').value;
+    var unit      = document.getElementById('weightUnit').value;
+
+    // Convert lbs to kg for storage
+    var weightKg = null;
+    if (weightVal) {
+      weightKg = parseFloat(weightVal);
+      if (unit === 'lbs') weightKg = Math.round(weightKg * 0.453592 * 10) / 10;
+    }
+
+    var payload = {
+      client_id: clientId,
+      week_no: parseInt(weekNo, 10),
+      weight: weightKg,
+      waist: document.getElementById('waist').value ? parseFloat(document.getElementById('waist').value) : null,
+      compliance_score: getRadioVal('compliance'),
+      energy: getRadioVal('energy'),
+      issues: document.getElementById('issues').value.trim() || null,
+      photos: photoBase64.length > 0 ? photoBase64 : null
+    };
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Submitting...';
+
+    fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(function(res) {
+      if (!res.ok) return res.json().then(function(d) { throw new Error(d.error || 'Submission failed.'); });
+      return res.json();
+    })
+    .then(function() {
+      overlay.classList.add('visible');
+    })
+    .catch(function(err) {
+      showError(err.message || 'Something went wrong. Please try again.');
+      btn.disabled = false;
+      btn.innerHTML = 'Submit Check-in &rarr;';
+    });
+  });
+})();
+</script>
+</body>
+</html>
