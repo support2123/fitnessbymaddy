@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{--cream:#FAF8F4;--sand:#F0EAE0;--gold:#B8965A;--gold-light:#D4AF7A;--charcoal:#2C2C2C;--mid-grey:#6B6B6B;--light-grey:#E8E3DC;--danger:#c0392b;--success:#27ae60}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charcoal);min-height:100vh}
+    .topbar{background:var(--charcoal);padding:16px 32px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+    .topbar h1{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--gold);letter-spacing:4px}
+    .topbar .actions{display:flex;gap:12px;align-items:center}
+    .topbar .user{color:rgba(255,255,255,.6);font-size:13px}
+    .topbar button{background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);padding:6px 14px;font-size:12px;cursor:pointer;border-radius:4px;font-family:'DM Sans',sans-serif}
+    .topbar button:hover{border-color:var(--gold);color:var(--gold)}
+
+    .login-wrap{max-width:400px;margin:120px auto;padding:0 20px;text-align:center}
+    .login-wrap h2{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--charcoal);letter-spacing:2px;margin-bottom:24px}
+    .login-wrap input{width:100%;padding:14px 16px;border:1.5px solid var(--light-grey);border-radius:4px;font-size:14px;font-family:'DM Sans',sans-serif;margin-bottom:12px;outline:none}
+    .login-wrap input:focus{border-color:var(--gold)}
+    .login-wrap .btn{width:100%;padding:14px;background:var(--charcoal);color:white;border:none;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;cursor:pointer;border-radius:4px}
+    .login-wrap .btn:hover{background:var(--gold)}
+    .login-wrap .error{color:var(--danger);font-size:13px;margin-top:8px}
+
+    .dashboard{display:none;padding:24px 32px}
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px}
+    .stat-card{background:white;border:1px solid var(--light-grey);border-radius:8px;padding:24px;text-align:center}
+    .stat-card .num{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--charcoal);line-height:1}
+    .stat-card .label{font-size:11px;color:var(--mid-grey);text-transform:uppercase;letter-spacing:1.5px;margin-top:6px}
+    .stat-card.gold .num{color:var(--gold)}
+    .stat-card.danger .num{color:var(--danger)}
+
+    .section-title{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--charcoal);letter-spacing:2px;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid var(--gold)}
+
+    table{width:100%;border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;border:1px solid var(--light-grey);margin-bottom:24px}
+    th{text-align:left;padding:12px 16px;background:var(--charcoal);color:var(--gold);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600}
+    td{padding:10px 16px;border-bottom:1px solid var(--light-grey);font-size:13px;color:var(--charcoal)}
+    tr:hover td{background:var(--sand)}
+    .badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;letter-spacing:.5px}
+    .badge-new{background:#e8f5e9;color:#2e7d32}
+    .badge-qualified{background:#e3f2fd;color:#1565c0}
+    .badge-converted{background:#fff3e0;color:#e65100}
+    .badge-dropped{background:#fce4ec;color:#c62828}
+    .badge-active{background:#e8f5e9;color:#2e7d32}
+    .badge-paused{background:#fff3e0;color:#e65100}
+    .badge-completed{background:#e3f2fd;color:#1565c0}
+
+    .refresh-btn{background:var(--gold);color:white;border:none;padding:8px 20px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;cursor:pointer;border-radius:4px;margin-bottom:24px}
+    .refresh-btn:hover{background:var(--charcoal)}
+
+    .empty{text-align:center;padding:40px;color:var(--mid-grey);font-size:14px}
+    @media(max-width:768px){
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+      .dashboard{padding:16px}
+      .topbar{padding:12px 16px}
+      table{font-size:12px}
+      th,td{padding:8px 10px}
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>FBM Dashboard</h1>
+    <div class="actions">
+      <span class="user" id="userEmail"></span>
+      <button onclick="logout()" id="logoutBtn" style="display:none">Logout</button>
+    </div>
+  </div>
+
+  <div class="login-wrap" id="loginSection">
+    <h2>Admin Login</h2>
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Password">
+    <button class="btn" onclick="login()">LOGIN</button>
+    <div class="error" id="loginError"></div>
+  </div>
+
+  <div class="dashboard" id="dashboardSection">
+    <button class="refresh-btn" onclick="loadDashboard()">REFRESH DATA</button>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="num" id="leadsToday">0</div><div class="label">Leads Today</div></div>
+      <div class="stat-card"><div class="num" id="leadsWeek">0</div><div class="label">Leads This Week</div></div>
+      <div class="stat-card gold"><div class="num" id="conversionRate">0%</div><div class="label">Conversion Rate</div></div>
+      <div class="stat-card"><div class="num" id="activeClients">0</div><div class="label">Active Clients</div></div>
+      <div class="stat-card"><div class="num" id="pendingCheckins">0</div><div class="label">Pending Check-Ins</div></div>
+      <div class="stat-card"><div class="num" id="programsGenerated">0</div><div class="label">Programs This Week</div></div>
+      <div class="stat-card danger"><div class="num" id="escalations">0</div><div class="label">Escalations</div></div>
+    </div>
+
+    <div class="section-title">Active Clients by Program</div>
+    <div class="stats-grid" id="programBreakdown"></div>
+
+    <div class="section-title">Recent Leads</div>
+    <table id="leadsTable">
+      <thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Interest</th><th>Market</th><th>Created</th></tr></thead>
+      <tbody id="leadsBody"></tbody>
+    </table>
+
+    <div class="section-title">Active Clients</div>
+    <table id="clientsTable">
+      <thead><tr><th>Name</th><th>Program</th><th>Status</th><th>Started</th><th>Ends</th><th>Paid</th></tr></thead>
+      <tbody id="clientsBody"></tbody>
+    </table>
+
+    <div class="section-title">Recent Check-Ins</div>
+    <table id="checkinsTable">
+      <thead><tr><th>Client</th><th>Week</th><th>Weight</th><th>Compliance</th><th>Energy</th><th>Submitted</th></tr></thead>
+      <tbody id="checkinsBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    var SUPABASE_URL = '';
+    var SUPABASE_ANON_KEY = '';
+
+    var metaUrl = document.querySelector('meta[name="supabase-url"]');
+    var metaKey = document.querySelector('meta[name="supabase-key"]');
+    if (metaUrl) SUPABASE_URL = metaUrl.content;
+    if (metaKey) SUPABASE_ANON_KEY = metaKey.content;
+
+    if (!SUPABASE_URL) {
+      SUPABASE_URL = window.__SUPABASE_URL || prompt('Supabase URL:') || '';
+      SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY || prompt('Supabase Anon Key:') || '';
+    }
+
+    var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function login() {
+      var email = document.getElementById('loginEmail').value;
+      var password = document.getElementById('loginPassword').value;
+      var errEl = document.getElementById('loginError');
+      errEl.textContent = '';
+
+      var result = await sb.auth.signInWithPassword({ email: email, password: password });
+      if (result.error) {
+        errEl.textContent = result.error.message;
+        return;
+      }
+      showDashboard(result.data.user.email);
+    }
+
+    async function logout() {
+      await sb.auth.signOut();
+      document.getElementById('dashboardSection').style.display = 'none';
+      document.getElementById('loginSection').style.display = 'block';
+      document.getElementById('logoutBtn').style.display = 'none';
+      document.getElementById('userEmail').textContent = '';
+    }
+
+    async function checkSession() {
+      var result = await sb.auth.getSession();
+      if (result.data.session) {
+        showDashboard(result.data.session.user.email);
+      }
+    }
+
+    function showDashboard(email) {
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('dashboardSection').style.display = 'block';
+      document.getElementById('userEmail').textContent = email;
+      document.getElementById('logoutBtn').style.display = 'inline-block';
+      loadDashboard();
+    }
+
+    function maskPhone(p) {
+      if (!p || p.length < 6) return '***';
+      return p.slice(0, 3) + 'XXX...' + p.slice(-3);
+    }
+
+    function formatDate(d) {
+      if (!d) return '—';
+      return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' });
+    }
+
+    function badgeHtml(status) {
+      return '<span class="badge badge-' + status + '">' + status.toUpperCase() + '</span>';
+    }
+
+    async function loadDashboard() {
+      var now = new Date();
+      var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      var weekStart = new Date(now.getTime() - 7 * 86400000).toISOString();
+
+      var leadsRes = await sb.from('leads').select('*').order('created_at', { ascending: false }).limit(50);
+      var leads = leadsRes.data || [];
+
+      var clientsRes = await sb.from('clients').select('*').order('created_at', { ascending: false });
+      var clients = clientsRes.data || [];
+
+      var checkinsRes = await sb.from('checkins').select('*, clients(name)').order('form_submitted_at', { ascending: false }).limit(20);
+      var checkins = checkinsRes.data || [];
+
+      var programsRes = await sb.from('programs').select('id').gt('generated_at', weekStart);
+      var programs = programsRes.data || [];
+
+      var todayLeads = leads.filter(function(l) { return l.created_at >= todayStart; });
+      var weekLeads = leads.filter(function(l) { return l.created_at >= weekStart; });
+      var converted = leads.filter(function(l) { return l.status === 'converted'; });
+      var active = clients.filter(function(c) { return c.status === 'active'; });
+
+      document.getElementById('leadsToday').textContent = todayLeads.length;
+      document.getElementById('leadsWeek').textContent = weekLeads.length;
+      document.getElementById('conversionRate').textContent = leads.length > 0 ? Math.round(converted.length / leads.length * 100) + '%' : '0%';
+      document.getElementById('activeClients').textContent = active.length;
+      document.getElementById('programsGenerated').textContent = programs.length;
+
+      var pending = 0;
+      for (var i = 0; i < active.length; i++) {
+        var c = active[i];
+        var wk = Math.ceil((now.getTime() - new Date(c.program_started_at).getTime()) / (7 * 86400000));
+        var hasCheckin = checkins.some(function(ci) { return ci.client_id === c.id && ci.week_no === wk; });
+        if (!hasCheckin && wk > 0) pending++;
+      }
+      document.getElementById('pendingCheckins').textContent = pending;
+
+      var escalationCount = 0;
+      document.getElementById('escalations').textContent = escalationCount;
+
+      var programCounts = {};
+      active.forEach(function(c) {
+        programCounts[c.program] = (programCounts[c.program] || 0) + 1;
+      });
+      var breakdownHtml = '';
+      Object.keys(programCounts).forEach(function(p) {
+        breakdownHtml += '<div class="stat-card"><div class="num">' + programCounts[p] + '</div><div class="label">' + (p || 'Unknown') + '</div></div>';
+      });
+      document.getElementById('programBreakdown').innerHTML = breakdownHtml || '<div class="empty">No active clients yet</div>';
+
+      var leadsHtml = '';
+      leads.slice(0, 20).forEach(function(l) {
+        leadsHtml += '<tr><td>' + (l.name || '—') + '</td><td>' + maskPhone(l.phone) + '</td><td>' + badgeHtml(l.status) + '</td><td>' + (l.program_interest || '—') + '</td><td>' + (l.market || '—') + '</td><td>' + formatDate(l.created_at) + '</td></tr>';
+      });
+      document.getElementById('leadsBody').innerHTML = leadsHtml || '<tr><td colspan="6" class="empty">No leads yet</td></tr>';
+
+      var clientsHtml = '';
+      clients.forEach(function(c) {
+        clientsHtml += '<tr><td>' + (c.name || '—') + '</td><td>' + (c.program || '—') + '</td><td>' + badgeHtml(c.status) + '</td><td>' + formatDate(c.program_started_at) + '</td><td>' + formatDate(c.program_ends_at) + '</td><td>' + (c.paid_amount ? '$' + c.paid_amount : '—') + '</td></tr>';
+      });
+      document.getElementById('clientsBody').innerHTML = clientsHtml || '<tr><td colspan="6" class="empty">No clients yet</td></tr>';
+
+      var checkinsHtml = '';
+      checkins.forEach(function(ci) {
+        var clientName = ci.clients ? ci.clients.name : '—';
+        checkinsHtml += '<tr><td>' + clientName + '</td><td>Week ' + ci.week_no + '</td><td>' + (ci.weight || '—') + ' kg</td><td>' + (ci.compliance_score || '—') + '/10</td><td>' + (ci.energy || '—') + '/10</td><td>' + formatDate(ci.form_submitted_at) + '</td></tr>';
+      });
+      document.getElementById('checkinsBody').innerHTML = checkinsHtml || '<tr><td colspan="6" class="empty">No check-ins yet</td></tr>';
+    }
+
+    checkSession();
+  </script>
+</body>
+</html>
