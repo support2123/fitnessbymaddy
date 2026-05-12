@@ -1,0 +1,14 @@
+function detectMarket(phone) {
+  const cleaned = phone.replace(/[^0-9]/g, '');
+
+  if (cleaned.startsWith('91') || cleaned.startsWith('091')) return 'IN';
+  if (cleaned.startsWith('971') || cleaned.startsWith('0971')) return 'UAE';
+  if (cleaned.startsWith('44') || cleaned.startsWith('044')) return 'UK';
+  return 'GLOBAL';
+}
+
+function getLanguage(market) {
+  return market === 'IN' ? 'hinglish' : 'english';
+}
+
+module.exports = { detectMarket, getLanguage };
