@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    :root { --sidebar-w: 240px; }
+    body { background: #F5F3EF; }
+    .auth-overlay {
+      position: fixed; inset: 0; z-index: 9999; background: var(--cream);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .auth-box {
+      background: white; padding: 48px 40px; border-radius: 4px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.08); width: 100%; max-width: 380px; text-align: center;
+    }
+    .auth-box h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 8px; color: var(--charcoal); }
+    .auth-box p { font-size: 13px; color: var(--mid-grey); margin-bottom: 24px; }
+    .auth-input {
+      width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px;
+      font-size: 14px; font-family: 'DM Sans', sans-serif; margin-bottom: 12px; outline: none;
+      background: var(--cream); text-align: center; letter-spacing: 4px;
+    }
+    .auth-input:focus { border-color: var(--gold); }
+    .auth-btn {
+      width: 100%; padding: 14px; background: var(--charcoal); color: white; border: none;
+      font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+      cursor: pointer; border-radius: 2px; transition: background 0.3s;
+    }
+    .auth-btn:hover { background: var(--gold); }
+    .auth-error { color: #c33; font-size: 12px; margin-top: 8px; display: none; }
+    .auth-hidden { display: none; }
+
+    .dash-layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: var(--sidebar-w); background: var(--charcoal); padding: 24px 0; position: fixed;
+      top: 0; bottom: 0; left: 0; z-index: 100; overflow-y: auto;
+    }
+    .sidebar-brand {
+      font-family: 'Cormorant Garamond', serif; font-size: 16px; color: white;
+      letter-spacing: 2px; text-transform: uppercase; padding: 0 24px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .sidebar-nav { padding: 16px 0; }
+    .sidebar-link {
+      display: block; padding: 10px 24px; font-size: 13px; color: rgba(255,255,255,0.5);
+      text-decoration: none; transition: all 0.2s; letter-spacing: 0.5px;
+    }
+    .sidebar-link:hover, .sidebar-link.active { color: white; background: rgba(255,255,255,0.05); }
+    .sidebar-link.active { border-left: 3px solid var(--gold); }
+    .sidebar-section { font-size: 10px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; padding: 20px 24px 8px; }
+
+    .main-content { margin-left: var(--sidebar-w); flex: 1; padding: 32px; }
+    .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    .dash-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; color: var(--charcoal); }
+    .dash-date { font-size: 12px; color: var(--mid-grey); letter-spacing: 1px; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card {
+      background: white; padding: 24px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .stat-card-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card-value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--charcoal); line-height: 1; }
+    .stat-card-sub { font-size: 11px; color: var(--gold); margin-top: 4px; }
+
+    .panel { background: white; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 24px; overflow: hidden; }
+    .panel-header {
+      padding: 20px 24px; border-bottom: 1px solid var(--light-grey);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .panel-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--charcoal); }
+    .panel-badge { font-size: 11px; background: var(--gold); color: white; padding: 3px 10px; border-radius: 10px; font-weight: 600; }
+    .panel-body { padding: 0; }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th {
+      text-align: left; padding: 12px 16px; font-size: 10px; font-weight: 600;
+      letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey);
+      border-bottom: 1px solid var(--light-grey); background: #FAFAF8;
+    }
+    .table td { padding: 12px 16px; font-size: 13px; color: var(--charcoal); border-bottom: 1px solid #f5f3ef; }
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 10px;
+      font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .badge-new { background: #E8F4FD; color: #1976D2; }
+    .badge-qualified { background: #FFF3E0; color: #E65100; }
+    .badge-converted { background: #E8F5E9; color: #2E7D32; }
+    .badge-dropped { background: #FCEAEE; color: #C62828; }
+    .badge-active { background: #E8F5E9; color: #2E7D32; }
+    .badge-paused { background: #FFF3E0; color: #E65100; }
+    .empty-state { padding: 40px; text-align: center; color: var(--mid-grey); font-size: 13px; }
+    .refresh-btn {
+      padding: 8px 16px; background: transparent; border: 1.5px solid var(--light-grey);
+      font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+      cursor: pointer; border-radius: 2px; color: var(--mid-grey); transition: all 0.3s;
+    }
+    .refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    .section-view { display: none; }
+    .section-view.active { display: block; }
+    .loading { text-align: center; padding: 40px; color: var(--mid-grey); }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; position: static; padding: 16px; }
+      .sidebar-nav { display: flex; flex-wrap: wrap; gap: 4px; }
+      .sidebar-link { padding: 8px 12px; font-size: 12px; }
+      .main-content { margin-left: 0; padding: 16px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- AUTH GATE -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-box">
+    <h2>Dashboard</h2>
+    <p>Enter admin password to continue</p>
+    <input type="password" class="auth-input" id="authPassword" placeholder="****" autofocus>
+    <button class="auth-btn" id="authBtn">Enter</button>
+    <p class="auth-error" id="authError">Wrong password. Try again.</p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dash-layout auth-hidden" id="dashboard">
+  <aside class="sidebar">
+    <div class="sidebar-brand">FBM Admin</div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section">Overview</div>
+      <a class="sidebar-link active" href="#" data-view="overview">Dashboard</a>
+      <div class="sidebar-section">Pipeline</div>
+      <a class="sidebar-link" href="#" data-view="leads">Leads</a>
+      <a class="sidebar-link" href="#" data-view="clients">Clients</a>
+      <div class="sidebar-section">Operations</div>
+      <a class="sidebar-link" href="#" data-view="checkins">Check-Ins</a>
+      <a class="sidebar-link" href="#" data-view="programs">Programs</a>
+      <a class="sidebar-link" href="#" data-view="escalations">Escalations</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title" id="viewTitle">Dashboard</h1>
+        <p class="dash-date" id="dashDate"></p>
+      </div>
+      <button class="refresh-btn" id="refreshBtn">Refresh</button>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="section-view active" id="view-overview">
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-card-label">New Leads Today</div><div class="stat-card-value" id="stat-leads-today">—</div></div>
+        <div class="stat-card"><div class="stat-card-label">Leads This Week</div><div class="stat-card-value" id="stat-leads-week">—</div></div>
+        <div class="stat-card"><div class="stat-card-label">Conversion Rate</div><div class="stat-card-value" id="stat-conversion">—</div><div class="stat-card-sub" id="stat-conversion-sub"></div></div>
+        <div class="stat-card"><div class="stat-card-label">Active Clients</div><div class="stat-card-value" id="stat-active">—</div></div>
+        <div class="stat-card"><div class="stat-card-label">Pending Check-Ins</div><div class="stat-card-value" id="stat-pending-checkins">—</div></div>
+        <div class="stat-card"><div class="stat-card-label">Programs This Week</div><div class="stat-card-value" id="stat-programs-week">—</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Recent Leads</span>
+          <span class="panel-badge" id="recentLeadsBadge">0</span>
+        </div>
+        <div class="panel-body">
+          <table class="table">
+            <thead><tr><th>Name</th><th>Phone</th><th>Interest</th><th>Status</th><th>Time</th></tr></thead>
+            <tbody id="recentLeadsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEADS -->
+    <div class="section-view" id="view-leads">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">All Leads</span><span class="panel-badge" id="allLeadsBadge">0</span></div>
+        <div class="panel-body">
+          <table class="table">
+            <thead><tr><th>Name</th><th>Phone</th><th>Source</th><th>Interest</th><th>Market</th><th>Status</th><th>Created</th></tr></thead>
+            <tbody id="allLeadsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="section-view" id="view-clients">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Active Clients</span><span class="panel-badge" id="clientsBadge">0</span></div>
+        <div class="panel-body">
+          <table class="table">
+            <thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Ends</th><th>Paid</th><th>Status</th></tr></thead>
+            <tbody id="clientsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHECK-INS -->
+    <div class="section-view" id="view-checkins">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Recent Check-Ins</span></div>
+        <div class="panel-body">
+          <table class="table">
+            <thead><tr><th>Client</th><th>Week</th><th>Weight</th><th>Compliance</th><th>Energy</th><th>Issues</th><th>Submitted</th></tr></thead>
+            <tbody id="checkinsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROGRAMS -->
+    <div class="section-view" id="view-programs">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Generated Programs</span></div>
+        <div class="panel-body">
+          <table class="table">
+            <thead><tr><th>Client</th><th>Week</th><th>PDF</th><th>WhatsApp Sent</th><th>Generated</th></tr></thead>
+            <tbody id="programsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESCALATIONS -->
+    <div class="section-view" id="view-escalations">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Escalation Messages</span></div>
+        <div class="panel-body">
+          <table class="table">
+            <thead><tr><th>Phone</th><th>Message</th><th>Time</th></tr></thead>
+            <tbody id="escalationsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+(function() {
+  var SUPABASE_URL = '';
+  var SUPABASE_ANON_KEY = '';
+  var supabase = null;
+
+  var dashDate = document.getElementById('dashDate');
+  dashDate.textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Auth
+  var ADMIN_HASH = '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'; // "password" — change in production
+
+  async function sha256(str) {
+    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+  }
+
+  document.getElementById('authBtn').addEventListener('click', async function() {
+    var pw = document.getElementById('authPassword').value;
+    var hash = await sha256(pw);
+    if (hash === ADMIN_HASH) {
+      document.getElementById('authOverlay').style.display = 'none';
+      document.getElementById('dashboard').classList.remove('auth-hidden');
+      initDashboard();
+    } else {
+      document.getElementById('authError').style.display = 'block';
+    }
+  });
+
+  document.getElementById('authPassword').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('authBtn').click();
+  });
+
+  // Navigation
+  document.querySelectorAll('.sidebar-link').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      var view = this.getAttribute('data-view');
+      document.querySelectorAll('.sidebar-link').forEach(function(l) { l.classList.remove('active'); });
+      this.classList.add('active');
+      document.querySelectorAll('.section-view').forEach(function(v) { v.classList.remove('active'); });
+      document.getElementById('view-' + view).classList.add('active');
+      var titles = { overview: 'Dashboard', leads: 'Leads', clients: 'Clients', checkins: 'Check-Ins', programs: 'Programs', escalations: 'Escalations' };
+      document.getElementById('viewTitle').textContent = titles[view] || 'Dashboard';
+    });
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', function() { loadAllData(); });
+
+  function maskPhone(phone) {
+    if (!phone || phone.length < 6) return '***';
+    return phone.slice(0, 4) + 'XXX...' + phone.slice(-3);
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' });
+  }
+
+  function badge(status) {
+    var cls = 'badge-' + (status || 'new');
+    return '<span class="badge ' + cls + '">' + (status || 'unknown') + '</span>';
+  }
+
+  function initDashboard() {
+    var meta = document.querySelector('meta[name="supabase-url"]');
+    SUPABASE_URL = (meta && meta.content) || window.__SUPABASE_URL || '';
+    var meta2 = document.querySelector('meta[name="supabase-anon-key"]');
+    SUPABASE_ANON_KEY = (meta2 && meta2.content) || window.__SUPABASE_ANON_KEY || '';
+
+    if (!SUPABASE_URL) {
+      document.querySelector('.main-content').innerHTML = '<div class="empty-state"><p>Supabase not configured. Set window.__SUPABASE_URL and window.__SUPABASE_ANON_KEY, or add meta tags.</p></div>';
+      return;
+    }
+
+    loadAllData();
+  }
+
+  async function sbQuery(table, opts) {
+    var url = SUPABASE_URL + '/rest/v1/' + table;
+    var params = [];
+    if (opts.select) params.push('select=' + encodeURIComponent(opts.select));
+    if (opts.filters) opts.filters.forEach(function(f) { params.push(f); });
+    if (opts.order) params.push('order=' + encodeURIComponent(opts.order));
+    if (opts.limit) params.push('limit=' + opts.limit);
+    if (params.length) url += '?' + params.join('&');
+
+    var headers = { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY };
+    if (opts.count) headers.Prefer = 'count=exact';
+
+    var res = await fetch(url, { headers: headers });
+    var data = await res.json();
+    var count = res.headers.get('content-range');
+    return { data: data, count: count ? parseInt(count.split('/')[1]) : data.length };
+  }
+
+  async function loadAllData() {
+    try {
+      var today = new Date(); today.setHours(0,0,0,0);
+      var weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+
+      var [leadsAll, leadsToday, leadsWeek, clientsActive, checkinsRecent, programsWeek, escalationMsgs] = await Promise.all([
+        sbQuery('leads', { select: '*', order: 'created_at.desc', limit: 50 }),
+        sbQuery('leads', { select: 'id', filters: ['created_at=gte.' + today.toISOString()], count: true }),
+        sbQuery('leads', { select: 'id', filters: ['created_at=gte.' + weekAgo.toISOString()], count: true }),
+        sbQuery('clients', { select: '*', filters: ['status=eq.active'], order: 'program_started_at.desc', limit: 50 }),
+        sbQuery('checkins', { select: '*', order: 'form_submitted_at.desc', limit: 30 }),
+        sbQuery('programs', { select: '*', filters: ['generated_at=gte.' + weekAgo.toISOString()], order: 'generated_at.desc', limit: 30 }),
+        sbQuery('messages', { select: '*', filters: ['direction=eq.out', 'template_name=eq.escalation_alert'], order: 'sent_at.desc', limit: 20 })
+      ]);
+
+      var totalLeads = leadsAll.data.length;
+      var converted = leadsAll.data.filter(function(l) { return l.status === 'converted'; }).length;
+      var convRate = totalLeads > 0 ? Math.round(converted / totalLeads * 100) : 0;
+
+      document.getElementById('stat-leads-today').textContent = leadsToday.count;
+      document.getElementById('stat-leads-week').textContent = leadsWeek.count;
+      document.getElementById('stat-conversion').textContent = convRate + '%';
+      document.getElementById('stat-conversion-sub').textContent = converted + ' of ' + totalLeads + ' leads';
+      document.getElementById('stat-active').textContent = clientsActive.data.length;
+      document.getElementById('stat-programs-week').textContent = programsWeek.data.length;
+
+      // Recent leads table
+      var recentLeads = leadsAll.data.slice(0, 10);
+      document.getElementById('recentLeadsBadge').textContent = recentLeads.length;
+      document.getElementById('recentLeadsBody').innerHTML = recentLeads.map(function(l) {
+        return '<tr><td>' + (l.name || '—') + '</td><td>' + maskPhone(l.phone) + '</td><td>' + (l.program_interest || '—') + '</td><td>' + badge(l.status) + '</td><td>' + formatDate(l.created_at) + '</td></tr>';
+      }).join('') || '<tr><td colspan="5" class="empty-state">No leads yet</td></tr>';
+
+      // All leads
+      document.getElementById('allLeadsBadge').textContent = leadsAll.data.length;
+      document.getElementById('allLeadsBody').innerHTML = leadsAll.data.map(function(l) {
+        return '<tr><td>' + (l.name || '—') + '</td><td>' + maskPhone(l.phone) + '</td><td>' + (l.source || '—') + '</td><td>' + (l.program_interest || '—') + '</td><td>' + (l.market || '—') + '</td><td>' + badge(l.status) + '</td><td>' + formatDate(l.created_at) + '</td></tr>';
+      }).join('') || '<tr><td colspan="7" class="empty-state">No leads yet</td></tr>';
+
+      // Clients
+      document.getElementById('clientsBadge').textContent = clientsActive.data.length;
+      document.getElementById('clientsBody').innerHTML = clientsActive.data.map(function(c) {
+        return '<tr><td>' + (c.name || '—') + '</td><td>' + (c.program || '—') + '</td><td>' + formatDate(c.program_started_at) + '</td><td>' + formatDate(c.program_ends_at) + '</td><td>$' + ((c.paid_amount || 0) / 100) + '</td><td>' + badge(c.status) + '</td></tr>';
+      }).join('') || '<tr><td colspan="6" class="empty-state">No active clients</td></tr>';
+
+      // Check-ins
+      document.getElementById('checkinsBody').innerHTML = checkinsRecent.data.map(function(ci) {
+        return '<tr><td>' + (ci.client_id || '—').slice(0, 8) + '</td><td>W' + ci.week_no + '</td><td>' + (ci.weight || '—') + '</td><td>' + (ci.compliance_score || '—') + '/10</td><td>' + (ci.energy || '—') + '/10</td><td>' + (ci.issues || '—') + '</td><td>' + formatDate(ci.form_submitted_at) + '</td></tr>';
+      }).join('') || '<tr><td colspan="7" class="empty-state">No check-ins yet</td></tr>';
+
+      // Pending check-ins count
+      var pendingCount = clientsActive.data.length - checkinsRecent.data.filter(function(ci) {
+        return new Date(ci.form_submitted_at) >= weekAgo;
+      }).length;
+      document.getElementById('stat-pending-checkins').textContent = Math.max(0, pendingCount);
+
+      // Programs
+      document.getElementById('programsBody').innerHTML = programsWeek.data.map(function(p) {
+        var pdfLink = p.pdf_url ? '<a href="' + p.pdf_url + '" target="_blank" style="color:var(--gold)">Download</a>' : '—';
+        return '<tr><td>' + (p.client_id || '—').slice(0, 8) + '</td><td>W' + p.week_no + '</td><td>' + pdfLink + '</td><td>' + (p.whatsapp_sent_at ? 'Yes' : 'No') + '</td><td>' + formatDate(p.generated_at) + '</td></tr>';
+      }).join('') || '<tr><td colspan="5" class="empty-state">No programs generated this week</td></tr>';
+
+      // Escalations
+      document.getElementById('escalationsBody').innerHTML = escalationMsgs.data.map(function(m) {
+        return '<tr><td>' + maskPhone(m.phone) + '</td><td>' + (m.body || '—') + '</td><td>' + formatDate(m.sent_at) + '</td></tr>';
+      }).join('') || '<tr><td colspan="3" class="empty-state">No escalations</td></tr>';
+
+    } catch (err) {
+      console.error('Dashboard load error:', err);
+    }
+  }
+})();
+</script>
+</body>
+</html>
