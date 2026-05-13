@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    :root { --admin-bg: #F5F3EF; }
+    body { background: var(--admin-bg); }
+    .admin-wrap { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+    .admin-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 400; color: var(--charcoal); }
+    .admin-title em { color: var(--gold); }
+    .admin-date { font-size: 13px; color: var(--mid-grey); }
+
+    /* Login */
+    .login-wrap { max-width: 400px; margin: 120px auto; text-align: center; }
+    .login-form { background: white; padding: 48px 32px; border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+    .login-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 24px; color: var(--charcoal); }
+
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card {
+      background: white; padding: 24px; border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04); position: relative; overflow: hidden;
+    }
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--light-grey); }
+    .stat-card.gold::before { background: var(--gold); }
+    .stat-card .stat-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card .stat-num { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--charcoal); line-height: 1; }
+    .stat-card .stat-sub { font-size: 12px; color: var(--mid-grey); margin-top: 4px; }
+
+    /* Tables */
+    .section-block { background: white; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 24px; overflow: hidden; }
+    .section-header {
+      padding: 20px 24px; border-bottom: 1px solid var(--light-grey);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .section-title-sm { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--charcoal); }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-new { background: #E8F5E9; color: #2E7D32; }
+    .badge-qualified { background: #FFF3E0; color: #E65100; }
+    .badge-converted { background: #E3F2FD; color: #1565C0; }
+    .badge-dropped { background: #FFEBEE; color: #C62828; }
+    .badge-active { background: #E8F5E9; color: #2E7D32; }
+    .badge-paused { background: #FFF8E1; color: #F57F17; }
+    .badge-completed { background: #E3F2FD; color: #1565C0; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 12px 16px; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); border-bottom: 1px solid var(--light-grey); }
+    td { padding: 12px 16px; font-size: 13px; color: var(--charcoal); border-bottom: 1px solid #f5f3ef; }
+    tr:last-child td { border-bottom: none; }
+    .table-empty { padding: 40px; text-align: center; color: var(--mid-grey); font-size: 14px; }
+
+    .form-input { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--charcoal); background: var(--cream); outline: none; }
+    .form-input:focus { border-color: var(--gold); }
+    .submit-btn {
+      width: 100%; padding: 14px; background: var(--charcoal); color: white;
+      border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: background 0.3s; margin-top: 16px;
+    }
+    .submit-btn:hover { background: var(--gold); }
+    .hidden { display: none; }
+    .refresh-btn {
+      padding: 8px 16px; background: transparent; border: 1.5px solid var(--light-grey);
+      color: var(--mid-grey); font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: all 0.3s;
+    }
+    .refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .escalation-item { padding: 16px 24px; border-bottom: 1px solid #f5f3ef; display: flex; gap: 16px; align-items: flex-start; }
+    .escalation-dot { width: 8px; height: 8px; border-radius: 50%; background: #C62828; margin-top: 6px; flex-shrink: 0; }
+    .escalation-text { font-size: 13px; color: var(--charcoal); line-height: 1.6; }
+    .escalation-time { font-size: 11px; color: var(--mid-grey); margin-top: 4px; }
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .admin-header { flex-direction: column; gap: 8px; align-items: flex-start; }
+      table { font-size: 12px; }
+      th, td { padding: 8px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="admin.html" class="active">Admin</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- LOGIN -->
+  <div id="loginSection" class="login-wrap">
+    <div class="login-form">
+      <h2 class="login-title">Admin Access</h2>
+      <input class="form-input" type="password" id="adminPassword" placeholder="Enter admin password">
+      <button class="submit-btn" onclick="adminLogin()">Access Dashboard</button>
+      <p id="loginError" style="color:#C62828; font-size:12px; margin-top:12px;" class="hidden">Invalid password</p>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboardSection" class="admin-wrap hidden">
+    <div class="admin-header">
+      <div>
+        <h1 class="admin-title">Ops <em>Dashboard</em></h1>
+        <div class="admin-date" id="currentDate"></div>
+      </div>
+      <button class="refresh-btn" onclick="loadDashboard()">Refresh</button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card gold">
+        <div class="stat-label">New Leads Today</div>
+        <div class="stat-num" id="leadsToday">--</div>
+        <div class="stat-sub" id="leadsWeek">-- this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Conversion Rate</div>
+        <div class="stat-num" id="convRate">--%</div>
+        <div class="stat-sub">lead to paid</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-label">Active Clients</div>
+        <div class="stat-num" id="activeClients">--</div>
+        <div class="stat-sub" id="clientsByProgram"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending Check-Ins</div>
+        <div class="stat-num" id="pendingCheckins">--</div>
+        <div class="stat-sub">awaiting submission</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Programs Generated</div>
+        <div class="stat-num" id="programsGenerated">--</div>
+        <div class="stat-sub">this week</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-label">Escalations</div>
+        <div class="stat-num" id="escalationCount">--</div>
+        <div class="stat-sub">awaiting Maddy</div>
+      </div>
+    </div>
+
+    <!-- RECENT LEADS -->
+    <div class="section-block">
+      <div class="section-header">
+        <span class="section-title-sm">Recent Leads</span>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Phone</th><th>Source</th><th>Interest</th><th>Status</th><th>Date</th></tr>
+        </thead>
+        <tbody id="leadsTable">
+          <tr><td colspan="6" class="table-empty">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ACTIVE CLIENTS -->
+    <div class="section-block">
+      <div class="section-header">
+        <span class="section-title-sm">Active Clients</span>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Program</th><th>Started</th><th>Ends</th><th>Status</th></tr>
+        </thead>
+        <tbody id="clientsTable">
+          <tr><td colspan="5" class="table-empty">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ESCALATIONS -->
+    <div class="section-block">
+      <div class="section-header">
+        <span class="section-title-sm">Escalations</span>
+      </div>
+      <div id="escalationsContainer">
+        <div class="table-empty">Loading...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var SUPABASE_URL = '';
+var SUPABASE_ANON_KEY = '';
+var adminKey = '';
+
+function adminLogin() {
+  var pw = document.getElementById('adminPassword').value;
+  if (!pw) return;
+  adminKey = pw;
+  document.getElementById('loginSection').classList.add('hidden');
+  document.getElementById('dashboardSection').classList.remove('hidden');
+  document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+  loadDashboard();
+}
+
+async function supaFetch(table, params) {
+  var url = SUPABASE_URL + '/rest/v1/' + table + '?' + (params || '');
+  var res = await fetch(url, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY || adminKey,
+      'Authorization': 'Bearer ' + (SUPABASE_ANON_KEY || adminKey),
+      'Prefer': 'count=exact'
+    }
+  });
+  var count = res.headers.get('content-range');
+  var data = await res.json();
+  return { data: data, count: count ? parseInt(count.split('/')[1]) : data.length };
+}
+
+function maskPhone(phone) {
+  if (!phone || phone.length < 6) return '***';
+  return phone.slice(0, 4) + 'XXX...' + phone.slice(-3);
+}
+
+function badge(status) {
+  return '<span class="badge badge-' + status + '">' + status + '</span>';
+}
+
+function formatDate(d) {
+  if (!d) return '--';
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+var PROGRAM_LABELS = {
+  '6wk_gym': '6W Gym', '6wk_home': '6W Home', '12wk': '12W Custom',
+  'pcos': 'PCOS', '40plus': '40+', 'zoom_trial': 'Zoom Trial', 'zoom_pack': 'Zoom Pack'
+};
+
+async function loadDashboard() {
+  if (!SUPABASE_URL) {
+    document.querySelectorAll('.stat-num').forEach(function(el) { el.textContent = '--'; });
+    document.getElementById('leadsTable').innerHTML = '<tr><td colspan="6" class="table-empty">Configure SUPABASE_URL in admin.html to connect</td></tr>';
+    document.getElementById('clientsTable').innerHTML = '<tr><td colspan="5" class="table-empty">Configure SUPABASE_URL in admin.html to connect</td></tr>';
+    document.getElementById('escalationsContainer').innerHTML = '<div class="table-empty">Configure SUPABASE_URL in admin.html to connect</div>';
+    return;
+  }
+
+  try {
+    var today = new Date(); today.setHours(0,0,0,0);
+    var weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+
+    var todayStr = today.toISOString();
+    var weekStr = weekAgo.toISOString();
+
+    var leadsRes = await supaFetch('leads', 'order=created_at.desc&limit=20');
+    var todayLeads = await supaFetch('leads', 'created_at=gte.' + todayStr + '&select=id');
+    var weekLeads = await supaFetch('leads', 'created_at=gte.' + weekStr + '&select=id');
+    var converted = await supaFetch('leads', 'status=eq.converted&select=id');
+    var totalLeads = await supaFetch('leads', 'select=id');
+    var clients = await supaFetch('clients', 'status=eq.active&order=program_started_at.desc');
+    var weekPrograms = await supaFetch('programs', 'generated_at=gte.' + weekStr + '&select=id');
+
+    document.getElementById('leadsToday').textContent = todayLeads.data.length;
+    document.getElementById('leadsWeek').textContent = weekLeads.data.length + ' this week';
+    var rate = totalLeads.data.length > 0 ? Math.round((converted.data.length / totalLeads.data.length) * 100) : 0;
+    document.getElementById('convRate').textContent = rate + '%';
+    document.getElementById('activeClients').textContent = clients.data.length;
+    document.getElementById('programsGenerated').textContent = weekPrograms.data.length;
+
+    var programCounts = {};
+    clients.data.forEach(function(c) {
+      var key = c.program || 'unknown';
+      programCounts[key] = (programCounts[key] || 0) + 1;
+    });
+    var programSummary = Object.entries(programCounts).map(function(e) {
+      return (PROGRAM_LABELS[e[0]] || e[0]) + ': ' + e[1];
+    }).join(', ');
+    document.getElementById('clientsByProgram').textContent = programSummary || 'none';
+
+    var leadsHtml = '';
+    leadsRes.data.forEach(function(l) {
+      leadsHtml += '<tr><td>' + (l.name || '--') + '</td><td>' + maskPhone(l.phone) + '</td><td>' + (l.source || '--') + '</td><td>' + (l.program_interest || '--') + '</td><td>' + badge(l.status) + '</td><td>' + formatDate(l.created_at) + '</td></tr>';
+    });
+    document.getElementById('leadsTable').innerHTML = leadsHtml || '<tr><td colspan="6" class="table-empty">No leads yet</td></tr>';
+
+    var clientsHtml = '';
+    clients.data.forEach(function(c) {
+      clientsHtml += '<tr><td>' + (c.name || '--') + '</td><td>' + (PROGRAM_LABELS[c.program] || c.program || '--') + '</td><td>' + formatDate(c.program_started_at) + '</td><td>' + formatDate(c.program_ends_at) + '</td><td>' + badge(c.status) + '</td></tr>';
+    });
+    document.getElementById('clientsTable').innerHTML = clientsHtml || '<tr><td colspan="5" class="table-empty">No active clients</td></tr>';
+
+    document.getElementById('pendingCheckins').textContent = '0';
+    document.getElementById('escalationCount').textContent = '0';
+    document.getElementById('escalationsContainer').innerHTML = '<div class="table-empty">No escalations pending</div>';
+
+  } catch (err) {
+    console.error('Dashboard error:', err);
+  }
+}
+</script>
+</body>
+</html>
