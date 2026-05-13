@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In | Fitness by Maddy</title>
+  <meta name="description" content="Submit your weekly check-in for your Fitness by Maddy program.">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<div class="form-page">
+  <div class="form-header">
+    <div class="form-logo">FITNESS BY <span>MADDY</span></div>
+    <div class="form-title">WEEKLY CHECK-IN</div>
+    <p class="form-subtitle">Week <span id="weekLabel">-</span> — Let's see how you're doing!</p>
+  </div>
+
+  <div class="form-card">
+    <form id="checkinForm">
+      <input type="hidden" name="client_id" id="clientId">
+      <input type="hidden" name="week_no" id="weekNo">
+
+      <div class="form-section-title">BODY STATS</div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="weight">Weight (kg)</label>
+          <input type="number" id="weight" name="weight" step="0.1" min="30" max="300" placeholder="70.5" required>
+        </div>
+        <div class="field">
+          <label for="waist">Waist (inches)</label>
+          <input type="number" id="waist" name="waist" step="0.1" min="15" max="80" placeholder="32">
+        </div>
+      </div>
+
+      <div class="form-section-title">HOW DID THIS WEEK GO?</div>
+
+      <div class="range-field">
+        <label>
+          <span>Workout Compliance</span>
+          <span class="range-value" id="complianceVal">5</span>
+        </label>
+        <input type="range" id="compliance" name="compliance_score" min="1" max="10" value="5">
+        <div class="field-hint">1 = missed most sessions &middot; 10 = nailed every workout</div>
+      </div>
+
+      <div class="range-field">
+        <label>
+          <span>Energy Level</span>
+          <span class="range-value" id="energyVal">5</span>
+        </label>
+        <input type="range" id="energy" name="energy" min="1" max="10" value="5">
+        <div class="field-hint">1 = exhausted all week &middot; 10 = full of energy</div>
+      </div>
+
+      <div class="field">
+        <label for="issues">Any Issues This Week?</label>
+        <textarea id="issues" name="issues" placeholder="Soreness, schedule problems, motivation dips, or anything else you want Maddy to know..."></textarea>
+      </div>
+
+      <div class="form-section-title">PROGRESS PHOTOS</div>
+
+      <div class="photo-upload">
+        <label>This Week's Photos</label>
+        <p class="field-hint" style="margin-bottom: 12px;">Same lighting, same angle as last week for accurate comparison.</p>
+        <div class="photo-grid">
+          <div class="photo-slot" id="photoFront">
+            <span class="photo-icon">+</span>
+            <span class="photo-label">Front</span>
+            <input type="file" accept="image/*" data-slot="front">
+          </div>
+          <div class="photo-slot" id="photoSide">
+            <span class="photo-icon">+</span>
+            <span class="photo-label">Side</span>
+            <input type="file" accept="image/*" data-slot="side">
+          </div>
+          <div class="photo-slot" id="photoBack">
+            <span class="photo-icon">+</span>
+            <span class="photo-label">Back</span>
+            <input type="file" accept="image/*" data-slot="back">
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">SUBMIT CHECK-IN</button>
+
+      <div class="form-message" id="formMessage"></div>
+    </form>
+  </div>
+
+  <div class="form-footer">
+    Fitness by Maddy &middot; Keep pushing, you've got this.
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w');
+  if (clientId) document.getElementById('clientId').value = clientId;
+  if (weekNo) {
+    document.getElementById('weekNo').value = weekNo;
+    document.getElementById('weekLabel').textContent = weekNo;
+  }
+
+  document.getElementById('compliance').addEventListener('input', function(e) {
+    document.getElementById('complianceVal').textContent = e.target.value;
+  });
+  document.getElementById('energy').addEventListener('input', function(e) {
+    document.getElementById('energyVal').textContent = e.target.value;
+  });
+
+  var photoSlots = document.querySelectorAll('.photo-slot input[type="file"]');
+  photoSlots.forEach(function(input) {
+    input.addEventListener('change', function(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var slot = e.target.closest('.photo-slot');
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        slot.classList.add('has-photo');
+        var existing = slot.querySelector('img');
+        if (existing) existing.remove();
+        var img = document.createElement('img');
+        img.src = ev.target.result;
+        slot.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  document.getElementById('checkinForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('submitBtn');
+    var msg = document.getElementById('formMessage');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span>SUBMITTING...';
+    msg.className = 'form-message';
+    msg.style.display = 'none';
+
+    var formData = {
+      client_id: document.getElementById('clientId').value,
+      week_no: document.getElementById('weekNo').value,
+      weight: document.getElementById('weight').value,
+      waist: document.getElementById('waist').value,
+      compliance_score: document.getElementById('compliance').value,
+      energy: document.getElementById('energy').value,
+      issues: document.getElementById('issues').value,
+      photos_urls: [],
+    };
+
+    fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT CHECK-IN';
+      if (data.ok) {
+        msg.className = 'form-message success';
+        msg.textContent = data.message || 'Check-in submitted! Your updated plan will be ready soon.';
+        msg.style.display = 'block';
+        document.getElementById('checkinForm').reset();
+        document.getElementById('complianceVal').textContent = '5';
+        document.getElementById('energyVal').textContent = '5';
+      } else {
+        msg.className = 'form-message error';
+        msg.textContent = data.error || 'Something went wrong. Please try again.';
+        msg.style.display = 'block';
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT CHECK-IN';
+      msg.className = 'form-message error';
+      msg.textContent = 'Network error. Please check your connection and try again.';
+      msg.style.display = 'block';
+    });
+  });
+})();
+</script>
+</body>
+</html>
