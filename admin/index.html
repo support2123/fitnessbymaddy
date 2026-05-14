@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body { background: #F5F3EF; }
+    .dash-nav {
+      background: var(--charcoal); padding: 0 40px; display: flex;
+      align-items: center; justify-content: space-between; height: 56px;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    }
+    .dash-nav-brand { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: white; letter-spacing: 2px; text-transform: uppercase; }
+    .dash-nav-sub { font-size: 11px; color: var(--gold-light); letter-spacing: 1px; }
+    .dash-wrap { padding: 80px 40px 60px; max-width: 1200px; margin: 0 auto; }
+    .dash-header { margin-bottom: 32px; }
+    .dash-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 400; color: var(--charcoal); }
+    .dash-header p { font-size: 13px; color: var(--mid-grey); margin-top: 4px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+    .stat-card {
+      background: white; padding: 24px; border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04); border-left: 3px solid var(--light-grey);
+    }
+    .stat-card.gold { border-left-color: var(--gold); }
+    .stat-card.green { border-left-color: #4CAF50; }
+    .stat-card.blue { border-left-color: #2196F3; }
+    .stat-card.red { border-left-color: #f44336; }
+    .stat-card-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card-value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--charcoal); line-height: 1; }
+    .stat-card-sub { font-size: 12px; color: var(--taupe); margin-top: 4px; }
+    .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    .dash-panel {
+      background: white; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 20px 24px; border-bottom: 1px solid var(--light-grey);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .panel-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--charcoal); }
+    .panel-badge {
+      font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px;
+      border-radius: 2px; font-weight: 600;
+    }
+    .badge-live { background: rgba(76,175,80,0.1); color: #4CAF50; }
+    .badge-warn { background: rgba(244,67,54,0.1); color: #f44336; }
+    .panel-body { padding: 0; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey);
+      padding: 12px 20px; text-align: left; background: #FAFAF8; border-bottom: 1px solid var(--light-grey);
+    }
+    td { font-size: 13px; color: var(--charcoal); padding: 14px 20px; border-bottom: 1px solid #F5F3EF; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    .dot-new { background: #2196F3; }
+    .dot-qualified { background: var(--gold); }
+    .dot-converted { background: #4CAF50; }
+    .dot-dropped { background: #ccc; }
+    .dot-active { background: #4CAF50; }
+    .program-tag {
+      font-size: 10px; padding: 3px 8px; border-radius: 2px; letter-spacing: 0.5px;
+      background: rgba(184,150,90,0.1); color: var(--gold); font-weight: 500;
+    }
+    .escalation-item {
+      padding: 16px 24px; border-bottom: 1px solid #F5F3EF;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .escalation-icon { width: 32px; height: 32px; background: rgba(244,67,54,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .escalation-text { font-size: 13px; color: var(--charcoal); }
+    .escalation-meta { font-size: 11px; color: var(--mid-grey); margin-top: 2px; }
+    .empty-state { padding: 40px; text-align: center; color: var(--mid-grey); font-size: 13px; }
+    .login-overlay {
+      position: fixed; inset: 0; background: var(--cream); z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-box { background: white; padding: 48px 40px; border-radius: 4px; box-shadow: 0 8px 40px rgba(0,0,0,0.08); width: 100%; max-width: 380px; text-align: center; }
+    .login-box h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 8px; }
+    .login-box p { font-size: 13px; color: var(--mid-grey); margin-bottom: 28px; }
+    .login-error { color: #f44336; font-size: 12px; margin-top: 8px; display: none; }
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .dash-grid { grid-template-columns: 1fr; }
+      .dash-wrap { padding: 72px 16px 40px; }
+      .dash-nav { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <h2>Dashboard</h2>
+    <p>Fitness by Maddy — Admin Access</p>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" type="email" id="login-email" placeholder="maddy@fitnessbymaddy.com">
+    </div>
+    <div class="form-group" style="margin-top:16px">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" id="login-password" placeholder="••••••••">
+    </div>
+    <div class="login-error" id="login-error">Invalid credentials. Try again.</div>
+    <button class="btn-primary" style="width:100%; margin-top:20px; padding:14px" id="login-btn" onclick="doLogin()">Sign In</button>
+  </div>
+</div>
+
+<div class="dash-nav">
+  <div>
+    <div class="dash-nav-brand">Fitness by Maddy</div>
+  </div>
+  <div class="dash-nav-sub" id="last-updated">Loading...</div>
+</div>
+
+<div class="dash-wrap" id="dashboard" style="display:none">
+
+  <div class="dash-header">
+    <h1>Operations Dashboard</h1>
+    <p id="dash-date"></p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card gold">
+      <div class="stat-card-label">New Leads Today</div>
+      <div class="stat-card-value" id="leads-today">-</div>
+      <div class="stat-card-sub" id="leads-week">this week: -</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-card-label">Conversion Rate</div>
+      <div class="stat-card-value" id="conversion-rate">-</div>
+      <div class="stat-card-sub">lead → paid</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-card-label">Active Clients</div>
+      <div class="stat-card-value" id="active-clients">-</div>
+      <div class="stat-card-sub" id="active-breakdown">by program</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-card-label">Pending Check-Ins</div>
+      <div class="stat-card-value" id="pending-checkins">-</div>
+      <div class="stat-card-sub">awaiting submission</div>
+    </div>
+  </div>
+
+  <div class="stats-grid" style="grid-template-columns: repeat(2,1fr)">
+    <div class="stat-card">
+      <div class="stat-card-label">Programs Generated This Week</div>
+      <div class="stat-card-value" id="programs-generated">-</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-card-label">Escalations Pending</div>
+      <div class="stat-card-value" id="escalation-count">-</div>
+    </div>
+  </div>
+
+  <div class="dash-grid">
+    <div class="dash-panel">
+      <div class="panel-header">
+        <div class="panel-title">Recent Leads</div>
+        <span class="panel-badge badge-live">Live</span>
+      </div>
+      <div class="panel-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Status</th><th>Interest</th><th>Market</th><th>When</th></tr>
+            </thead>
+            <tbody id="leads-table">
+              <tr><td colspan="5" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-panel">
+      <div class="panel-header">
+        <div class="panel-title">Escalations</div>
+        <span class="panel-badge badge-warn" id="esc-badge">0</span>
+      </div>
+      <div class="panel-body" id="escalations-list">
+        <div class="empty-state">No escalations</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-panel" style="margin-top:20px">
+    <div class="panel-header">
+      <div class="panel-title">Active Clients</div>
+    </div>
+    <div class="panel-body">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Program</th><th>Started</th><th>Ends</th><th>Status</th></tr>
+          </thead>
+          <tbody id="clients-table">
+            <tr><td colspan="5" class="empty-state">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var SUPABASE_URL = '';
+var SUPABASE_ANON_KEY = '';
+var session = null;
+
+function doLogin() {
+  var email = document.getElementById('login-email').value;
+  var password = document.getElementById('login-password').value;
+  var errorEl = document.getElementById('login-error');
+  errorEl.style.display = 'none';
+
+  fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY
+    },
+    body: JSON.stringify({ email: email, password: password })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.access_token) {
+      session = data;
+      document.getElementById('login-overlay').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadDashboard();
+    } else {
+      errorEl.style.display = 'block';
+    }
+  })
+  .catch(function() {
+    errorEl.style.display = 'block';
+  });
+}
+
+document.getElementById('login-password').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doLogin();
+});
+
+function supaFetch(table, query) {
+  var url = SUPABASE_URL + '/rest/v1/' + table + '?' + (query || '');
+  return fetch(url, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + session.access_token,
+      'Content-Type': 'application/json'
+    }
+  }).then(function(r) { return r.json(); });
+}
+
+function loadDashboard() {
+  document.getElementById('dash-date').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+  var todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  var weekStart = new Date(); weekStart.setDate(weekStart.getDate() - 7);
+
+  Promise.all([
+    supaFetch('leads', 'select=*&order=created_at.desc&limit=20'),
+    supaFetch('clients', 'select=*&order=created_at.desc'),
+    supaFetch('leads', 'select=id&created_at=gte.' + todayStart.toISOString()),
+    supaFetch('leads', 'select=id&created_at=gte.' + weekStart.toISOString()),
+    supaFetch('leads', 'select=id&status=eq.converted'),
+    supaFetch('leads', 'select=id'),
+    supaFetch('programs', 'select=id&generated_at=gte.' + weekStart.toISOString())
+  ]).then(function(results) {
+    var leads = results[0] || [];
+    var clients = results[1] || [];
+    var leadsToday = results[2] || [];
+    var leadsWeek = results[3] || [];
+    var converted = results[4] || [];
+    var allLeads = results[5] || [];
+    var programsWeek = results[6] || [];
+
+    document.getElementById('leads-today').textContent = leadsToday.length;
+    document.getElementById('leads-week').textContent = 'this week: ' + leadsWeek.length;
+
+    var rate = allLeads.length > 0 ? Math.round((converted.length / allLeads.length) * 100) : 0;
+    document.getElementById('conversion-rate').textContent = rate + '%';
+
+    var activeClients = clients.filter(function(c) { return c.status === 'active'; });
+    document.getElementById('active-clients').textContent = activeClients.length;
+
+    var programCounts = {};
+    activeClients.forEach(function(c) {
+      programCounts[c.program] = (programCounts[c.program] || 0) + 1;
+    });
+    var breakdown = Object.keys(programCounts).map(function(k) { return k + ': ' + programCounts[k]; }).join(', ');
+    document.getElementById('active-breakdown').textContent = breakdown || 'none yet';
+
+    document.getElementById('programs-generated').textContent = programsWeek.length;
+
+    var leadsHtml = '';
+    leads.slice(0, 10).forEach(function(l) {
+      var dotClass = 'dot-' + l.status;
+      var timeAgo = getTimeAgo(l.created_at);
+      leadsHtml += '<tr>' +
+        '<td>' + (l.name || 'Unknown') + '</td>' +
+        '<td><span class="status-dot ' + dotClass + '"></span>' + l.status + '</td>' +
+        '<td>' + (l.program_interest || '-') + '</td>' +
+        '<td>' + (l.market || '-') + '</td>' +
+        '<td>' + timeAgo + '</td></tr>';
+    });
+    document.getElementById('leads-table').innerHTML = leadsHtml || '<tr><td colspan="5" class="empty-state">No leads yet</td></tr>';
+
+    var clientsHtml = '';
+    activeClients.forEach(function(c) {
+      var started = new Date(c.program_started_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+      var ends = c.program_ends_at ? new Date(c.program_ends_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '-';
+      clientsHtml += '<tr>' +
+        '<td>' + (c.name || 'Unknown') + '</td>' +
+        '<td><span class="program-tag">' + c.program + '</span></td>' +
+        '<td>' + started + '</td>' +
+        '<td>' + ends + '</td>' +
+        '<td><span class="status-dot dot-active"></span>Active</td></tr>';
+    });
+    document.getElementById('clients-table').innerHTML = clientsHtml || '<tr><td colspan="5" class="empty-state">No active clients</td></tr>';
+
+    document.getElementById('pending-checkins').textContent = '0';
+    document.getElementById('escalation-count').textContent = '0';
+    document.getElementById('esc-badge').textContent = '0';
+    document.getElementById('escalations-list').innerHTML = '<div class="empty-state">No escalations</div>';
+  });
+}
+
+function getTimeAgo(dateStr) {
+  var diff = Date.now() - new Date(dateStr).getTime();
+  var mins = Math.floor(diff / 60000);
+  if (mins < 60) return mins + 'm ago';
+  var hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  var days = Math.floor(hrs / 24);
+  return days + 'd ago';
+}
+</script>
+
+</body>
+</html>
