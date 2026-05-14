@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In | Fitness by Maddy</title>
+  <meta name="description" content="Submit your weekly check-in to track progress and get your next week's program.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="form-page">
+  <div class="form-container">
+    <div class="form-header">
+      <p class="section-eyebrow">Weekly Progress</p>
+      <h1 class="section-title">Week <em id="weekNum">—</em> Check-In</h1>
+      <p class="section-body" style="margin:0 auto">Track your progress so Maddy can fine-tune your next week's program.</p>
+    </div>
+
+    <div class="form-card" id="checkinForm">
+      <form id="checkin" onsubmit="return submitCheckin(event)">
+
+        <h3 class="form-section-title">Body Stats</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Weight (kg) <span class="required">*</span></label>
+            <input class="form-input" type="number" name="weight" required step="0.1" placeholder="70.5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Waist (inches)</label>
+            <input class="form-input" type="number" name="waist" step="0.1" placeholder="32">
+          </div>
+        </div>
+
+        <h3 class="form-section-title">How Did This Week Go?</h3>
+        <div class="form-group">
+          <label class="form-label">Workout Compliance (1-10) <span class="required">*</span></label>
+          <div class="range-group">
+            <span style="font-size:12px; color:var(--mid-grey)">Low</span>
+            <input class="range-input" type="range" name="compliance_score" min="1" max="10" value="7" oninput="document.getElementById('compVal').textContent=this.value" required>
+            <span class="range-value" id="compVal">7</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Energy Level (1-10) <span class="required">*</span></label>
+          <div class="range-group">
+            <span style="font-size:12px; color:var(--mid-grey)">Low</span>
+            <input class="range-input" type="range" name="energy" min="1" max="10" value="7" oninput="document.getElementById('energyVal').textContent=this.value" required>
+            <span class="range-value" id="energyVal">7</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Issues / Challenges This Week</label>
+          <textarea class="form-textarea" name="issues" rows="3" placeholder="Any pain, soreness, schedule issues, food cravings, low motivation..."></textarea>
+        </div>
+
+        <h3 class="form-section-title">Progress Photos</h3>
+        <div class="form-group">
+          <label class="form-label">Upload 3 Photos (front, side, back)</label>
+          <div class="photo-upload-area" onclick="document.getElementById('photoInput').click()">
+            <div class="upload-icon">&#128247;</div>
+            <p>Tap to upload photos</p>
+            <p class="file-info">JPG/PNG, max 5MB each</p>
+          </div>
+          <input type="file" id="photoInput" name="photos" accept="image/*" multiple style="display:none" onchange="previewPhotos(this)">
+          <div class="photo-previews" id="photoPreviews"></div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">Submit Check-In &rarr;</button>
+        <p class="form-note">Your updated program will be sent to your WhatsApp within 24 hours.</p>
+      </form>
+    </div>
+
+    <div class="form-success" id="successMsg" style="display:none">
+      <div class="success-icon">&#128170;</div>
+      <h2>Check-In Received!</h2>
+      <p>Great work this week! Maddy will review your progress and your next week's program will be sent to your WhatsApp.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w');
+
+  if (weekNo) {
+    document.getElementById('weekNum').textContent = weekNo;
+  }
+
+  function previewPhotos(input) {
+    var container = document.getElementById('photoPreviews');
+    container.innerHTML = '';
+    var files = Array.from(input.files).slice(0, 3);
+    files.forEach(function(file) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = document.createElement('img');
+        img.src = e.target.result;
+        img.className = 'photo-preview';
+        container.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function submitCheckin(e) {
+    e.preventDefault();
+    if (!clientId || !weekNo) {
+      alert('Invalid check-in link. Please use the link sent to your WhatsApp.');
+      return false;
+    }
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    var photoUrls = [];
+    var photoInput = document.getElementById('photoInput');
+    if (photoInput.files.length > 0) {
+      var files = Array.from(photoInput.files).slice(0, 3);
+      for (var i = 0; i < files.length; i++) {
+        try {
+          var formData = new FormData();
+          formData.append('file', files[i]);
+          formData.append('client_id', clientId);
+          formData.append('week_no', weekNo);
+          formData.append('index', i);
+          photoUrls.push('pending_upload_' + i);
+        } catch (err) {
+          console.error('Photo upload failed:', err);
+        }
+      }
+    }
+
+    var form = document.getElementById('checkin');
+    var formData = new FormData(form);
+    var data = {
+      client_id: clientId,
+      week_no: parseInt(weekNo),
+      weight: parseFloat(formData.get('weight')) || null,
+      waist: parseFloat(formData.get('waist')) || null,
+      compliance_score: parseInt(formData.get('compliance_score')),
+      energy: parseInt(formData.get('energy')),
+      issues: formData.get('issues') || '',
+      photos_urls: photoUrls,
+    };
+
+    try {
+      var res = await fetch('/api/checkin-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        document.getElementById('checkinForm').style.display = 'none';
+        document.getElementById('successMsg').style.display = 'block';
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Submit Check-In →';
+        alert('Something went wrong. Please try again.');
+      }
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Submit Check-In →';
+      alert('Network error. Please check your connection and try again.');
+    }
+
+    return false;
+  }
+</script>
+
+</body>
+</html>
