@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In | Fitness by Maddy</title>
+  <meta name="description" content="Submit your weekly check-in — weight, measurements, photos, and how you're feeling.">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<div class="form-page">
+  <div class="form-header">
+    <div class="form-brand">Fitness by Maddy</div>
+    <div class="form-title">WEEKLY CHECK-IN</div>
+    <div class="form-subtitle" id="weekLabel">Track your progress. Stay accountable. Get results.</div>
+  </div>
+
+  <form id="checkinForm" class="form-card">
+    <div class="section-label">MEASUREMENTS</div>
+
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label field-required">Weight (kg)</label>
+        <input class="field-input" type="number" name="weight" placeholder="70.5" step="0.1" required>
+      </div>
+      <div class="field">
+        <label class="field-label">Waist (inches)</label>
+        <input class="field-input" type="number" name="waist" placeholder="32" step="0.1">
+      </div>
+    </div>
+
+    <div class="section-divider"></div>
+    <div class="section-label">HOW ARE YOU DOING?</div>
+
+    <div class="field">
+      <label class="field-label field-required">Compliance Score (1-10)</label>
+      <div class="field-hint">How well did you follow the plan this week?</div>
+      <div class="rating-group" id="complianceRating">
+        <button type="button" class="rating-btn" data-value="1">1</button>
+        <button type="button" class="rating-btn" data-value="2">2</button>
+        <button type="button" class="rating-btn" data-value="3">3</button>
+        <button type="button" class="rating-btn" data-value="4">4</button>
+        <button type="button" class="rating-btn" data-value="5">5</button>
+        <button type="button" class="rating-btn" data-value="6">6</button>
+        <button type="button" class="rating-btn" data-value="7">7</button>
+        <button type="button" class="rating-btn" data-value="8">8</button>
+        <button type="button" class="rating-btn" data-value="9">9</button>
+        <button type="button" class="rating-btn" data-value="10">10</button>
+      </div>
+      <input type="hidden" name="compliance_score" id="complianceValue" required>
+    </div>
+
+    <div class="field">
+      <label class="field-label field-required">Energy Level (1-10)</label>
+      <div class="field-hint">How's your overall energy been this week?</div>
+      <div class="rating-group" id="energyRating">
+        <button type="button" class="rating-btn" data-value="1">1</button>
+        <button type="button" class="rating-btn" data-value="2">2</button>
+        <button type="button" class="rating-btn" data-value="3">3</button>
+        <button type="button" class="rating-btn" data-value="4">4</button>
+        <button type="button" class="rating-btn" data-value="5">5</button>
+        <button type="button" class="rating-btn" data-value="6">6</button>
+        <button type="button" class="rating-btn" data-value="7">7</button>
+        <button type="button" class="rating-btn" data-value="8">8</button>
+        <button type="button" class="rating-btn" data-value="9">9</button>
+        <button type="button" class="rating-btn" data-value="10">10</button>
+      </div>
+      <input type="hidden" name="energy" id="energyValue" required>
+    </div>
+
+    <div class="section-divider"></div>
+    <div class="section-label">DETAILS</div>
+
+    <div class="field">
+      <label class="field-label">Issues or Challenges</label>
+      <textarea class="field-input" name="issues" placeholder="Any pain, soreness, digestion issues, sleep problems, motivation struggles?" rows="3"></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Progress Photos (3 angles)</label>
+      <div class="photo-upload" id="photoUpload">
+        <div class="photo-upload-icon">&#128247;</div>
+        <div class="photo-upload-text">Tap to upload photos<br><span style="font-size:11px;color:#B0A898">Front, side, and back — same lighting, same time of day</span></div>
+        <input type="file" id="photoInput" accept="image/*" multiple>
+      </div>
+      <div class="photo-preview" id="photoPreview"></div>
+    </div>
+
+    <button type="submit" class="btn-submit" id="submitBtn">SUBMIT CHECK-IN</button>
+  </form>
+
+  <div class="form-footer">Your check-in helps Maddy fine-tune your program each week.</div>
+
+  <div class="success-state" id="successState">
+    <div class="success-icon">&#128170;</div>
+    <div class="success-title">CHECK-IN SUBMITTED!</div>
+    <div class="success-text">Great work staying consistent! Maddy will review your progress and your updated program will be ready soon.</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w');
+  var form = document.getElementById('checkinForm');
+  var btn = document.getElementById('submitBtn');
+
+  if (weekNo) {
+    document.getElementById('weekLabel').textContent = 'Week ' + weekNo + ' Check-In';
+  }
+
+  // Rating buttons
+  function setupRating(groupId, hiddenId) {
+    var group = document.getElementById(groupId);
+    var hidden = document.getElementById(hiddenId);
+    var btns = group.querySelectorAll('.rating-btn');
+    btns.forEach(function(b) {
+      b.addEventListener('click', function() {
+        btns.forEach(function(x) { x.classList.remove('selected'); });
+        b.classList.add('selected');
+        hidden.value = b.getAttribute('data-value');
+      });
+    });
+  }
+  setupRating('complianceRating', 'complianceValue');
+  setupRating('energyRating', 'energyValue');
+
+  // Photo upload
+  var photoInput = document.getElementById('photoInput');
+  var photoPreview = document.getElementById('photoPreview');
+  var uploadArea = document.getElementById('photoUpload');
+  var selectedFiles = [];
+
+  uploadArea.addEventListener('click', function() { photoInput.click(); });
+
+  photoInput.addEventListener('change', function() {
+    var files = Array.from(photoInput.files);
+    selectedFiles = selectedFiles.concat(files).slice(0, 5);
+    photoPreview.innerHTML = '';
+    selectedFiles.forEach(function(file) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = document.createElement('img');
+        img.className = 'photo-thumb';
+        img.src = e.target.result;
+        photoPreview.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  // Submit
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    if (!document.getElementById('complianceValue').value) {
+      alert('Please select a compliance score.');
+      return;
+    }
+    if (!document.getElementById('energyValue').value) {
+      alert('Please select an energy level.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'SUBMITTING...';
+
+    var data = {
+      client_id: clientId,
+      week_no: weekNo,
+      weight: form.weight.value,
+      waist: form.waist.value || null,
+      compliance_score: document.getElementById('complianceValue').value,
+      energy: document.getElementById('energyValue').value,
+      issues: form.issues.value || null,
+      photos_urls: []
+    };
+
+    fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+      if (result.ok) {
+        form.style.display = 'none';
+        document.getElementById('successState').classList.add('visible');
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'SUBMIT CHECK-IN';
+        alert(result.error || 'Something went wrong. Please try again.');
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT CHECK-IN';
+      alert('Network error. Please check your connection and try again.');
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
