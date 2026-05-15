@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="admin-login" id="loginView">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:4px;color:#B8965A;margin-bottom:24px;">FITNESS BY MADDY</div>
+  <div class="form-card">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:24px;">ADMIN DASHBOARD</div>
+    <input type="password" id="apiKeyInput" placeholder="Enter admin API key">
+    <button id="loginBtn" onclick="login()">ACCESS DASHBOARD</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="admin-wrap" id="dashboardView">
+  <div class="admin-header">
+    <div>
+      <div class="admin-logo">FITNESS BY MADDY</div>
+      <div class="admin-subtitle">OPS DASHBOARD</div>
+    </div>
+    <button class="admin-logout" onclick="logout()">LOGOUT</button>
+  </div>
+
+  <div class="admin-body">
+    <div class="loading" id="loadingState">Loading dashboard data...</div>
+
+    <div id="dashboardContent" style="display:none;">
+      <!-- STATS -->
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <!-- CLIENTS BY PROGRAM -->
+      <div class="section-title">ACTIVE CLIENTS BY PROGRAM</div>
+      <div class="program-chips" id="programChips"></div>
+
+      <!-- ESCALATIONS -->
+      <div class="section-title">ESCALATIONS AWAITING REVIEW</div>
+      <div id="escalationsList"></div>
+
+      <!-- PENDING CHECK-INS -->
+      <div class="section-title">PENDING CHECK-INS</div>
+      <div class="data-table" id="pendingTable"></div>
+
+      <!-- RECENT LEADS -->
+      <div class="section-title">RECENT LEADS</div>
+      <div class="data-table" id="leadsTable"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var API_KEY = '';
+
+function login() {
+  API_KEY = document.getElementById('apiKeyInput').value.trim();
+  if (!API_KEY) return;
+  sessionStorage.setItem('admin_key', API_KEY);
+  document.getElementById('loginView').style.display = 'none';
+  document.getElementById('dashboardView').classList.add('visible');
+  loadDashboard();
+}
+
+function logout() {
+  sessionStorage.removeItem('admin_key');
+  API_KEY = '';
+  document.getElementById('loginView').style.display = '';
+  document.getElementById('dashboardView').classList.remove('visible');
+}
+
+function loadDashboard() {
+  fetch('/api/admin/stats', {
+    headers: { 'Authorization': 'Bearer ' + API_KEY }
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('Unauthorized');
+    return r.json();
+  })
+  .then(function(data) { renderDashboard(data); })
+  .catch(function(err) {
+    document.getElementById('loadingState').textContent = 'Failed to load: ' + err.message;
+  });
+}
+
+function renderDashboard(d) {
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('dashboardContent').style.display = '';
+
+  // Stats
+  var stats = [
+    { label: 'Leads Today', value: d.leads.today },
+    { label: 'Leads This Week', value: d.leads.this_week },
+    { label: 'Total Leads', value: d.leads.total },
+    { label: 'Conversion Rate', value: d.leads.conversion_rate },
+    { label: 'Active Clients', value: d.clients.active_total },
+    { label: 'Programs This Week', value: d.programs.generated_this_week },
+    { label: 'Pending Check-ins', value: d.checkins.pending },
+    { label: 'Open Escalations', value: d.escalations.length }
+  ];
+
+  var statsHtml = '';
+  stats.forEach(function(s) {
+    statsHtml += '<div class="stat-card"><div class="stat-card-label">' + s.label + '</div><div class="stat-card-value">' + s.value + '</div></div>';
+  });
+  document.getElementById('statsGrid').innerHTML = statsHtml;
+
+  // Programs
+  var chipHtml = '';
+  var programs = d.clients.by_program;
+  var programNames = {
+    '6wk_gym': '6W Gym', '6wk_home': '6W Home', '12wk': '12 Week',
+    'pcos': 'PCOS', '40plus': '40+', 'zoom_trial': 'Trial', 'zoom_pack': 'Zoom Pack'
+  };
+  for (var key in programs) {
+    chipHtml += '<div class="program-chip">' + (programNames[key] || key) + '<strong>' + programs[key] + '</strong></div>';
+  }
+  document.getElementById('programChips').innerHTML = chipHtml || '<span style="color:#6B6B6B;font-size:13px;">No active clients</span>';
+
+  // Escalations
+  var escHtml = '';
+  if (d.escalations.length === 0) {
+    escHtml = '<div style="color:#6B6B6B;font-size:13px;padding:12px 0;">No pending escalations</div>';
+  } else {
+    d.escalations.forEach(function(e) {
+      var time = new Date(e.created_at).toLocaleString();
+      escHtml += '<div class="escalation-card">' +
+        '<div class="escalation-reason">' + escapeHtml(e.reason) + '</div>' +
+        '<div class="escalation-body">' + escapeHtml(e.message_body || 'No message') + '</div>' +
+        '<div class="escalation-time">' + time + '</div>' +
+        '</div>';
+    });
+  }
+  document.getElementById('escalationsList').innerHTML = escHtml;
+
+  // Pending check-ins
+  var pendHtml = '<table><tr><th>Client</th><th>Program</th><th>Week</th></tr>';
+  if (d.checkins.pending_list.length === 0) {
+    pendHtml += '<tr><td colspan="3" style="color:#6B6B6B">All caught up!</td></tr>';
+  } else {
+    d.checkins.pending_list.forEach(function(p) {
+      pendHtml += '<tr><td>' + escapeHtml(p.name || 'N/A') + '</td><td>' + (programNames[p.program] || p.program) + '</td><td>Week ' + p.week + '</td></tr>';
+    });
+  }
+  pendHtml += '</table>';
+  document.getElementById('pendingTable').innerHTML = pendHtml;
+
+  // Recent leads
+  var leadsHtml = '<table><tr><th>Name</th><th>Status</th><th>Interest</th><th>Market</th><th>Date</th></tr>';
+  if (d.leads.recent.length === 0) {
+    leadsHtml += '<tr><td colspan="5" style="color:#6B6B6B">No leads yet</td></tr>';
+  } else {
+    d.leads.recent.forEach(function(l) {
+      var badge = 'badge-' + l.status;
+      var date = new Date(l.created_at).toLocaleDateString();
+      leadsHtml += '<tr>' +
+        '<td>' + escapeHtml(l.name || 'Unknown') + '</td>' +
+        '<td><span class="badge ' + badge + '">' + l.status + '</span></td>' +
+        '<td>' + (l.program_interest || '-') + '</td>' +
+        '<td>' + l.market + '</td>' +
+        '<td>' + date + '</td>' +
+        '</tr>';
+    });
+  }
+  leadsHtml += '</table>';
+  document.getElementById('leadsTable').innerHTML = leadsHtml;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// Auto-login if key stored
+(function() {
+  var storedKey = sessionStorage.getItem('admin_key');
+  if (storedKey) {
+    API_KEY = storedKey;
+    document.getElementById('loginView').style.display = 'none';
+    document.getElementById('dashboardView').classList.add('visible');
+    loadDashboard();
+  }
+})();
+</script>
+
+</body>
+</html>
