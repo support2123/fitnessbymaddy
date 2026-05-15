@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/forms.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="../index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="../index.html">Home</a></li>
+    <li><a href="#" class="active">Dashboard</a></li>
+    <li><a href="#" id="logoutLink" style="display:none">Logout</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap admin-page">
+
+  <!-- LOGIN -->
+  <div class="admin-login" id="loginSection">
+    <div class="admin-login-card">
+      <div class="form-card-title">Admin Access</div>
+      <div class="form-group">
+        <label class="form-label" for="adminKey">Dashboard Key</label>
+        <input class="form-input" type="password" id="adminKey" placeholder="Enter admin key">
+      </div>
+      <button class="form-submit" id="loginBtn">Access Dashboard</button>
+      <p id="loginError" style="color:#c0392b; font-size:12px; margin-top:12px; display:none;">Invalid key. Try again.</p>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="admin-content" id="dashboardSection">
+
+    <div style="margin-bottom:32px;">
+      <p class="section-eyebrow">Operations</p>
+      <h1 class="section-title" style="font-size:36px;">Daily <em>Dashboard</em></h1>
+      <p id="lastRefresh" style="font-size:12px; color:var(--taupe); margin-top:4px;"></p>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="admin-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-card-label">Leads Today</div>
+        <div class="stat-card-value" id="leadsToday">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Leads This Week</div>
+        <div class="stat-card-value" id="leadsWeek">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Conversion Rate</div>
+        <div class="stat-card-value" id="convRate">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Active Clients</div>
+        <div class="stat-card-value" id="activeClients">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Pending Check-ins</div>
+        <div class="stat-card-value" id="pendingCheckins">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Programs This Week</div>
+        <div class="stat-card-value" id="programsWeek">—</div>
+      </div>
+    </div>
+
+    <!-- CLIENTS BY PROGRAM -->
+    <div class="admin-section">
+      <div class="admin-section-title">Active Clients by Program</div>
+      <div id="programBreakdown"></div>
+    </div>
+
+    <!-- PENDING CHECK-INS -->
+    <div class="admin-section">
+      <div class="admin-section-title">Pending Check-ins</div>
+      <div id="pendingList"></div>
+    </div>
+
+    <!-- ESCALATIONS -->
+    <div class="admin-section">
+      <div class="admin-section-title">Open Escalations</div>
+      <div id="escalationList"></div>
+    </div>
+
+    <button class="form-submit" id="refreshBtn" style="max-width:200px; margin:32px auto 0; display:block;">Refresh Data</button>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  var adminKey = '';
+
+  var PROGRAM_LABELS = {
+    '6wk_gym': '6-Week Burn & Build (Gym)',
+    '6wk_home': '6-Week Burn & Build (Home)',
+    '12wk': '12-Week Flagship',
+    'pcos': 'PCOS Warrior',
+    '40plus': '40+ Strong',
+    'zoom_trial': 'Zoom Trial',
+    'zoom_pack': 'Zoom Pack'
+  };
+
+  document.getElementById('loginBtn').addEventListener('click', function() {
+    adminKey = document.getElementById('adminKey').value;
+    if (!adminKey) return;
+    loadDashboard();
+  });
+
+  document.getElementById('adminKey').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('loginBtn').click();
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', loadDashboard);
+
+  document.getElementById('logoutLink').addEventListener('click', function(e) {
+    e.preventDefault();
+    adminKey = '';
+    document.getElementById('dashboardSection').classList.remove('visible');
+    document.getElementById('loginSection').style.display = 'flex';
+    document.getElementById('logoutLink').style.display = 'none';
+    document.getElementById('adminKey').value = '';
+  });
+
+  function loadDashboard() {
+    fetch('/api/admin/stats', {
+      headers: { 'Authorization': 'Bearer ' + adminKey }
+    })
+    .then(function(res) {
+      if (res.status === 401) {
+        document.getElementById('loginError').style.display = 'block';
+        throw new Error('Unauthorized');
+      }
+      return res.json();
+    })
+    .then(function(data) {
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('dashboardSection').classList.add('visible');
+      document.getElementById('logoutLink').style.display = 'inline';
+      document.getElementById('loginError').style.display = 'none';
+      renderDashboard(data);
+    })
+    .catch(function(err) {
+      if (err.message !== 'Unauthorized') {
+        alert('Failed to load dashboard data.');
+      }
+    });
+  }
+
+  function renderDashboard(data) {
+    document.getElementById('lastRefresh').textContent = 'Last refreshed: ' + new Date().toLocaleTimeString();
+
+    document.getElementById('leadsToday').textContent = data.leads.today;
+    document.getElementById('leadsWeek').textContent = data.leads.this_week;
+    document.getElementById('convRate').textContent = data.leads.conversion_rate;
+    document.getElementById('activeClients').textContent = data.clients.active;
+    document.getElementById('pendingCheckins').textContent = data.checkins.pending;
+    document.getElementById('programsWeek').textContent = data.programs.generated_this_week;
+
+    var progHtml = '';
+    var programs = data.clients.by_program;
+    if (Object.keys(programs).length === 0) {
+      progHtml = '<div class="admin-empty">No active clients yet</div>';
+    } else {
+      progHtml = '<table class="admin-table"><thead><tr><th>Program</th><th>Clients</th></tr></thead><tbody>';
+      for (var key in programs) {
+        progHtml += '<tr><td>' + (PROGRAM_LABELS[key] || key) + '</td><td><strong>' + programs[key] + '</strong></td></tr>';
+      }
+      progHtml += '</tbody></table>';
+    }
+    document.getElementById('programBreakdown').innerHTML = progHtml;
+
+    var pendingHtml = '';
+    if (data.checkins.pending_list.length === 0) {
+      pendingHtml = '<div class="admin-empty">All check-ins up to date</div>';
+    } else {
+      pendingHtml = '<table class="admin-table"><thead><tr><th>Client</th><th>Program</th><th>Expected Week</th><th>Last Submitted</th></tr></thead><tbody>';
+      data.checkins.pending_list.forEach(function(item) {
+        pendingHtml += '<tr>';
+        pendingHtml += '<td>' + item.name + '</td>';
+        pendingHtml += '<td><span class="badge badge-gold">' + (PROGRAM_LABELS[item.program] || item.program) + '</span></td>';
+        pendingHtml += '<td>Week ' + item.expected_week + '</td>';
+        pendingHtml += '<td>' + (item.last_submitted > 0 ? 'Week ' + item.last_submitted : 'Never') + '</td>';
+        pendingHtml += '</tr>';
+      });
+      pendingHtml += '</tbody></table>';
+    }
+    document.getElementById('pendingList').innerHTML = pendingHtml;
+
+    var escHtml = '';
+    if (data.escalations.list.length === 0) {
+      escHtml = '<div class="admin-empty">No open escalations</div>';
+    } else {
+      escHtml = '<table class="admin-table"><thead><tr><th>Type</th><th>Message</th><th>Time</th></tr></thead><tbody>';
+      data.escalations.list.forEach(function(esc) {
+        escHtml += '<tr>';
+        escHtml += '<td><span class="badge badge-red">' + esc.trigger_type + '</span></td>';
+        escHtml += '<td>' + (esc.trigger_message || '—').slice(0, 80) + '</td>';
+        escHtml += '<td>' + new Date(esc.created_at).toLocaleDateString() + '</td>';
+        escHtml += '</tr>';
+      });
+      escHtml += '</tbody></table>';
+    }
+    document.getElementById('escalationList').innerHTML = escHtml;
+  }
+})();
+</script>
+</body>
+</html>
