@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4;
+      --gold: #B8965A;
+      --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C;
+      --mid-grey: #6B6B6B;
+      --light-grey: #E8E3DC;
+      --sand: #F0EAE0;
+      --green: #4a9;
+      --red: #c54;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--charcoal);
+      color: white;
+      min-height: 100vh;
+    }
+
+    /* Auth overlay */
+    .auth-overlay {
+      position: fixed; inset: 0;
+      background: var(--charcoal);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    .auth-overlay.hidden { display: none; }
+    .auth-box {
+      background: #333;
+      padding: 48px 40px;
+      border-radius: 8px;
+      text-align: center;
+      max-width: 360px;
+      width: 90%;
+    }
+    .auth-box h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      letter-spacing: 2px;
+      color: var(--gold);
+      margin-bottom: 24px;
+    }
+    .auth-box input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid #555;
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      color: white;
+      background: #444;
+      outline: none;
+      margin-bottom: 16px;
+      text-align: center;
+      letter-spacing: 4px;
+    }
+    .auth-box input:focus { border-color: var(--gold); }
+    .auth-box button {
+      width: 100%;
+      padding: 14px;
+      background: var(--gold);
+      color: white;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 2px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .auth-error { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
+
+    /* Dashboard */
+    .dash-header {
+      padding: 24px 32px;
+      border-bottom: 1px solid #444;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dash-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 14px;
+      letter-spacing: 4px;
+      color: var(--gold);
+    }
+    .dash-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      letter-spacing: 2px;
+    }
+    .dash-date { font-size: 12px; color: var(--mid-grey); }
+
+    .dash-body { padding: 32px; max-width: 1200px; margin: 0 auto; }
+
+    /* Stat cards */
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: #333;
+      border-radius: 8px;
+      padding: 24px;
+      border-left: 3px solid var(--gold);
+    }
+    .stat-card-label {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      margin-bottom: 8px;
+    }
+    .stat-card-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      color: white;
+      line-height: 1;
+    }
+    .stat-card-sub {
+      font-size: 11px;
+      color: var(--gold-light);
+      margin-top: 4px;
+    }
+
+    /* Section */
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: var(--gold);
+      margin: 32px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #444;
+    }
+
+    /* Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .data-table th {
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      border-bottom: 1px solid #444;
+    }
+    .data-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #333;
+      color: rgba(255,255,255,0.8);
+    }
+    .data-table tr:hover td { background: rgba(255,255,255,0.03); }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .badge-active { background: rgba(68,170,153,0.15); color: var(--green); }
+    .badge-new { background: rgba(184,150,90,0.15); color: var(--gold); }
+    .badge-dropped { background: rgba(204,85,68,0.15); color: var(--red); }
+    .badge-converted { background: rgba(68,170,153,0.15); color: var(--green); }
+    .badge-qualified { background: rgba(100,149,237,0.15); color: cornflowerblue; }
+
+    .escalation-card {
+      background: rgba(204,85,68,0.1);
+      border: 1px solid rgba(204,85,68,0.3);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .escalation-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--red);
+      margin-bottom: 4px;
+    }
+    .escalation-card-body {
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--mid-grey);
+      font-size: 13px;
+    }
+
+    .refresh-btn {
+      padding: 8px 20px;
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 13px;
+      letter-spacing: 2px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .refresh-btn:hover { background: var(--gold); color: white; }
+  </style>
+</head>
+<body>
+
+  <!-- Auth overlay -->
+  <div class="auth-overlay" id="authOverlay">
+    <div class="auth-box">
+      <h2>Admin Dashboard</h2>
+      <input type="password" id="authPin" placeholder="Enter PIN" maxlength="6">
+      <button onclick="authenticate()">Access Dashboard</button>
+      <div class="auth-error" id="authError">Invalid PIN</div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="dash-header">
+    <div>
+      <div class="dash-logo">Fitness by Maddy</div>
+      <div class="dash-title">Operations Dashboard</div>
+    </div>
+    <div style="text-align:right">
+      <div class="dash-date" id="dashDate"></div>
+      <button class="refresh-btn" onclick="loadDashboard()">Refresh</button>
+    </div>
+  </div>
+
+  <div class="dash-body">
+    <!-- Stats row -->
+    <div class="stat-row" id="statsRow">
+      <div class="stat-card">
+        <div class="stat-card-label">New Leads Today</div>
+        <div class="stat-card-val" id="statLeadsToday">—</div>
+        <div class="stat-card-sub" id="statLeadsWeek">— this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Conversion Rate</div>
+        <div class="stat-card-val" id="statConversion">—</div>
+        <div class="stat-card-sub">lead → paid</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Active Clients</div>
+        <div class="stat-card-val" id="statActiveClients">—</div>
+        <div class="stat-card-sub" id="statByProgram"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Pending Check-ins</div>
+        <div class="stat-card-val" id="statPendingCheckins">—</div>
+        <div class="stat-card-sub">awaiting submission</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Programs Generated</div>
+        <div class="stat-card-val" id="statProgramsWeek">—</div>
+        <div class="stat-card-sub">this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Escalations</div>
+        <div class="stat-card-val" id="statEscalations">—</div>
+        <div class="stat-card-sub">awaiting Maddy</div>
+      </div>
+    </div>
+
+    <!-- Recent leads -->
+    <div class="section-title">Recent Leads</div>
+    <div id="leadsTable"><div class="loading">Loading...</div></div>
+
+    <!-- Active clients -->
+    <div class="section-title">Active Clients</div>
+    <div id="clientsTable"><div class="loading">Loading...</div></div>
+
+    <!-- Escalations -->
+    <div class="section-title">Escalations</div>
+    <div id="escalations"><div class="loading">Loading...</div></div>
+  </div>
+
+  <script>
+    var SUPABASE_URL = '';
+    var SUPABASE_ANON_KEY = '';
+
+    function authenticate() {
+      var pin = document.getElementById('authPin').value;
+      // Simple PIN auth — in production, use Supabase Auth
+      if (pin === '247374') {
+        document.getElementById('authOverlay').classList.add('hidden');
+        initDashboard();
+      } else {
+        document.getElementById('authError').style.display = 'block';
+      }
+    }
+
+    document.getElementById('authPin').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') authenticate();
+    });
+
+    function initDashboard() {
+      document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-IN', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+
+      // Read Supabase config from meta or env
+      SUPABASE_URL = document.querySelector('meta[name="supabase-url"]')?.content || '';
+      SUPABASE_ANON_KEY = document.querySelector('meta[name="supabase-key"]')?.content || '';
+
+      loadDashboard();
+    }
+
+    async function supabaseQuery(table, params) {
+      var url = SUPABASE_URL + '/rest/v1/' + table;
+      if (params) url += '?' + params;
+      var res = await fetch(url, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+          'Prefer': 'count=exact',
+        },
+      });
+      var count = res.headers.get('content-range');
+      var data = await res.json();
+      return { data: data, count: count ? parseInt(count.split('/')[1]) : data.length };
+    }
+
+    async function loadDashboard() {
+      if (!SUPABASE_URL) {
+        showDemoData();
+        return;
+      }
+
+      try {
+        var today = new Date().toISOString().split('T')[0];
+        var weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+
+        // Leads
+        var leadsToday = await supabaseQuery('leads', 'created_at=gte.' + today + 'T00:00:00&select=*');
+        var leadsWeek = await supabaseQuery('leads', 'created_at=gte.' + weekAgo + 'T00:00:00&select=*');
+        var allLeads = await supabaseQuery('leads', 'select=*&order=created_at.desc&limit=20');
+        var convertedLeads = await supabaseQuery('leads', 'status=eq.converted&select=id');
+
+        document.getElementById('statLeadsToday').textContent = leadsToday.data.length;
+        document.getElementById('statLeadsWeek').textContent = leadsWeek.data.length + ' this week';
+
+        var totalLeads = allLeads.count || 1;
+        var convRate = Math.round((convertedLeads.data.length / totalLeads) * 100);
+        document.getElementById('statConversion').textContent = convRate + '%';
+
+        // Clients
+        var clients = await supabaseQuery('clients', 'status=eq.active&select=*');
+        document.getElementById('statActiveClients').textContent = clients.data.length;
+
+        var programCounts = {};
+        clients.data.forEach(function(c) {
+          programCounts[c.program] = (programCounts[c.program] || 0) + 1;
+        });
+        var programSummary = Object.entries(programCounts).map(function(e) { return e[0] + ': ' + e[1]; }).join(', ');
+        document.getElementById('statByProgram').textContent = programSummary || 'none';
+
+        // Programs this week
+        var programs = await supabaseQuery('programs', 'generated_at=gte.' + weekAgo + 'T00:00:00&select=id');
+        document.getElementById('statProgramsWeek').textContent = programs.data.length;
+
+        // Render leads table
+        renderLeadsTable(allLeads.data);
+        renderClientsTable(clients.data);
+
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+        showDemoData();
+      }
+    }
+
+    function showDemoData() {
+      document.getElementById('statLeadsToday').textContent = '—';
+      document.getElementById('statLeadsWeek').textContent = 'Connect Supabase';
+      document.getElementById('statConversion').textContent = '—';
+      document.getElementById('statActiveClients').textContent = '—';
+      document.getElementById('statPendingCheckins').textContent = '—';
+      document.getElementById('statProgramsWeek').textContent = '—';
+      document.getElementById('statEscalations').textContent = '—';
+      document.getElementById('leadsTable').innerHTML = '<div class="loading">Configure SUPABASE_URL and SUPABASE_ANON_KEY to load live data</div>';
+      document.getElementById('clientsTable').innerHTML = '<div class="loading">No data yet</div>';
+      document.getElementById('escalations').innerHTML = '<div class="loading">No escalations</div>';
+    }
+
+    function renderLeadsTable(leads) {
+      if (!leads || leads.length === 0) {
+        document.getElementById('leadsTable').innerHTML = '<div class="loading">No leads yet</div>';
+        return;
+      }
+      var html = '<table class="data-table"><thead><tr><th>Phone</th><th>Name</th><th>Status</th><th>Interest</th><th>Market</th><th>Created</th></tr></thead><tbody>';
+      leads.forEach(function(l) {
+        var phone = l.phone ? l.phone.slice(0, 3) + 'XXX...' + l.phone.slice(-3) : '—';
+        var badge = 'badge-' + (l.status || 'new');
+        html += '<tr><td>' + phone + '</td><td>' + (l.name || '—') + '</td><td><span class="badge ' + badge + '">' + (l.status || 'new') + '</span></td><td>' + (l.program_interest || '—') + '</td><td>' + (l.market || '—') + '</td><td>' + new Date(l.created_at).toLocaleDateString() + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('leadsTable').innerHTML = html;
+    }
+
+    function renderClientsTable(clients) {
+      if (!clients || clients.length === 0) {
+        document.getElementById('clientsTable').innerHTML = '<div class="loading">No active clients</div>';
+        return;
+      }
+      var html = '<table class="data-table"><thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Ends</th><th>Status</th></tr></thead><tbody>';
+      clients.forEach(function(c) {
+        html += '<tr><td>' + (c.name || '—') + '</td><td>' + (c.program || '—') + '</td><td>' + new Date(c.program_started_at).toLocaleDateString() + '</td><td>' + (c.program_ends_at ? new Date(c.program_ends_at).toLocaleDateString() : '—') + '</td><td><span class="badge badge-active">active</span></td></tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('clientsTable').innerHTML = html;
+    }
+  </script>
+</body>
+</html>
