@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-wrap { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+    .admin-header { margin-bottom: 48px; }
+    .admin-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 400; }
+    .admin-header p { color: var(--mid-grey); font-size: 14px; margin-top: 8px; }
+    .login-card { max-width: 400px; margin: 120px auto; background: white; padding: 48px 36px; border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); text-align: center; }
+    .login-card h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 24px; }
+    .login-card input { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; margin-bottom: 16px; outline: none; }
+    .login-card input:focus { border-color: var(--gold); }
+    .login-card button { width: 100%; padding: 14px; background: var(--charcoal); color: white; border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; }
+    .login-card button:hover { background: var(--gold); }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 48px; }
+    .stat-card { background: white; padding: 28px 24px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .stat-card .label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card .value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--charcoal); }
+    .stat-card .sub { font-size: 12px; color: var(--gold); margin-top: 4px; }
+    .section-block { background: white; padding: 32px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 24px; }
+    .section-block h3 { font-family: 'Cormorant Garamond', serif; font-size: 22px; margin-bottom: 20px; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .data-table th { text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--light-grey); font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); }
+    .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--light-grey); color: var(--charcoal); }
+    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .status-new { background: #E3F2FD; color: #1565C0; }
+    .status-qualified { background: #FFF3E0; color: #E65100; }
+    .status-converted { background: #E8F5E9; color: #2E7D32; }
+    .status-dropped { background: #FAFAFA; color: #9E9E9E; }
+    .status-active { background: #E8F5E9; color: #2E7D32; }
+    .hidden { display: none; }
+    .refresh-btn { background: var(--charcoal); color: white; border: none; padding: 10px 20px; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; border-radius: 2px; }
+    .refresh-btn:hover { background: var(--gold); }
+    @media (max-width: 600px) { .stats-grid { grid-template-columns: 1fr 1fr; } .data-table { font-size: 11px; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="#" onclick="logout()" class="nav-cta" id="logoutBtn" style="display:none">Logout</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+  <div class="login-card" id="loginSection">
+    <h2>Admin Access</h2>
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Password">
+    <button onclick="login()">Sign In</button>
+  </div>
+
+  <div class="admin-wrap hidden" id="dashboard">
+    <div class="admin-header">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h1>Dashboard</h1>
+          <p id="dashDate"></p>
+        </div>
+        <button class="refresh-btn" onclick="loadDashboard()">Refresh</button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">New Leads Today</div>
+        <div class="value" id="leadsToday">—</div>
+        <div class="sub" id="leadsWeek"></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Conversion Rate</div>
+        <div class="value" id="convRate">—</div>
+        <div class="sub">lead → paid</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Active Clients</div>
+        <div class="value" id="activeClients">—</div>
+        <div class="sub" id="clientsByProgram"></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Pending Check-ins</div>
+        <div class="value" id="pendingCheckins">—</div>
+        <div class="sub">this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Programs Generated</div>
+        <div class="value" id="programsGenerated">—</div>
+        <div class="sub">this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Escalations</div>
+        <div class="value" id="escalations">—</div>
+        <div class="sub">awaiting review</div>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <h3>Recent Leads</h3>
+      <table class="data-table">
+        <thead><tr><th>Phone</th><th>Name</th><th>Status</th><th>Interest</th><th>Market</th><th>Created</th></tr></thead>
+        <tbody id="leadsTable"></tbody>
+      </table>
+    </div>
+
+    <div class="section-block">
+      <h3>Active Clients</h3>
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Last Check-in</th><th>Status</th></tr></thead>
+        <tbody id="clientsTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+var SUPABASE_URL = '';
+var SUPABASE_ANON_KEY = '';
+var session = null;
+
+function login() {
+  var email = document.getElementById('loginEmail').value;
+  var password = document.getElementById('loginPassword').value;
+  fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+    body: JSON.stringify({ email: email, password: password })
+  }).then(function(r) { return r.json(); }).then(function(data) {
+    if (data.access_token) {
+      session = data;
+      localStorage.setItem('admin_session', JSON.stringify(data));
+      showDashboard();
+    } else {
+      alert('Invalid credentials');
+    }
+  });
+}
+
+function logout() {
+  localStorage.removeItem('admin_session');
+  session = null;
+  document.getElementById('loginSection').classList.remove('hidden');
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('logoutBtn').style.display = 'none';
+}
+
+function showDashboard() {
+  document.getElementById('loginSection').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+  document.getElementById('logoutBtn').style.display = 'inline-block';
+  document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  loadDashboard();
+}
+
+function sbFetch(table, query) {
+  return fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + query, {
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + session.access_token }
+  }).then(function(r) { return r.json(); });
+}
+
+async function loadDashboard() {
+  var today = new Date().toISOString().split('T')[0];
+  var weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+  var leads = await sbFetch('leads', 'select=*&order=created_at.desc&limit=20');
+  var clients = await sbFetch('clients', 'select=*&status=eq.active');
+  var programs = await sbFetch('programs', 'select=id&generated_at=gte.' + weekAgo);
+
+  var leadsToday = leads.filter(function(l) { return l.created_at && l.created_at.startsWith(today); });
+  var leadsThisWeek = leads.filter(function(l) { return l.created_at >= weekAgo; });
+  var converted = leads.filter(function(l) { return l.status === 'converted'; });
+
+  document.getElementById('leadsToday').textContent = leadsToday.length;
+  document.getElementById('leadsWeek').textContent = leadsThisWeek.length + ' this week';
+  document.getElementById('activeClients').textContent = clients.length || 0;
+  document.getElementById('programsGenerated').textContent = (programs && programs.length) || 0;
+  document.getElementById('convRate').textContent = leads.length > 0 ? Math.round((converted.length / leads.length) * 100) + '%' : '0%';
+
+  var tbody = document.getElementById('leadsTable');
+  tbody.innerHTML = '';
+  leads.slice(0, 10).forEach(function(l) {
+    var phone = l.phone ? l.phone.slice(0, 4) + '***' + l.phone.slice(-3) : '—';
+    tbody.innerHTML += '<tr><td>' + phone + '</td><td>' + (l.name || '—') + '</td><td><span class="status-badge status-' + l.status + '">' + l.status + '</span></td><td>' + (l.program_interest || '—') + '</td><td>' + (l.market || '—') + '</td><td>' + new Date(l.created_at).toLocaleDateString() + '</td></tr>';
+  });
+
+  var ctbody = document.getElementById('clientsTable');
+  ctbody.innerHTML = '';
+  (clients || []).forEach(function(c) {
+    ctbody.innerHTML += '<tr><td>' + (c.name || '—') + '</td><td>' + (c.program || '—') + '</td><td>' + new Date(c.program_started_at).toLocaleDateString() + '</td><td>—</td><td><span class="status-badge status-active">active</span></td></tr>';
+  });
+}
+
+var stored = localStorage.getItem('admin_session');
+if (stored) {
+  session = JSON.parse(stored);
+  showDashboard();
+}
+</script>
+</body>
+</html>
