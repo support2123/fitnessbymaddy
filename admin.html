@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 100px 24px 60px; }
+    .admin-header { margin-bottom: 48px; }
+    .admin-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 400; }
+    .login-card { max-width: 400px; margin: 120px auto 0; background: white; padding: 48px 36px; border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); text-align: center; }
+    .login-card h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 24px; }
+    .login-card .form-input { margin-bottom: 16px; }
+    .login-card .form-submit { margin-top: 0; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card { background: white; padding: 24px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .stat-card .label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card .value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--charcoal); }
+    .stat-card .sub { font-size: 12px; color: var(--gold); margin-top: 4px; }
+    .section-block { margin-bottom: 40px; }
+    .section-block h3 { font-family: 'Cormorant Garamond', serif; font-size: 24px; margin-bottom: 16px; color: var(--charcoal); }
+    .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .data-table th { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--mid-grey); padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--light-grey); }
+    .data-table td { font-size: 13px; padding: 12px 16px; border-bottom: 1px solid var(--light-grey); color: var(--charcoal); }
+    .badge { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 1px; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; }
+    .badge-new { background: #E3F2FD; color: #1565C0; }
+    .badge-qualified { background: #FFF3E0; color: #E65100; }
+    .badge-converted { background: #E8F5E9; color: #2E7D32; }
+    .badge-active { background: #E8F5E9; color: #2E7D32; }
+    .badge-dropped { background: #FAFAFA; color: #9E9E9E; }
+    .badge-escalation { background: #FFEBEE; color: #C62828; }
+    .hidden { display: none; }
+    .form-input { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--charcoal); background: var(--cream); outline: none; }
+    .form-submit { width: 100%; padding: 16px; background: var(--charcoal); color: white; border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; }
+    .form-submit:hover { background: var(--gold); }
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="#" onclick="logout()">Logout</a></li>
+  </ul>
+</nav>
+
+<div id="loginView" class="login-card">
+  <h2>Admin Login</h2>
+  <input class="form-input" type="email" id="loginEmail" placeholder="Email">
+  <input class="form-input" type="password" id="loginPassword" placeholder="Password">
+  <button class="form-submit" onclick="login()">Sign In</button>
+</div>
+
+<div id="dashboardView" class="admin-wrap hidden">
+  <div class="admin-header">
+    <p class="section-eyebrow">Operations</p>
+    <h1>Dashboard</h1>
+  </div>
+
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <div class="section-block">
+    <h3>Recent Leads</h3>
+    <table class="data-table">
+      <thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Program</th><th>Date</th></tr></thead>
+      <tbody id="leadsTable"></tbody>
+    </table>
+  </div>
+
+  <div class="section-block">
+    <h3>Active Clients</h3>
+    <table class="data-table">
+      <thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Status</th></tr></thead>
+      <tbody id="clientsTable"></tbody>
+    </table>
+  </div>
+
+  <div class="section-block">
+    <h3>Pending Check-ins</h3>
+    <table class="data-table">
+      <thead><tr><th>Client</th><th>Week</th><th>Due</th></tr></thead>
+      <tbody id="checkinsTable"></tbody>
+    </table>
+  </div>
+
+  <div class="section-block">
+    <h3>Escalations</h3>
+    <table class="data-table">
+      <thead><tr><th>Phone</th><th>Message</th><th>Time</th></tr></thead>
+      <tbody id="escalationsTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+var supabaseUrl = '';
+var supabaseKey = '';
+var supabase = null;
+
+function initSupabase() {
+  supabaseUrl = localStorage.getItem('sb_url') || prompt('Supabase URL:');
+  supabaseKey = localStorage.getItem('sb_key') || prompt('Supabase Anon Key:');
+  if (supabaseUrl && supabaseKey) {
+    localStorage.setItem('sb_url', supabaseUrl);
+    localStorage.setItem('sb_key', supabaseKey);
+  }
+}
+
+async function login() {
+  var email = document.getElementById('loginEmail').value;
+  var password = document.getElementById('loginPassword').value;
+  if (!email || !password) return;
+
+  initSupabase();
+
+  try {
+    var res = await fetch(supabaseUrl + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': supabaseKey },
+      body: JSON.stringify({ email: email, password: password })
+    });
+    var data = await res.json();
+    if (data.access_token) {
+      localStorage.setItem('sb_token', data.access_token);
+      showDashboard();
+    } else {
+      alert('Login failed: ' + (data.error_description || data.msg || 'Unknown error'));
+    }
+  } catch (err) {
+    alert('Connection error');
+  }
+}
+
+function logout() {
+  localStorage.removeItem('sb_token');
+  document.getElementById('dashboardView').classList.add('hidden');
+  document.getElementById('loginView').classList.remove('hidden');
+}
+
+async function showDashboard() {
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('dashboardView').classList.remove('hidden');
+  await loadData();
+}
+
+async function sbQuery(table, options) {
+  var token = localStorage.getItem('sb_token');
+  var url = supabaseUrl + '/rest/v1/' + table + '?select=*';
+  if (options && options.filter) url += '&' + options.filter;
+  if (options && options.order) url += '&order=' + options.order;
+  if (options && options.limit) url += '&limit=' + options.limit;
+
+  var res = await fetch(url, {
+    headers: {
+      'apikey': supabaseKey,
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json'
+    }
+  });
+  return res.json();
+}
+
+async function loadData() {
+  try {
+    var leads = await sbQuery('leads', { order: 'created_at.desc', limit: '20' });
+    var clients = await sbQuery('clients', { filter: 'status=eq.active', order: 'program_started_at.desc' });
+    var allLeads = await sbQuery('leads');
+    var programs = await sbQuery('programs', { order: 'generated_at.desc', limit: '10' });
+
+    var today = new Date().toISOString().split('T')[0];
+    var weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+
+    var newToday = (allLeads || []).filter(function(l) { return l.created_at && l.created_at.startsWith(today); }).length;
+    var newWeek = (allLeads || []).filter(function(l) { return l.created_at && l.created_at >= weekAgo; }).length;
+    var converted = (allLeads || []).filter(function(l) { return l.status === 'converted'; }).length;
+    var rate = allLeads.length > 0 ? Math.round((converted / allLeads.length) * 100) : 0;
+
+    var statsHtml = '';
+    statsHtml += '<div class="stat-card"><div class="label">Leads Today</div><div class="value">' + newToday + '</div></div>';
+    statsHtml += '<div class="stat-card"><div class="label">Leads This Week</div><div class="value">' + newWeek + '</div></div>';
+    statsHtml += '<div class="stat-card"><div class="label">Conversion Rate</div><div class="value">' + rate + '%</div><div class="sub">' + converted + ' of ' + allLeads.length + '</div></div>';
+    statsHtml += '<div class="stat-card"><div class="label">Active Clients</div><div class="value">' + (clients || []).length + '</div></div>';
+    statsHtml += '<div class="stat-card"><div class="label">Programs Generated</div><div class="value">' + (programs || []).length + '</div><div class="sub">this week</div></div>';
+    document.getElementById('statsGrid').innerHTML = statsHtml;
+
+    var leadsHtml = '';
+    (leads || []).forEach(function(l) {
+      leadsHtml += '<tr><td>' + (l.name || '-') + '</td><td>' + maskPhone(l.phone) + '</td><td><span class="badge badge-' + l.status + '">' + l.status + '</span></td><td>' + (l.program_interest || '-') + '</td><td>' + formatDate(l.created_at) + '</td></tr>';
+    });
+    document.getElementById('leadsTable').innerHTML = leadsHtml || '<tr><td colspan="5">No leads yet</td></tr>';
+
+    var clientsHtml = '';
+    (clients || []).forEach(function(c) {
+      clientsHtml += '<tr><td>' + (c.name || '-') + '</td><td>' + (c.program || '-') + '</td><td>' + formatDate(c.program_started_at) + '</td><td><span class="badge badge-active">active</span></td></tr>';
+    });
+    document.getElementById('clientsTable').innerHTML = clientsHtml || '<tr><td colspan="4">No active clients</td></tr>';
+
+  } catch (err) {
+    console.error('Dashboard load error:', err);
+  }
+}
+
+function maskPhone(phone) {
+  if (!phone || phone.length < 6) return '***';
+  return phone.slice(0, 3) + 'XXX...' + phone.slice(-3);
+}
+
+function formatDate(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+if (localStorage.getItem('sb_token') && localStorage.getItem('sb_url')) {
+  supabaseUrl = localStorage.getItem('sb_url');
+  supabaseKey = localStorage.getItem('sb_key');
+  showDashboard();
+}
+</script>
+</body>
+</html>
