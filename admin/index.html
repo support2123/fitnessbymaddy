@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4;
+      --gold: #B8965A;
+      --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C;
+      --mid-grey: #6B6B6B;
+      --light-grey: #E8E3DC;
+      --sand: #F0EAE0;
+      --green: #4CAF50;
+      --red: #E53935;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); min-height: 100vh; }
+    .auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    .auth-box { background: white; padding: 48px; border-radius: 8px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 400px; width: 100%; text-align: center; }
+    .auth-box h1 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; margin-bottom: 8px; }
+    .auth-box p { font-size: 13px; color: var(--mid-grey); margin-bottom: 24px; }
+    .auth-input { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 4px; font-size: 15px; font-family: 'DM Sans', sans-serif; outline: none; margin-bottom: 16px; }
+    .auth-input:focus { border-color: var(--gold); }
+    .auth-btn { width: 100%; padding: 14px; background: var(--charcoal); color: white; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; border: none; border-radius: 4px; cursor: pointer; }
+    .auth-btn:hover { background: var(--gold); }
+
+    .dashboard { display: none; }
+    .dash-header { background: var(--charcoal); padding: 20px 32px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .dash-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: white; letter-spacing: 1px; }
+    .dash-time { font-size: 12px; color: rgba(255,255,255,0.5); }
+    .dash-logout { font-size: 11px; color: var(--gold-light); cursor: pointer; letter-spacing: 1px; text-transform: uppercase; background: none; border: none; }
+
+    .dash-content { padding: 32px; max-width: 1200px; margin: 0 auto; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: white; padding: 24px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .stat-card .label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card .value { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--charcoal); line-height: 1; }
+    .stat-card .sub { font-size: 12px; color: var(--mid-grey); margin-top: 4px; }
+    .stat-card.gold .value { color: var(--gold); }
+
+    .section-card { background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 24px; }
+    .section-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; margin-bottom: 16px; color: var(--charcoal); }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--light-grey); }
+    .table td { font-size: 13px; padding: 12px; border-bottom: 1px solid var(--light-grey); }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+    .badge-active { background: #E8F5E9; color: #2E7D32; }
+    .badge-new { background: #E3F2FD; color: #1565C0; }
+    .badge-dropped { background: #FFEBEE; color: #C62828; }
+    .badge-converted { background: #FFF8E1; color: #F57F17; }
+    .empty-state { text-align: center; padding: 32px; color: var(--mid-grey); font-size: 14px; }
+    .hidden { display: none; }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .dash-content { padding: 16px; }
+      .table { font-size: 12px; }
+      .table th, .table td { padding: 8px 6px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-screen" id="authScreen">
+    <div class="auth-box">
+      <h1>MADDY'S DASHBOARD</h1>
+      <p>Enter your admin password to access the dashboard.</p>
+      <input type="password" class="auth-input" id="authPassword" placeholder="Password">
+      <button class="auth-btn" id="authBtn">ACCESS DASHBOARD</button>
+    </div>
+  </div>
+
+  <div class="dashboard" id="dashboard">
+    <div class="dash-header">
+      <div>
+        <div class="dash-title">FITNESS BY MADDY OPS</div>
+        <div class="dash-time" id="dashTime"></div>
+      </div>
+      <button class="dash-logout" id="logoutBtn">Logout</button>
+    </div>
+
+    <div class="dash-content">
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="label">New Leads Today</div>
+          <div class="value" id="leadsToday">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Leads This Week</div>
+          <div class="value" id="leadsWeek">-</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="label">Conversion Rate</div>
+          <div class="value" id="convRate">-</div>
+          <div class="sub">Lead → Paid</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Active Clients</div>
+          <div class="value" id="activeClients">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Pending Check-ins</div>
+          <div class="value" id="pendingCheckins">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Programs Generated</div>
+          <div class="value" id="programsGenerated">-</div>
+          <div class="sub">This week</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h3>ACTIVE CLIENTS BY PROGRAM</h3>
+        <div id="clientsByProgram"></div>
+      </div>
+
+      <div class="section-card">
+        <h3>RECENT LEADS</h3>
+        <table class="table">
+          <thead><tr><th>Phone</th><th>Name</th><th>Status</th><th>Interest</th><th>Time</th></tr></thead>
+          <tbody id="leadsTable"></tbody>
+        </table>
+      </div>
+
+      <div class="section-card">
+        <h3>ESCALATIONS</h3>
+        <div id="escalations"><p class="empty-state">No escalations pending</p></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var SUPABASE_URL = '';
+      var SUPABASE_ANON_KEY = '';
+      var session = null;
+
+      document.getElementById('authBtn').addEventListener('click', login);
+      document.getElementById('authPassword').addEventListener('keypress', function(e) { if (e.key === 'Enter') login(); });
+      document.getElementById('logoutBtn').addEventListener('click', logout);
+
+      if (localStorage.getItem('admin_auth')) {
+        showDashboard();
+      }
+
+      function login() {
+        var pw = document.getElementById('authPassword').value;
+        if (pw === 'maddy2024' || pw === (window.__ADMIN_PW || '')) {
+          localStorage.setItem('admin_auth', '1');
+          showDashboard();
+        } else {
+          alert('Invalid password');
+        }
+      }
+
+      function logout() {
+        localStorage.removeItem('admin_auth');
+        document.getElementById('authScreen').style.display = 'flex';
+        document.getElementById('dashboard').style.display = 'none';
+      }
+
+      function showDashboard() {
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('dashTime').textContent = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+        loadData();
+      }
+
+      async function loadData() {
+        try {
+          var res = await fetch('/api/admin-stats');
+          if (!res.ok) throw new Error('Failed to load');
+          var data = await res.json();
+
+          document.getElementById('leadsToday').textContent = data.leads_today || 0;
+          document.getElementById('leadsWeek').textContent = data.leads_week || 0;
+          document.getElementById('convRate').textContent = (data.conversion_rate || 0) + '%';
+          document.getElementById('activeClients').textContent = data.active_clients || 0;
+          document.getElementById('pendingCheckins').textContent = data.pending_checkins || 0;
+          document.getElementById('programsGenerated').textContent = data.programs_this_week || 0;
+
+          if (data.clients_by_program) {
+            var html = '<table class="table"><thead><tr><th>Program</th><th>Count</th></tr></thead><tbody>';
+            Object.entries(data.clients_by_program).forEach(function(entry) {
+              html += '<tr><td>' + entry[0] + '</td><td>' + entry[1] + '</td></tr>';
+            });
+            html += '</tbody></table>';
+            document.getElementById('clientsByProgram').innerHTML = html;
+          }
+
+          if (data.recent_leads && data.recent_leads.length > 0) {
+            var tbody = '';
+            data.recent_leads.forEach(function(lead) {
+              var badge = 'badge-' + lead.status;
+              tbody += '<tr><td>' + maskPhone(lead.phone) + '</td><td>' + (lead.name || '-') + '</td><td><span class="badge ' + badge + '">' + lead.status + '</span></td><td>' + (lead.program_interest || '-') + '</td><td>' + timeAgo(lead.created_at) + '</td></tr>';
+            });
+            document.getElementById('leadsTable').innerHTML = tbody;
+          }
+
+          if (data.escalations && data.escalations.length > 0) {
+            var escHtml = '<table class="table"><thead><tr><th>Client</th><th>Issue</th><th>Time</th></tr></thead><tbody>';
+            data.escalations.forEach(function(esc) {
+              escHtml += '<tr><td>' + maskPhone(esc.phone) + '</td><td>' + esc.body.slice(0, 80) + '</td><td>' + timeAgo(esc.sent_at) + '</td></tr>';
+            });
+            escHtml += '</tbody></table>';
+            document.getElementById('escalations').innerHTML = escHtml;
+          }
+        } catch (err) {
+          console.error('Dashboard load error:', err);
+        }
+      }
+
+      function maskPhone(phone) {
+        if (!phone || phone.length < 6) return '***';
+        return phone.slice(0, 4) + 'XXX...' + phone.slice(-3);
+      }
+
+      function timeAgo(dateStr) {
+        var diff = Date.now() - new Date(dateStr).getTime();
+        var mins = Math.floor(diff / 60000);
+        if (mins < 60) return mins + 'm ago';
+        var hrs = Math.floor(mins / 60);
+        if (hrs < 24) return hrs + 'h ago';
+        return Math.floor(hrs / 24) + 'd ago';
+      }
+    })();
+  </script>
+</body>
+</html>
