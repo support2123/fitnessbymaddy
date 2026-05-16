@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:#0f0f0f; color:#fff; min-height:100vh; }
+    .admin-container { max-width:1200px; margin:0 auto; padding:40px 24px; }
+    .admin-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; border-bottom:1px solid #333; padding-bottom:24px; }
+    .admin-header h1 { font-family:'Bebas Neue',sans-serif; font-size:36px; color:#B8965A; letter-spacing:3px; }
+    .admin-header .date { color:#666; font-size:13px; }
+    .login-screen { max-width:400px; margin:100px auto; text-align:center; }
+    .login-screen h2 { font-family:'Bebas Neue',sans-serif; font-size:28px; color:#B8965A; margin-bottom:16px; }
+    .login-screen input { width:100%; padding:14px 16px; background:#2c2c2c; border:1.5px solid #444; border-radius:4px; color:#fff; font-size:14px; font-family:'DM Sans',sans-serif; margin-bottom:12px; outline:none; }
+    .login-screen input:focus { border-color:#B8965A; }
+    .login-screen button { width:100%; padding:14px; background:#B8965A; color:#1a1a1a; border:none; border-radius:4px; font-weight:600; font-size:13px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; }
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:40px; }
+    .stat-card { background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:24px; }
+    .stat-card .value { font-family:'Bebas Neue',sans-serif; font-size:42px; color:#B8965A; line-height:1; }
+    .stat-card .label { font-size:11px; color:#888; letter-spacing:1.5px; text-transform:uppercase; margin-top:8px; }
+    .section-title { font-family:'Bebas Neue',sans-serif; font-size:22px; color:#fff; margin:32px 0 16px; letter-spacing:1px; }
+    .programs-breakdown { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px; margin-bottom:32px; }
+    .program-pill { background:#2c2c2c; border:1px solid #444; border-radius:8px; padding:16px; text-align:center; }
+    .program-pill .count { font-family:'Bebas Neue',sans-serif; font-size:32px; color:#D4AF7A; }
+    .program-pill .name { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
+    .refresh-btn { padding:10px 20px; background:transparent; border:1px solid #B8965A; color:#B8965A; border-radius:4px; font-size:12px; letter-spacing:1px; cursor:pointer; text-transform:uppercase; }
+    .refresh-btn:hover { background:#B8965A; color:#1a1a1a; }
+    .loading { color:#666; font-style:italic; }
+    .status-ok { color:#4CAF50; }
+    .status-warn { color:#FFC107; }
+    .status-alert { color:#F44336; }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <div id="loginScreen" class="login-screen">
+      <h2>ADMIN ACCESS</h2>
+      <p style="color:#888; font-size:13px; margin-bottom:24px;">Enter your admin key to view the dashboard.</p>
+      <input type="password" id="apiKeyInput" placeholder="Admin API Key">
+      <button onclick="login()">ACCESS DASHBOARD</button>
+    </div>
+
+    <div id="dashboard" style="display:none">
+      <div class="admin-header">
+        <h1>OPERATIONS DASHBOARD</h1>
+        <div>
+          <span class="date" id="currentDate"></span>
+          <button class="refresh-btn" onclick="loadStats()" style="margin-left:12px">Refresh</button>
+        </div>
+      </div>
+
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="value" id="leadsToday">-</div><div class="label">Leads Today</div></div>
+        <div class="stat-card"><div class="value" id="leadsWeek">-</div><div class="label">Leads This Week</div></div>
+        <div class="stat-card"><div class="value" id="convRate">-</div><div class="label">Conversion Rate</div></div>
+        <div class="stat-card"><div class="value" id="activeClients">-</div><div class="label">Active Clients</div></div>
+        <div class="stat-card"><div class="value" id="pendingCheckins">-</div><div class="label">Pending Check-ins</div></div>
+        <div class="stat-card"><div class="value" id="programsGenerated">-</div><div class="label">Programs This Week</div></div>
+      </div>
+
+      <div class="section-title">ACTIVE CLIENTS BY PROGRAM</div>
+      <div class="programs-breakdown" id="programsBreakdown">
+        <p class="loading">Loading...</p>
+      </div>
+
+      <div class="section-title">ESCALATIONS</div>
+      <div id="escalationsSection">
+        <p class="loading">Loading...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let apiKey = localStorage.getItem('fbm_admin_key') || '';
+
+    if (apiKey) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadStats();
+    }
+
+    function login() {
+      apiKey = document.getElementById('apiKeyInput').value;
+      if (!apiKey) return;
+      localStorage.setItem('fbm_admin_key', apiKey);
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadStats();
+    }
+
+    async function loadStats() {
+      document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+      try {
+        const res = await fetch('/api/admin-stats', {
+          headers: { 'Authorization': 'Bearer ' + apiKey }
+        });
+
+        if (res.status === 401) {
+          localStorage.removeItem('fbm_admin_key');
+          document.getElementById('loginScreen').style.display = 'block';
+          document.getElementById('dashboard').style.display = 'none';
+          return;
+        }
+
+        const data = await res.json();
+
+        document.getElementById('leadsToday').textContent = data.leads_today;
+        document.getElementById('leadsWeek').textContent = data.leads_this_week;
+        document.getElementById('convRate').textContent = data.conversion_rate + '%';
+        document.getElementById('activeClients').textContent = data.active_clients;
+        document.getElementById('pendingCheckins').textContent = data.pending_checkins;
+        document.getElementById('programsGenerated').textContent = data.programs_generated_this_week;
+
+        const programNames = {
+          '6wk_gym': '6-Week Gym', '6wk_home': '6-Week Home', '12wk': '12-Week Custom',
+          'pcos': 'PCOS Warrior', '40plus': '40+ Strong', 'zoom_trial': 'Zoom Trial', 'zoom_pack': 'Zoom Pack'
+        };
+
+        const breakdown = document.getElementById('programsBreakdown');
+        breakdown.innerHTML = '';
+        const programs = data.clients_by_program || {};
+        if (Object.keys(programs).length === 0) {
+          breakdown.innerHTML = '<p style="color:#666">No active clients yet</p>';
+        } else {
+          Object.entries(programs).forEach(([key, count]) => {
+            breakdown.innerHTML += `<div class="program-pill"><div class="count">${count}</div><div class="name">${programNames[key] || key}</div></div>`;
+          });
+        }
+
+        const escalations = document.getElementById('escalationsSection');
+        if (data.recent_escalations > 0) {
+          escalations.innerHTML = `<p class="status-alert">&#9888; ${data.recent_escalations} escalation(s) awaiting review</p>`;
+        } else {
+          escalations.innerHTML = '<p class="status-ok">&#10003; No pending escalations</p>';
+        }
+      } catch (err) {
+        console.error('Failed to load stats:', err);
+      }
+    }
+  </script>
+</body>
+</html>
