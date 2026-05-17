@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { background: #1a1a1a; color: #fff; }
+    .checkin-wrap {
+      max-width: 600px; margin: 0 auto; padding: 24px;
+      min-height: 100vh;
+    }
+    .checkin-header {
+      text-align: center; padding: 40px 0 32px;
+      border-bottom: 2px solid #B8965A; margin-bottom: 32px;
+    }
+    .checkin-header h1 {
+      font-family: 'Cormorant Garamond', serif; font-size: 36px;
+      color: #B8965A; letter-spacing: 3px; text-transform: uppercase;
+    }
+    .checkin-header .week-badge {
+      display: inline-block; background: #B8965A; color: #fff;
+      font-size: 12px; font-weight: 600; letter-spacing: 2px;
+      padding: 6px 16px; border-radius: 20px; margin-top: 12px;
+      text-transform: uppercase;
+    }
+    .form-section { margin-bottom: 32px; }
+    .form-section-title {
+      font-family: 'Cormorant Garamond', serif; font-size: 22px;
+      color: #B8965A; margin-bottom: 16px;
+    }
+    .field { margin-bottom: 20px; }
+    .field label {
+      display: block; font-size: 11px; font-weight: 600;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: #999; margin-bottom: 8px;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: 14px 16px;
+      border: 1.5px solid #333; border-radius: 4px;
+      font-size: 14px; font-family: 'DM Sans', sans-serif;
+      color: #fff; background: #222; outline: none;
+      transition: border-color 0.3s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: #B8965A; }
+    .field textarea { min-height: 100px; resize: vertical; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .slider-field { margin-bottom: 24px; }
+    .slider-field label {
+      display: block; font-size: 11px; font-weight: 600;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: #999; margin-bottom: 12px;
+    }
+    .slider-wrap { display: flex; align-items: center; gap: 16px; }
+    .slider-wrap input[type="range"] {
+      flex: 1; -webkit-appearance: none; appearance: none;
+      height: 6px; background: #333; border-radius: 3px; outline: none;
+      border: none; padding: 0;
+    }
+    .slider-wrap input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 22px; height: 22px;
+      background: #B8965A; border-radius: 50%; cursor: pointer;
+    }
+    .slider-value {
+      min-width: 36px; text-align: center;
+      font-family: 'Cormorant Garamond', serif; font-size: 24px;
+      color: #B8965A; font-weight: 600;
+    }
+    .photo-upload {
+      border: 2px dashed #333; border-radius: 8px;
+      padding: 32px; text-align: center; cursor: pointer;
+      transition: border-color 0.3s;
+    }
+    .photo-upload:hover { border-color: #B8965A; }
+    .photo-upload p { color: #666; font-size: 13px; }
+    .photo-upload input { display: none; }
+    .photo-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .photo-preview img {
+      width: 80px; height: 80px; object-fit: cover;
+      border-radius: 4px; border: 1px solid #333;
+    }
+    .mood-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .mood-btn {
+      padding: 12px 8px; text-align: center; background: #222;
+      border: 1.5px solid #333; border-radius: 4px; cursor: pointer;
+      font-size: 24px; transition: all 0.3s;
+    }
+    .mood-btn.selected { border-color: #B8965A; background: #2a2215; }
+    .mood-label { font-size: 10px; color: #999; margin-top: 4px; }
+    .submit-btn {
+      width: 100%; padding: 16px; background: #B8965A;
+      color: #fff; border: none; border-radius: 4px;
+      font-size: 14px; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: background 0.3s;
+    }
+    .submit-btn:hover { background: #a07a3a; }
+    .submit-btn:disabled { background: #555; cursor: not-allowed; }
+    .success-msg {
+      display: none; text-align: center; padding: 60px 24px;
+    }
+    .success-msg h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px; color: #B8965A; margin-bottom: 12px;
+    }
+    .success-msg p { color: #999; font-size: 14px; line-height: 1.6; }
+    .error-msg { color: #ff6b6b; font-size: 13px; margin-top: 8px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="checkin-wrap">
+    <div class="checkin-header">
+      <h1>Fitness by Maddy</h1>
+      <div class="week-badge" id="weekBadge">Week Check-In</div>
+    </div>
+
+    <form id="checkinForm">
+      <div class="form-section">
+        <div class="form-section-title">Body Stats</div>
+        <div class="field-row">
+          <div class="field">
+            <label>Current Weight (kg) *</label>
+            <input type="number" name="weight" step="0.1" min="30" max="300" required>
+          </div>
+          <div class="field">
+            <label>Waist (inches)</label>
+            <input type="number" name="waist" step="0.1" min="15" max="80">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Self Assessment</div>
+        <div class="slider-field">
+          <label>Workout Compliance (how closely did you follow the plan?)</label>
+          <div class="slider-wrap">
+            <input type="range" name="compliance_score" min="1" max="10" value="7" oninput="document.getElementById('compVal').textContent=this.value">
+            <div class="slider-value" id="compVal">7</div>
+            <span style="color:#666; font-size:12px">/10</span>
+          </div>
+        </div>
+        <div class="slider-field">
+          <label>Energy Level This Week</label>
+          <div class="slider-wrap">
+            <input type="range" name="energy" min="1" max="10" value="7" oninput="document.getElementById('energyVal').textContent=this.value">
+            <div class="slider-value" id="energyVal">7</div>
+            <span style="color:#666; font-size:12px">/10</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Progress Photos</div>
+        <div class="photo-upload" onclick="document.getElementById('checkinPhotos').click()">
+          <p>Tap to upload photos (front, side, back)</p>
+          <input type="file" id="checkinPhotos" accept="image/*" multiple>
+        </div>
+        <div class="photo-preview" id="photoPreview"></div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Notes</div>
+        <div class="field">
+          <label>Any Issues, Struggles, or Wins This Week?</label>
+          <textarea name="issues" placeholder="What went well? What was challenging? Any pain or discomfort?"></textarea>
+        </div>
+        <div class="field">
+          <label>Focus Area for Next Week</label>
+          <textarea name="next_week_focus" placeholder="What do you want to improve on next week?"></textarea>
+        </div>
+      </div>
+
+      <div class="error-msg" id="errorMsg"></div>
+      <button type="submit" class="submit-btn" id="submitBtn">Submit Check-In</button>
+    </form>
+
+    <div class="success-msg" id="successMsg">
+      <h2>Check-In Submitted!</h2>
+      <p>Your coach will review your progress and your updated program will be sent to you on WhatsApp shortly.</p>
+    </div>
+  </div>
+
+  <script>
+    var params = new URLSearchParams(window.location.search);
+    var clientId = params.get('c');
+    var weekNo = params.get('w');
+
+    if (weekNo) {
+      document.getElementById('weekBadge').textContent = 'Week ' + weekNo + ' Check-In';
+    }
+
+    document.getElementById('checkinPhotos').addEventListener('change', function(e) {
+      var preview = document.getElementById('photoPreview');
+      preview.innerHTML = '';
+      var files = Array.from(e.target.files).slice(0, 3);
+      files.forEach(function(file) {
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+          var img = document.createElement('img');
+          img.src = ev.target.result;
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    document.getElementById('checkinForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var btn = document.getElementById('submitBtn');
+      var errEl = document.getElementById('errorMsg');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+      errEl.style.display = 'none';
+
+      var form = e.target;
+      var photoFiles = document.getElementById('checkinPhotos').files;
+      var photos = [];
+      var processed = 0;
+      var totalPhotos = Math.min(photoFiles.length, 3);
+
+      function submitData() {
+        var data = {
+          client_id: clientId,
+          week_no: weekNo,
+          weight: form.weight.value,
+          waist: form.waist.value || null,
+          compliance_score: form.compliance_score.value,
+          energy: form.energy.value,
+          issues: form.issues.value.trim(),
+          next_week_focus: form.next_week_focus.value.trim(),
+          photos: photos
+        };
+
+        fetch('/api/checkin-submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(result) {
+          if (result.success) {
+            document.getElementById('checkinForm').style.display = 'none';
+            document.getElementById('successMsg').style.display = 'block';
+          } else {
+            throw new Error(result.error || 'Submission failed');
+          }
+        })
+        .catch(function(err) {
+          errEl.textContent = err.message || 'Something went wrong. Please try again.';
+          errEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Submit Check-In';
+        });
+      }
+
+      if (totalPhotos === 0) {
+        submitData();
+        return;
+      }
+
+      for (var i = 0; i < totalPhotos; i++) {
+        (function(file) {
+          var reader = new FileReader();
+          reader.onload = function(ev) {
+            var base64 = ev.target.result.split(',')[1];
+            photos.push({
+              base64: base64,
+              filename: file.name,
+              type: file.type
+            });
+            processed++;
+            if (processed === totalPhotos) submitData();
+          };
+          reader.readAsDataURL(file);
+        })(photoFiles[i]);
+      }
+    });
+  </script>
+</body>
+</html>
