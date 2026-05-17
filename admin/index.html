@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --sand: #F0EAE0; --gold: #B8965A; --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C; --mid-grey: #6B6B6B; --light-grey: #E8E3DC;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); }
+
+    .admin-nav {
+      background: var(--charcoal); padding: 0 40px; display: flex;
+      align-items: center; justify-content: space-between; height: 60px;
+    }
+    .admin-logo { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: white; letter-spacing: 2px; text-transform: uppercase; }
+    .admin-nav-right { display: flex; gap: 20px; align-items: center; }
+    .admin-nav-link { color: rgba(255,255,255,0.6); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; text-decoration: none; transition: color 0.3s; cursor: pointer; }
+    .admin-nav-link:hover, .admin-nav-link.active { color: var(--gold-light); }
+    .admin-status { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; }
+
+    .admin-wrap { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    .admin-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; }
+    .admin-title em { color: var(--gold); font-style: italic; }
+    .admin-date { font-size: 13px; color: var(--mid-grey); }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card {
+      background: white; padding: 24px; border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04); border-top: 3px solid var(--light-grey);
+      transition: border-color 0.3s;
+    }
+    .stat-card:hover { border-top-color: var(--gold); }
+    .stat-card-label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card-value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--charcoal); line-height: 1; }
+    .stat-card-sub { font-size: 11px; color: var(--mid-grey); margin-top: 4px; }
+
+    .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 40px; }
+    .panel {
+      background: white; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 20px 24px; border-bottom: 1px solid var(--light-grey);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .panel-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; }
+    .panel-badge { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; background: var(--sand); color: var(--gold); }
+    .panel-body { padding: 0; }
+    .panel-row {
+      padding: 14px 24px; border-bottom: 1px solid var(--light-grey);
+      display: flex; justify-content: space-between; align-items: center; font-size: 13px;
+    }
+    .panel-row:last-child { border-bottom: none; }
+    .panel-row-name { font-weight: 500; }
+    .panel-row-meta { color: var(--mid-grey); font-size: 12px; }
+    .panel-empty { padding: 40px 24px; text-align: center; color: var(--mid-grey); font-size: 13px; }
+
+    .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; }
+    .status-new { background: #3b82f6; }
+    .status-qualified { background: #f59e0b; }
+    .status-converted { background: #10b981; }
+    .status-dropped { background: #ef4444; }
+    .status-active { background: #10b981; }
+    .status-paused { background: #f59e0b; }
+    .status-escalation { background: #ef4444; }
+
+    .tag { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; }
+    .tag-gold { background: rgba(184,150,90,0.15); color: var(--gold); }
+    .tag-red { background: rgba(239,68,68,0.1); color: #ef4444; }
+    .tag-green { background: rgba(16,185,129,0.1); color: #10b981; }
+
+    .login-overlay {
+      position: fixed; inset: 0; background: var(--cream); z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-card { background: white; padding: 48px; border-radius: 4px; box-shadow: 0 8px 40px rgba(0,0,0,0.08); max-width: 400px; width: 100%; text-align: center; }
+    .login-card h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 8px; }
+    .login-card p { font-size: 13px; color: var(--mid-grey); margin-bottom: 32px; }
+    .login-input { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; margin-bottom: 16px; outline: none; background: var(--cream); }
+    .login-input:focus { border-color: var(--gold); }
+    .login-btn { width: 100%; padding: 14px; background: var(--charcoal); color: white; border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: background 0.3s; }
+    .login-btn:hover { background: var(--gold); }
+    .login-error { color: #ef4444; font-size: 12px; margin-top: 12px; display: none; }
+
+    .full-width { grid-column: 1 / -1; }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); text-align: left; padding: 12px 24px; border-bottom: 2px solid var(--light-grey); }
+    .table td { padding: 12px 24px; border-bottom: 1px solid var(--light-grey); font-size: 13px; }
+
+    @media (max-width: 768px) {
+      .panels { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .admin-wrap { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <h2>Maddy's <em style="color:#B8965A; font-style:italic">Dashboard</em></h2>
+    <p>Enter your admin password to access the dashboard.</p>
+    <input class="login-input" type="password" id="loginPassword" placeholder="Password">
+    <button class="login-btn" id="loginBtn">Access Dashboard</button>
+    <div class="login-error" id="loginError">Invalid password. Try again.</div>
+  </div>
+</div>
+
+<div id="dashboardContent" style="display:none">
+  <div class="admin-nav">
+    <div class="admin-logo">Fitness by Maddy</div>
+    <div class="admin-nav-right">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div class="admin-status"></div>
+        <span style="color:rgba(255,255,255,0.5); font-size:11px;">System Active</span>
+      </div>
+      <a class="admin-nav-link" onclick="loadDashboard()">Refresh</a>
+      <a class="admin-nav-link" onclick="logout()">Logout</a>
+    </div>
+  </div>
+
+  <div class="admin-wrap">
+    <div class="admin-header">
+      <h1 class="admin-title">Ops <em>Dashboard</em></h1>
+      <div class="admin-date" id="currentDate"></div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-label">New Leads Today</div>
+        <div class="stat-card-value" id="leadsToday">—</div>
+        <div class="stat-card-sub" id="leadsWeek">— this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Conversion Rate</div>
+        <div class="stat-card-value" id="conversionRate">—%</div>
+        <div class="stat-card-sub">lead → paid</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Active Clients</div>
+        <div class="stat-card-value" id="activeClients">—</div>
+        <div class="stat-card-sub" id="activeByProgram">by program</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Pending Check-ins</div>
+        <div class="stat-card-value" id="pendingCheckins">—</div>
+        <div class="stat-card-sub">awaiting submission</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Programs Generated</div>
+        <div class="stat-card-value" id="programsGenerated">—</div>
+        <div class="stat-card-sub">this week</div>
+      </div>
+      <div class="stat-card" style="border-top-color:#ef4444">
+        <div class="stat-card-label">Escalations</div>
+        <div class="stat-card-value" id="escalations" style="color:#ef4444">—</div>
+        <div class="stat-card-sub">awaiting Maddy</div>
+      </div>
+    </div>
+
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Recent Leads</div>
+          <div class="panel-badge" id="leadsBadge">0 new</div>
+        </div>
+        <div class="panel-body" id="recentLeads">
+          <div class="panel-empty">Loading...</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Active Clients</div>
+          <div class="panel-badge" id="clientsBadge">0 active</div>
+        </div>
+        <div class="panel-body" id="activeClientsList">
+          <div class="panel-empty">Loading...</div>
+        </div>
+      </div>
+
+      <div class="panel full-width">
+        <div class="panel-header">
+          <div class="panel-title">Clients by Program</div>
+        </div>
+        <div class="panel-body" style="padding:20px 24px">
+          <table class="table" id="programTable">
+            <thead>
+              <tr>
+                <th>Program</th>
+                <th>Active</th>
+                <th>Completed</th>
+                <th>Revenue</th>
+              </tr>
+            </thead>
+            <tbody id="programTableBody">
+              <tr><td colspan="4" style="text-align:center; color:var(--mid-grey)">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var SUPABASE_URL = '';
+  var SUPABASE_ANON_KEY = '';
+  var db = null;
+
+  var loginOverlay = document.getElementById('loginOverlay');
+  var dashboard = document.getElementById('dashboardContent');
+  var loginBtn = document.getElementById('loginBtn');
+  var loginPassword = document.getElementById('loginPassword');
+  var loginError = document.getElementById('loginError');
+
+  if (sessionStorage.getItem('admin_auth')) {
+    showDashboard();
+  }
+
+  loginPassword.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') loginBtn.click();
+  });
+
+  loginBtn.addEventListener('click', function() {
+    var pass = loginPassword.value;
+    loginError.style.display = 'none';
+
+    fetch('/api/admin/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pass }),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        sessionStorage.setItem('admin_auth', data.token || 'ok');
+        SUPABASE_URL = data.supabase_url || '';
+        SUPABASE_ANON_KEY = data.supabase_anon_key || '';
+        showDashboard();
+      } else {
+        loginError.style.display = 'block';
+      }
+    })
+    .catch(function() {
+      loginError.style.display = 'block';
+    });
+  });
+
+  function showDashboard() {
+    loginOverlay.style.display = 'none';
+    dashboard.style.display = 'block';
+    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    loadDashboard();
+  }
+
+  window.loadDashboard = function() {
+    var token = sessionStorage.getItem('admin_auth');
+    fetch('/api/admin/stats', {
+      headers: { 'Authorization': 'Bearer ' + token },
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      document.getElementById('leadsToday').textContent = data.leads_today || 0;
+      document.getElementById('leadsWeek').textContent = (data.leads_week || 0) + ' this week';
+      document.getElementById('conversionRate').textContent = (data.conversion_rate || 0) + '%';
+      document.getElementById('activeClients').textContent = data.active_clients || 0;
+      document.getElementById('pendingCheckins').textContent = data.pending_checkins || 0;
+      document.getElementById('programsGenerated').textContent = data.programs_this_week || 0;
+      document.getElementById('escalations').textContent = data.escalations || 0;
+      document.getElementById('leadsBadge').textContent = (data.leads_today || 0) + ' new';
+      document.getElementById('clientsBadge').textContent = (data.active_clients || 0) + ' active';
+
+      var leadsHtml = '';
+      if (data.recent_leads && data.recent_leads.length) {
+        data.recent_leads.forEach(function(lead) {
+          leadsHtml += '<div class="panel-row">'
+            + '<div><span class="status-dot status-' + lead.status + '"></span>'
+            + '<span class="panel-row-name">' + (lead.name || 'Unknown') + '</span></div>'
+            + '<div><span class="tag tag-gold">' + (lead.program_interest || lead.status) + '</span></div>'
+            + '</div>';
+        });
+      } else {
+        leadsHtml = '<div class="panel-empty">No recent leads</div>';
+      }
+      document.getElementById('recentLeads').innerHTML = leadsHtml;
+
+      var clientsHtml = '';
+      if (data.recent_clients && data.recent_clients.length) {
+        data.recent_clients.forEach(function(client) {
+          clientsHtml += '<div class="panel-row">'
+            + '<div><span class="status-dot status-active"></span>'
+            + '<span class="panel-row-name">' + (client.name || 'Unknown') + '</span></div>'
+            + '<div><span class="tag tag-green">' + (client.program || '') + '</span></div>'
+            + '</div>';
+        });
+      } else {
+        clientsHtml = '<div class="panel-empty">No active clients</div>';
+      }
+      document.getElementById('activeClientsList').innerHTML = clientsHtml;
+
+      var programHtml = '';
+      if (data.programs_breakdown && data.programs_breakdown.length) {
+        data.programs_breakdown.forEach(function(p) {
+          programHtml += '<tr><td>' + p.program + '</td><td>' + p.active + '</td><td>' + p.completed + '</td><td>$' + p.revenue + '</td></tr>';
+        });
+      } else {
+        programHtml = '<tr><td colspan="4" style="text-align:center;color:var(--mid-grey)">No data yet</td></tr>';
+      }
+      document.getElementById('programTableBody').innerHTML = programHtml;
+    })
+    .catch(function(err) {
+      console.error('Dashboard load error:', err);
+    });
+  };
+
+  window.logout = function() {
+    sessionStorage.removeItem('admin_auth');
+    loginOverlay.style.display = 'flex';
+    dashboard.style.display = 'none';
+    loginPassword.value = '';
+  };
+})();
+</script>
+</body>
+</html>
