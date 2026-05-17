@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+  <div class="form-container">
+    <div class="form-header">
+      <div class="brand">Fitness by Maddy</div>
+      <h1>Reschedule Session</h1>
+      <p>Life happens — let's find a better time for your session.</p>
+    </div>
+
+    <form id="rescheduleForm" class="fbm-form">
+      <input type="hidden" id="clientId" name="client_id">
+
+      <div class="form-section">
+        <div class="field">
+          <label for="reason">Reason for rescheduling</label>
+          <select id="reason" name="reason" required>
+            <option value="">Select reason</option>
+            <option value="work">Work conflict</option>
+            <option value="health">Not feeling well</option>
+            <option value="travel">Travelling</option>
+            <option value="personal">Personal emergency</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="preferred_date">Preferred New Date</label>
+          <input type="date" id="preferred_date" name="preferred_date" required>
+        </div>
+
+        <div class="field">
+          <label for="preferred_time">Preferred Time Slot</label>
+          <select id="preferred_time" name="preferred_time" required>
+            <option value="">Select time</option>
+            <option value="morning">Morning (7-10 AM IST)</option>
+            <option value="midday">Midday (11 AM - 1 PM IST)</option>
+            <option value="afternoon">Afternoon (2-5 PM IST)</option>
+            <option value="evening">Evening (6-9 PM IST)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="notes">Any notes for Maddy?</label>
+          <textarea id="notes" name="notes" rows="2" placeholder="Optional"></textarea>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn">Request Reschedule</button>
+    </form>
+
+    <div id="successMsg" class="success-msg" style="display:none;">
+      <div class="success-icon">✓</div>
+      <h2>Request submitted!</h2>
+      <p>We'll confirm your new slot via WhatsApp shortly.</p>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const clientId = params.get('c');
+    if (clientId) document.getElementById('clientId').value = clientId;
+
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('preferred_date').min = today;
+
+    document.getElementById('rescheduleForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn = this.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      const formData = new FormData(this);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const res = await fetch('/api/lead-intake', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...data, type: 'reschedule' }),
+        });
+
+        if (res.ok) {
+          this.style.display = 'none';
+          document.getElementById('successMsg').style.display = 'block';
+        } else {
+          alert('Something went wrong. Please try again.');
+          btn.disabled = false;
+          btn.textContent = 'Request Reschedule';
+        }
+      } catch {
+        alert('Network error. Please check your connection and try again.');
+        btn.disabled = false;
+        btn.textContent = 'Request Reschedule';
+      }
+    });
+  </script>
+</body>
+</html>
