@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-box">
+      <h1>FitnessByMaddy</h1>
+      <p>Admin Dashboard</p>
+      <div class="field">
+        <input type="email" id="loginEmail" placeholder="Email">
+      </div>
+      <div class="field">
+        <input type="password" id="loginPassword" placeholder="Password">
+      </div>
+      <button id="loginBtn" class="login-btn">Login</button>
+      <p id="loginError" class="error" style="display:none;"></p>
+    </div>
+  </div>
+
+  <div id="dashboard" class="dashboard" style="display:none;">
+    <header class="dash-header">
+      <div class="dash-brand">FBM Dashboard</div>
+      <button id="logoutBtn" class="logout-btn">Logout</button>
+    </header>
+
+    <main class="dash-main">
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="stat-value" id="leadsToday">-</div>
+          <div class="stat-label">New Leads Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="leadsWeek">-</div>
+          <div class="stat-label">Leads This Week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="conversionRate">-</div>
+          <div class="stat-label">Conversion Rate</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="activeClients">-</div>
+          <div class="stat-label">Active Clients</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="pendingCheckins">-</div>
+          <div class="stat-label">Pending Check-Ins</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="programsGenerated">-</div>
+          <div class="stat-label">Programs This Week</div>
+        </div>
+      </div>
+
+      <div class="section-grid">
+        <div class="dash-section">
+          <h2>Active Clients by Program</h2>
+          <div id="programBreakdown" class="program-list"></div>
+        </div>
+
+        <div class="dash-section">
+          <h2>Escalations Awaiting Review</h2>
+          <div id="escalations" class="escalation-list">
+            <p class="empty">No pending escalations</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-section">
+        <h2>Recent Leads</h2>
+        <table class="data-table" id="leadsTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Status</th>
+              <th>Interest</th>
+              <th>Market</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="leadsTableBody"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const SUPABASE_URL = window.__SUPABASE_URL || '';
+    const SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY || '';
+
+    let session = null;
+
+    document.getElementById('loginBtn').addEventListener('click', login);
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    document.getElementById('loginPassword').addEventListener('keyup', function(e) {
+      if (e.key === 'Enter') login();
+    });
+
+    async function login() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const errEl = document.getElementById('loginError');
+
+      if (!email || !password) {
+        errEl.textContent = 'Please enter email and password';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (!res.ok) {
+          errEl.textContent = 'Invalid credentials';
+          errEl.style.display = 'block';
+          return;
+        }
+
+        session = await res.json();
+        localStorage.setItem('fbm_session', JSON.stringify(session));
+        showDashboard();
+      } catch {
+        errEl.textContent = 'Connection error';
+        errEl.style.display = 'block';
+      }
+    }
+
+    function logout() {
+      session = null;
+      localStorage.removeItem('fbm_session');
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+    }
+
+    function showDashboard() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadDashboardData();
+    }
+
+    async function supaFetch(table, query) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+      return res.json();
+    }
+
+    async function loadDashboardData() {
+      const today = new Date().toISOString().split('T')[0];
+      const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+
+      const [leads, clients, checkins, programs] = await Promise.all([
+        supaFetch('leads', 'select=id,name,phone,status,program_interest,market,created_at&order=created_at.desc&limit=50'),
+        supaFetch('clients', 'select=id,program,status'),
+        supaFetch('checkins', `select=id,client_id,week_no,form_submitted_at&form_submitted_at=gte.${weekAgo}`),
+        supaFetch('programs', `select=id&generated_at=gte.${weekAgo}`),
+      ]);
+
+      const leadsToday = leads.filter(l => l.created_at >= today).length;
+      const leadsWeek = leads.filter(l => l.created_at >= weekAgo).length;
+      const activeClients = (clients || []).filter(c => c.status === 'active');
+      const converted = (leads || []).filter(l => l.status === 'converted').length;
+      const totalLeads = (leads || []).length;
+
+      document.getElementById('leadsToday').textContent = leadsToday;
+      document.getElementById('leadsWeek').textContent = leadsWeek;
+      document.getElementById('conversionRate').textContent = totalLeads > 0 ? Math.round((converted / totalLeads) * 100) + '%' : '0%';
+      document.getElementById('activeClients').textContent = activeClients.length;
+      document.getElementById('pendingCheckins').textContent = activeClients.length - (checkins || []).length;
+      document.getElementById('programsGenerated').textContent = (programs || []).length;
+
+      const programCounts = {};
+      activeClients.forEach(c => {
+        programCounts[c.program] = (programCounts[c.program] || 0) + 1;
+      });
+      const programHtml = Object.entries(programCounts).map(([p, count]) =>
+        `<div class="program-item"><span>${p.replace(/_/g, ' ')}</span><span class="program-count">${count}</span></div>`
+      ).join('') || '<p class="empty">No active clients yet</p>';
+      document.getElementById('programBreakdown').innerHTML = programHtml;
+
+      const tbody = document.getElementById('leadsTableBody');
+      tbody.innerHTML = (leads || []).slice(0, 20).map(l => `
+        <tr>
+          <td>${l.name || '-'}</td>
+          <td>${maskPhone(l.phone)}</td>
+          <td><span class="status-badge status-${l.status}">${l.status}</span></td>
+          <td>${(l.program_interest || '-').replace(/_/g, ' ')}</td>
+          <td>${l.market || '-'}</td>
+          <td>${new Date(l.created_at).toLocaleDateString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    function maskPhone(phone) {
+      if (!phone || phone.length < 6) return '***';
+      return phone.substring(0, 4) + '***' + phone.slice(-3);
+    }
+
+    const saved = localStorage.getItem('fbm_session');
+    if (saved) {
+      session = JSON.parse(saved);
+      showDashboard();
+    }
+  </script>
+</body>
+</html>
