@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .form-page { max-width: 640px; margin: 0 auto; padding: 40px 24px 80px; }
+    .form-header { text-align: center; margin-bottom: 48px; }
+    .form-card { background: white; padding: 40px 32px; border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { margin-bottom: 20px; }
+    .range-display { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+    .range-value { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 600; color: var(--gold); }
+    .range-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--mid-grey); letter-spacing: 1px; text-transform: uppercase; }
+    input[type="range"] { width: 100%; margin: 8px 0; accent-color: var(--gold); height: 6px; }
+    .photo-upload { border: 2px dashed var(--light-grey); border-radius: 4px; padding: 32px; text-align: center; cursor: pointer; transition: border-color 0.3s; }
+    .photo-upload:hover { border-color: var(--gold); }
+    .photo-upload input { display: none; }
+    .photo-preview { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .photo-preview img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid var(--light-grey); }
+    .form-success { display: none; text-align: center; padding: 60px 24px; }
+    .form-success h2 { font-family: 'Cormorant Garamond', serif; font-size: 36px; margin-bottom: 16px; color: var(--charcoal); }
+    .form-error { display: none; background: #FFF0F0; border: 1px solid #FFD0D0; color: #CC3333; padding: 12px 16px; border-radius: 4px; font-size: 13px; margin-bottom: 16px; }
+    .week-badge { display: inline-block; background: var(--charcoal); color: white; font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; padding: 6px 16px; border-radius: 2px; margin-bottom: 16px; }
+    textarea.form-input { min-height: 80px; resize: vertical; }
+    .btn-submit { width: 100%; padding: 16px; font-size: 13px; margin-top: 8px; }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .mood-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .mood-option { position: relative; text-align: center; }
+    .mood-option input { position: absolute; opacity: 0; }
+    .mood-option label { display: block; padding: 12px 4px; border: 1.5px solid var(--light-grey); border-radius: 4px; cursor: pointer; transition: all 0.3s; font-size: 24px; }
+    .mood-option input:checked + label { border-color: var(--gold); background: rgba(184,150,90,0.08); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+  <div class="form-page">
+    <div class="form-header">
+      <span class="week-badge" id="weekBadge">Week —</span>
+      <h1 class="section-title">Weekly <em>Check-In</em></h1>
+      <p class="section-body" style="max-width:480px; margin:0 auto;">Track your progress so Maddy can fine-tune your program for maximum results.</p>
+    </div>
+
+    <div class="form-error" id="formError"></div>
+
+    <form id="checkinForm" class="form-card">
+      <input type="hidden" id="clientId" name="client_id">
+      <input type="hidden" id="weekNo" name="week_no">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Current Weight (kg) *</label>
+          <input class="form-input" type="number" name="weight" step="0.1" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Waist (cm)</label>
+          <input class="form-input" type="number" name="waist" step="0.1">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Workout Compliance</label>
+        <div class="range-display">
+          <span class="range-labels" style="flex:1">How closely did you follow the plan?</span>
+          <span class="range-value" id="complianceVal">7</span>
+        </div>
+        <input type="range" name="compliance_score" min="1" max="10" value="7" id="complianceRange">
+        <div class="range-labels"><span>Barely</span><span>Perfectly</span></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Energy Level</label>
+        <div class="range-display">
+          <span class="range-labels" style="flex:1">How was your energy this week?</span>
+          <span class="range-value" id="energyVal">7</span>
+        </div>
+        <input type="range" name="energy" min="1" max="10" value="7" id="energyRange">
+        <div class="range-labels"><span>Drained</span><span>Unstoppable</span></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Overall Mood</label>
+        <div class="mood-grid">
+          <div class="mood-option"><input type="radio" id="m1" name="mood" value="struggling"><label for="m1">&#128553;</label></div>
+          <div class="mood-option"><input type="radio" id="m2" name="mood" value="meh"><label for="m2">&#128528;</label></div>
+          <div class="mood-option"><input type="radio" id="m3" name="mood" value="okay"><label for="m3">&#128578;</label></div>
+          <div class="mood-option"><input type="radio" id="m4" name="mood" value="good"><label for="m4">&#128522;</label></div>
+          <div class="mood-option"><input type="radio" id="m5" name="mood" value="amazing"><label for="m5">&#128293;</label></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Issues / Challenges</label>
+        <textarea class="form-input" name="issues" placeholder="Any pain, discomfort, challenges with diet, schedule issues, or anything else..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Progress Photos (3 angles recommended)</label>
+        <div class="photo-upload" id="photoUpload">
+          <div style="font-size:32px; margin-bottom:8px;">+</div>
+          <p>Front, side, and back — same lighting as last week</p>
+          <input type="file" id="photoInput" accept="image/*" multiple>
+        </div>
+        <div class="photo-preview" id="photoPreview"></div>
+      </div>
+
+      <button type="submit" class="btn-primary btn-submit" id="submitBtn">Submit Check-In</button>
+    </form>
+
+    <div class="form-success" id="formSuccess">
+      <div style="font-size:48px; margin-bottom:16px;">&#128170;</div>
+      <h2>Check-In Submitted!</h2>
+      <p>Great work staying consistent. Maddy will review your progress and your updated program will be sent on WhatsApp.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w');
+
+  if (clientId) document.getElementById('clientId').value = clientId;
+  if (weekNo) {
+    document.getElementById('weekNo').value = weekNo;
+    document.getElementById('weekBadge').textContent = 'Week ' + weekNo;
+  }
+
+  document.getElementById('complianceRange').addEventListener('input', function(e) {
+    document.getElementById('complianceVal').textContent = e.target.value;
+  });
+  document.getElementById('energyRange').addEventListener('input', function(e) {
+    document.getElementById('energyVal').textContent = e.target.value;
+  });
+
+  var photoInput = document.getElementById('photoInput');
+  var photoUpload = document.getElementById('photoUpload');
+  var photoPreview = document.getElementById('photoPreview');
+  var selectedPhotos = [];
+
+  photoUpload.addEventListener('click', function() { photoInput.click(); });
+  photoInput.addEventListener('change', function(e) {
+    var files = Array.from(e.target.files).slice(0, 5);
+    selectedPhotos = [];
+    photoPreview.innerHTML = '';
+    files.forEach(function(file) {
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var img = document.createElement('img');
+        img.src = ev.target.result;
+        photoPreview.appendChild(img);
+        selectedPhotos.push({ name: file.name, data: ev.target.result.split(',')[1] });
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  var form = document.getElementById('checkinForm');
+  var errorEl = document.getElementById('formError');
+  var successEl = document.getElementById('formSuccess');
+  var submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    errorEl.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+
+    var formData = new FormData(form);
+    var payload = {};
+    formData.forEach(function(v, k) { if (v) payload[k] = v; });
+    if (selectedPhotos.length > 0) payload.photos = selectedPhotos;
+
+    fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(result) {
+      if (result.ok) {
+        form.style.display = 'none';
+        successEl.style.display = 'block';
+      } else {
+        errorEl.textContent = result.data.error || 'Something went wrong. Please try again.';
+        errorEl.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Check-In';
+      }
+    })
+    .catch(function() {
+      errorEl.textContent = 'Network error. Please check your connection and try again.';
+      errorEl.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Check-In';
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
