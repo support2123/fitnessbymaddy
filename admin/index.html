@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --sand: #F0EAE0; --gold: #B8965A; --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C; --mid-grey: #6B6B6B; --light-grey: #E8E3DC;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); }
+
+    .login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .login-card { background: white; padding: 48px 40px; border-radius: 4px; box-shadow: 0 4px 32px rgba(0,0,0,0.08); max-width: 380px; width: 100%; text-align: center; }
+    .login-card h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 8px; }
+    .login-card p { color: var(--mid-grey); font-size: 13px; margin-bottom: 32px; }
+    .login-input { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--cream); outline: none; margin-bottom: 16px; }
+    .login-input:focus { border-color: var(--gold); }
+    .login-btn { width: 100%; padding: 14px; background: var(--charcoal); color: white; border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; font-family: 'DM Sans', sans-serif; }
+    .login-btn:hover { background: var(--gold); }
+    .login-error { color: #991b1b; font-size: 13px; margin-bottom: 12px; display: none; }
+
+    .dashboard { display: none; }
+    .dash-header { background: var(--charcoal); padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; }
+    .dash-logo { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: white; letter-spacing: 2px; text-transform: uppercase; }
+    .dash-user { display: flex; align-items: center; gap: 12px; }
+    .dash-user span { color: var(--gold-light); font-size: 12px; letter-spacing: 1px; }
+    .dash-logout { background: none; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); padding: 6px 14px; border-radius: 2px; font-size: 11px; cursor: pointer; font-family: 'DM Sans', sans-serif; letter-spacing: 1px; }
+    .dash-logout:hover { border-color: var(--gold); color: var(--gold); }
+
+    .dash-body { padding: 32px; max-width: 1200px; margin: 0 auto; }
+    .dash-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; margin-bottom: 32px; }
+    .dash-title em { color: var(--gold); font-style: italic; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card { background: white; padding: 24px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .stat-card .label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card .value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--charcoal); line-height: 1; }
+    .stat-card .sub { font-size: 11px; color: var(--mid-grey); margin-top: 4px; }
+    .stat-card.gold { border-left: 3px solid var(--gold); }
+    .stat-card.alert { border-left: 3px solid #c0392b; }
+
+    .section-label { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; }
+    .table-wrap { background: white; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); overflow-x: auto; margin-bottom: 40px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--light-grey); background: var(--cream); }
+    td { font-size: 13px; padding: 12px 16px; border-bottom: 1px solid var(--light-grey); color: var(--charcoal); }
+    tr:hover td { background: #faf8f4; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-new { background: #dbeafe; color: #1d4ed8; }
+    .badge-qualified { background: #fef3c7; color: #92400e; }
+    .badge-converted { background: #d1fae5; color: #065f46; }
+    .badge-dropped { background: #fee2e2; color: #991b1b; }
+    .badge-active { background: #d1fae5; color: #065f46; }
+    .badge-paused { background: #fef3c7; color: #92400e; }
+    .badge-completed { background: #e0e7ff; color: #3730a3; }
+    .escalation-row { background: #fef2f2 !important; }
+    .resolve-btn { background: var(--charcoal); color: white; border: none; padding: 4px 12px; border-radius: 2px; font-size: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; letter-spacing: 1px; }
+    .resolve-btn:hover { background: var(--gold); }
+    .loading { text-align: center; padding: 40px; color: var(--mid-grey); font-size: 14px; }
+    .empty { text-align: center; padding: 32px; color: var(--mid-grey); font-size: 13px; }
+
+    @media (max-width: 768px) {
+      .dash-body { padding: 20px 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <h2>Dashboard</h2>
+    <p>Fitness by Maddy — Admin Access</p>
+    <div class="login-error" id="loginError">Invalid credentials</div>
+    <input type="email" class="login-input" id="loginEmail" placeholder="Email">
+    <input type="password" class="login-input" id="loginPassword" placeholder="Password">
+    <button class="login-btn" id="loginBtn">Sign In</button>
+  </div>
+</div>
+
+<div class="dashboard" id="dashboard">
+  <div class="dash-header">
+    <div class="dash-logo">Fitness by Maddy</div>
+    <div class="dash-user">
+      <span>Admin</span>
+      <button class="dash-logout" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+
+  <div class="dash-body">
+    <h1 class="dash-title">Operations <em>Dashboard</em></h1>
+
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card gold"><div class="label">Leads Today</div><div class="value" id="leadsToday">-</div><div class="sub" id="leadsWeek">this week: -</div></div>
+      <div class="stat-card"><div class="label">Conversion Rate</div><div class="value" id="convRate">-</div><div class="sub">lead &rarr; paid</div></div>
+      <div class="stat-card gold"><div class="label">Active Clients</div><div class="value" id="activeClients">-</div><div class="sub" id="byProgram">-</div></div>
+      <div class="stat-card"><div class="label">Pending Check-Ins</div><div class="value" id="pendingCheckins">-</div><div class="sub">this week</div></div>
+      <div class="stat-card"><div class="label">Programs Generated</div><div class="value" id="programsGen">-</div><div class="sub">this week</div></div>
+      <div class="stat-card alert"><div class="label">Escalations</div><div class="value" id="escalations">-</div><div class="sub">awaiting review</div></div>
+    </div>
+
+    <div class="section-label">Escalations Awaiting Review</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Time</th><th>Phone</th><th>Reason</th><th>Message</th><th>Action</th></tr></thead>
+        <tbody id="escalationTable"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section-label">Recent Leads</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Phone</th><th>Market</th><th>Interest</th><th>Status</th><th>Created</th></tr></thead>
+        <tbody id="leadsTable"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section-label">Active Clients</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Program</th><th>Started</th><th>Ends</th><th>Status</th><th>Last Check-In</th></tr></thead>
+        <tbody id="clientsTable"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var SUPABASE_URL = '';
+  var SUPABASE_ANON_KEY = '';
+  var session = null;
+
+  function initConfig() {
+    var meta = document.querySelector('meta[name="supabase-url"]');
+    SUPABASE_URL = (meta && meta.content) || localStorage.getItem('sb_url') || '';
+    var metaKey = document.querySelector('meta[name="supabase-anon-key"]');
+    SUPABASE_ANON_KEY = (metaKey && metaKey.content) || localStorage.getItem('sb_key') || '';
+  }
+
+  function sbFetch(path, opts) {
+    opts = opts || {};
+    var headers = {
+      'apikey': SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json'
+    };
+    if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
+    return fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({ headers: headers }, opts)).then(function(r) { return r.json(); });
+  }
+
+  function sbAuth(email, password) {
+    return fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: password })
+    }).then(function(r) { return r.json(); });
+  }
+
+  function maskPhone(p) {
+    if (!p || p.length < 6) return '***';
+    return p.slice(0, 3) + 'XXX...' + p.slice(-3);
+  }
+
+  function fmtDate(d) {
+    if (!d) return '-';
+    var dt = new Date(d);
+    return dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function fmtTime(d) {
+    if (!d) return '-';
+    var dt = new Date(d);
+    return dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function badge(status) {
+    return '<span class="badge badge-' + status + '">' + status + '</span>';
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', function() {
+    var email = document.getElementById('loginEmail').value.trim();
+    var password = document.getElementById('loginPassword').value;
+    var errEl = document.getElementById('loginError');
+    errEl.style.display = 'none';
+
+    if (!email || !password) { errEl.textContent = 'Enter email and password'; errEl.style.display = 'block'; return; }
+
+    if (!SUPABASE_URL) {
+      SUPABASE_URL = prompt('Supabase URL:');
+      SUPABASE_ANON_KEY = prompt('Supabase Anon Key:');
+      if (SUPABASE_URL) localStorage.setItem('sb_url', SUPABASE_URL);
+      if (SUPABASE_ANON_KEY) localStorage.setItem('sb_key', SUPABASE_ANON_KEY);
+    }
+
+    sbAuth(email, password).then(function(data) {
+      if (data.error || !data.access_token) {
+        errEl.textContent = data.error_description || data.msg || 'Invalid credentials';
+        errEl.style.display = 'block';
+        return;
+      }
+      session = data;
+      localStorage.setItem('sb_session', JSON.stringify(data));
+      showDashboard();
+    });
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', function() {
+    session = null;
+    localStorage.removeItem('sb_session');
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+  });
+
+  function showDashboard() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadStats();
+    loadEscalations();
+    loadLeads();
+    loadClients();
+  }
+
+  function loadStats() {
+    var today = new Date(); today.setHours(0,0,0,0);
+    var weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+
+    sbFetch('leads?select=id,status,created_at').then(function(leads) {
+      if (!Array.isArray(leads)) return;
+      var todayCount = leads.filter(function(l) { return new Date(l.created_at) >= today; }).length;
+      var weekCount = leads.filter(function(l) { return new Date(l.created_at) >= weekAgo; }).length;
+      var converted = leads.filter(function(l) { return l.status === 'converted'; }).length;
+      document.getElementById('leadsToday').textContent = todayCount;
+      document.getElementById('leadsWeek').textContent = 'this week: ' + weekCount;
+      document.getElementById('convRate').textContent = leads.length > 0 ? Math.round((converted / leads.length) * 100) + '%' : '0%';
+    });
+
+    sbFetch('clients?select=id,program,status').then(function(clients) {
+      if (!Array.isArray(clients)) return;
+      var active = clients.filter(function(c) { return c.status === 'active'; });
+      document.getElementById('activeClients').textContent = active.length;
+      var programs = {};
+      active.forEach(function(c) { programs[c.program] = (programs[c.program] || 0) + 1; });
+      var summary = Object.keys(programs).map(function(k) { return k + ': ' + programs[k]; }).join(', ');
+      document.getElementById('byProgram').textContent = summary || 'none';
+    });
+
+    sbFetch('checkins?select=id&form_submitted_at=gte.' + weekAgo.toISOString()).then(function() {});
+
+    sbFetch('programs?select=id&generated_at=gte.' + weekAgo.toISOString()).then(function(progs) {
+      document.getElementById('programsGen').textContent = Array.isArray(progs) ? progs.length : 0;
+    });
+
+    sbFetch('escalations?select=id&resolved=eq.false').then(function(esc) {
+      document.getElementById('escalations').textContent = Array.isArray(esc) ? esc.length : 0;
+    });
+  }
+
+  function loadEscalations() {
+    sbFetch('escalations?resolved=eq.false&order=created_at.desc&limit=20').then(function(data) {
+      var tbody = document.getElementById('escalationTable');
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">No pending escalations</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(function(e) {
+        return '<tr class="escalation-row"><td>' + fmtTime(e.created_at) + '</td><td>' + maskPhone(e.phone) + '</td><td>' + (e.reason || '-') + '</td><td>' + (e.message_body || '-').substring(0, 80) + '</td><td><button class="resolve-btn" data-id="' + e.id + '">Resolve</button></td></tr>';
+      }).join('');
+
+      tbody.querySelectorAll('.resolve-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.dataset.id;
+          fetch(SUPABASE_URL + '/rest/v1/escalations?id=eq.' + id, {
+            method: 'PATCH',
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ resolved: true })
+          }).then(function() { loadEscalations(); loadStats(); });
+        });
+      });
+    });
+  }
+
+  function loadLeads() {
+    sbFetch('leads?order=created_at.desc&limit=30').then(function(data) {
+      var tbody = document.getElementById('leadsTable');
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">No leads yet</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(function(l) {
+        return '<tr><td>' + (l.name || '-') + '</td><td>' + maskPhone(l.phone) + '</td><td>' + (l.market || '-') + '</td><td>' + (l.program_interest || '-') + '</td><td>' + badge(l.status) + '</td><td>' + fmtDate(l.created_at) + '</td></tr>';
+      }).join('');
+    });
+  }
+
+  function loadClients() {
+    sbFetch('clients?order=created_at.desc&limit=30').then(function(data) {
+      var tbody = document.getElementById('clientsTable');
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">No clients yet</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(function(c) {
+        return '<tr><td>' + (c.name || '-') + '</td><td>' + (c.program || '-') + '</td><td>' + fmtDate(c.program_started_at) + '</td><td>' + fmtDate(c.program_ends_at) + '</td><td>' + badge(c.status) + '</td><td>-</td></tr>';
+      }).join('');
+    });
+  }
+
+  initConfig();
+  var saved = localStorage.getItem('sb_session');
+  if (saved) {
+    try {
+      session = JSON.parse(saved);
+      showDashboard();
+    } catch(e) { localStorage.removeItem('sb_session'); }
+  }
+})();
+</script>
+</body>
+</html>
