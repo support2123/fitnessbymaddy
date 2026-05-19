@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:6px;color:#B8965A;margin-bottom:24px;">FITNESS BY MADDY</div>
+    <h2>ADMIN DASHBOARD</h2>
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Password">
+    <button onclick="login()">SIGN IN</button>
+    <p id="loginError" style="color:#e74c3c;font-size:13px;margin-top:12px;display:none;"></p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none;">
+  <div class="admin-wrap">
+
+    <div class="admin-header">
+      <div>
+        <div class="admin-logo">FITNESS BY MADDY</div>
+        <h1 class="admin-title">OPS DASHBOARD</h1>
+      </div>
+      <div style="text-align:right">
+        <div class="admin-date" id="currentDate"></div>
+        <button class="refresh-btn" onclick="loadDashboard()" style="margin-top:8px">REFRESH</button>
+      </div>
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-label">NEW LEADS TODAY</div>
+        <div class="stat-card-value" id="leadsToday">-</div>
+        <div class="stat-card-sub" id="leadsWeek">this week: -</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">CONVERSION RATE</div>
+        <div class="stat-card-value" id="conversionRate">-</div>
+        <div class="stat-card-sub">lead to paid</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">ACTIVE CLIENTS</div>
+        <div class="stat-card-value" id="activeClients">-</div>
+        <div class="stat-card-sub" id="activeBreakdown"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">PENDING CHECK-INS</div>
+        <div class="stat-card-value" id="pendingCheckins">-</div>
+        <div class="stat-card-sub">awaiting submission</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">PROGRAMS THIS WEEK</div>
+        <div class="stat-card-value" id="programsGenerated">-</div>
+        <div class="stat-card-sub">generated & sent</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">ESCALATIONS</div>
+        <div class="stat-card-value" id="escalationCount">-</div>
+        <div class="stat-card-sub" style="color:#f39c12">needs attention</div>
+      </div>
+    </div>
+
+    <!-- DETAIL SECTIONS -->
+    <div class="section-grid">
+      <!-- RECENT LEADS -->
+      <div class="admin-card">
+        <div class="admin-card-title">RECENT LEADS</div>
+        <div id="recentLeads"><div class="loading">Loading...</div></div>
+      </div>
+
+      <!-- ACTIVE CLIENTS BY PROGRAM -->
+      <div class="admin-card">
+        <div class="admin-card-title">CLIENTS BY PROGRAM</div>
+        <div id="clientsByProgram"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+
+    <div class="section-grid">
+      <!-- PENDING CHECK-INS -->
+      <div class="admin-card">
+        <div class="admin-card-title">PENDING CHECK-INS</div>
+        <div id="pendingCheckinsList"><div class="loading">Loading...</div></div>
+      </div>
+
+      <!-- ESCALATIONS -->
+      <div class="admin-card">
+        <div class="admin-card-title">ESCALATIONS AWAITING MADDY</div>
+        <div id="escalationsList"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var SUPABASE_URL = '';
+var SUPABASE_ANON_KEY = '';
+var supabase = null;
+
+function initSupabase() {
+  SUPABASE_URL = localStorage.getItem('fbm_sb_url') || prompt('Supabase URL:');
+  SUPABASE_ANON_KEY = localStorage.getItem('fbm_sb_key') || prompt('Supabase anon key:');
+  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+    localStorage.setItem('fbm_sb_url', SUPABASE_URL);
+    localStorage.setItem('fbm_sb_key', SUPABASE_ANON_KEY);
+  }
+}
+
+function sbFetch(table, query) {
+  var url = SUPABASE_URL + '/rest/v1/' + table + '?' + query;
+  return fetch(url, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + (sessionStorage.getItem('fbm_token') || SUPABASE_ANON_KEY),
+      'Content-Type': 'application/json',
+      'Prefer': 'count=exact'
+    }
+  });
+}
+
+function sbRpc(fn, body) {
+  return fetch(SUPABASE_URL + '/rest/v1/rpc/' + fn, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + (sessionStorage.getItem('fbm_token') || SUPABASE_ANON_KEY),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+}
+
+async function login() {
+  initSupabase();
+  var email = document.getElementById('loginEmail').value;
+  var password = document.getElementById('loginPassword').value;
+  var errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  try {
+    var res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email: email, password: password })
+    });
+    var data = await res.json();
+    if (data.access_token) {
+      sessionStorage.setItem('fbm_token', data.access_token);
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadDashboard();
+    } else {
+      errEl.textContent = 'Invalid credentials';
+      errEl.style.display = 'block';
+    }
+  } catch(e) {
+    errEl.textContent = 'Connection error';
+    errEl.style.display = 'block';
+  }
+}
+
+async function loadDashboard() {
+  document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  try {
+    var todayStr = new Date().toISOString().split('T')[0];
+    var weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+
+    var [leadsRes, leadsWeekRes, allLeadsRes, clientsRes, checkinsRes, programsRes, escalationsRes] = await Promise.all([
+      sbFetch('leads', 'select=id&created_at=gte.' + todayStr),
+      sbFetch('leads', 'select=id&created_at=gte.' + weekAgo),
+      sbFetch('leads', 'select=id,status'),
+      sbFetch('clients', 'select=id,program,status,name,phone'),
+      sbFetch('checkins', 'select=id,client_id,week_no,form_submitted_at'),
+      sbFetch('programs', 'select=id&generated_at=gte.' + weekAgo),
+      sbFetch('messages', 'select=id,body,sent_at&template_name=eq.escalation&order=sent_at.desc&limit=10')
+    ]);
+
+    var leadsToday = leadsRes.headers.get('content-range');
+    var ltCount = leadsToday ? leadsToday.split('/')[1] : '0';
+    document.getElementById('leadsToday').textContent = ltCount;
+
+    var leadsWeek = leadsWeekRes.headers.get('content-range');
+    var lwCount = leadsWeek ? leadsWeek.split('/')[1] : '0';
+    document.getElementById('leadsWeek').textContent = 'this week: ' + lwCount;
+
+    var allLeads = await allLeadsRes.json();
+    var totalLeads = allLeads.length;
+    var convertedLeads = allLeads.filter(function(l) { return l.status === 'converted'; }).length;
+    var rate = totalLeads > 0 ? Math.round((convertedLeads / totalLeads) * 100) : 0;
+    document.getElementById('conversionRate').textContent = rate + '%';
+
+    var clients = await clientsRes.json();
+    var activeC = clients.filter(function(c) { return c.status === 'active'; });
+    document.getElementById('activeClients').textContent = activeC.length;
+
+    var programCounts = {};
+    activeC.forEach(function(c) {
+      programCounts[c.program] = (programCounts[c.program] || 0) + 1;
+    });
+
+    var breakdown = Object.entries(programCounts)
+      .map(function(e) { return e[0] + ': ' + e[1]; })
+      .join(' | ');
+    document.getElementById('activeBreakdown').textContent = breakdown || 'none';
+
+    renderClientsByProgram(programCounts);
+
+    var checkins = await checkinsRes.json();
+    var thisWeekCheckins = checkins.filter(function(c) {
+      return new Date(c.form_submitted_at) > new Date(weekAgo);
+    });
+    var pendingCount = activeC.length - thisWeekCheckins.length;
+    document.getElementById('pendingCheckins').textContent = Math.max(0, pendingCount);
+
+    var progsCount = programsRes.headers.get('content-range');
+    var pgCount = progsCount ? progsCount.split('/')[1] : '0';
+    document.getElementById('programsGenerated').textContent = pgCount;
+
+    renderRecentLeads(allLeads.slice(-10).reverse());
+    renderPendingCheckins(activeC, thisWeekCheckins);
+
+    var escalations = await escalationsRes.json();
+    document.getElementById('escalationCount').textContent = escalations.length;
+    renderEscalations(escalations);
+
+  } catch(e) {
+    console.error('Dashboard load error:', e);
+  }
+}
+
+var PROGRAM_LABELS = {
+  '6wk_gym': '6WK Gym', '6wk_home': '6WK Home', '12wk': '12WK Custom',
+  'pcos': 'PCOS', '40plus': '40+', 'zoom_trial': 'Zoom Trial', 'zoom_pack': 'Zoom Pack'
+};
+
+function renderRecentLeads(leads) {
+  var el = document.getElementById('recentLeads');
+  if (!leads.length) {
+    el.innerHTML = '<div class="empty-state">No leads yet</div>';
+    return;
+  }
+  var html = '<table class="admin-table"><thead><tr><th>Phone</th><th>Status</th><th>Interest</th></tr></thead><tbody>';
+  leads.slice(0, 8).forEach(function(l) {
+    html += '<tr><td>' + maskPhone(l.phone || '') + '</td>';
+    html += '<td><span class="badge badge-' + (l.status || 'new') + '">' + (l.status || 'new') + '</span></td>';
+    html += '<td>' + (l.program_interest || '-') + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+function renderClientsByProgram(counts) {
+  var el = document.getElementById('clientsByProgram');
+  var keys = Object.keys(counts);
+  if (!keys.length) {
+    el.innerHTML = '<div class="empty-state">No active clients</div>';
+    return;
+  }
+  var html = '<table class="admin-table"><thead><tr><th>Program</th><th>Active</th></tr></thead><tbody>';
+  keys.forEach(function(k) {
+    html += '<tr><td>' + (PROGRAM_LABELS[k] || k) + '</td><td>' + counts[k] + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+function renderPendingCheckins(activeClients, submitted) {
+  var el = document.getElementById('pendingCheckinsList');
+  var submittedIds = submitted.map(function(c) { return c.client_id; });
+  var pending = activeClients.filter(function(c) {
+    return submittedIds.indexOf(c.id) === -1;
+  });
+  if (!pending.length) {
+    el.innerHTML = '<div class="empty-state">All check-ins submitted!</div>';
+    return;
+  }
+  var html = '<table class="admin-table"><thead><tr><th>Client</th><th>Program</th></tr></thead><tbody>';
+  pending.slice(0, 8).forEach(function(c) {
+    html += '<tr><td>' + (c.name || maskPhone(c.phone || '')) + '</td>';
+    html += '<td>' + (PROGRAM_LABELS[c.program] || c.program || '-') + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+function renderEscalations(items) {
+  var el = document.getElementById('escalationsList');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-state">No escalations pending</div>';
+    return;
+  }
+  var html = '';
+  items.forEach(function(item) {
+    html += '<div class="escalation-item">';
+    html += '<div class="escalation-reason">Alert</div>';
+    html += '<div class="escalation-detail">' + escapeHtml((item.body || '').slice(0, 200)) + '</div>';
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function maskPhone(phone) {
+  if (!phone || phone.length < 6) return '***';
+  return phone.slice(0, 3) + 'XXX...' + phone.slice(-3);
+}
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+if (sessionStorage.getItem('fbm_token')) {
+  initSupabase();
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadDashboard();
+}
+</script>
+</body>
+</html>

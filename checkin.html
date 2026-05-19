@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in | Fitness by Maddy</title>
+  <meta name="description" content="Submit your weekly progress check-in.">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+<div class="form-page">
+
+  <div class="form-header">
+    <div class="form-logo">Fitness by Maddy</div>
+    <h1 class="form-title">WEEKLY CHECK-IN</h1>
+    <p class="form-subtitle" id="weekLabel">Track your progress — it takes less than 5 minutes.</p>
+  </div>
+
+  <form id="checkinForm" novalidate>
+    <input type="hidden" id="clientId" name="client_id">
+    <input type="hidden" id="weekNo" name="week_no">
+
+    <div class="form-card">
+      <div class="form-section-title">BODY METRICS</div>
+      <div class="field-row">
+        <div class="field">
+          <label for="weight">Current Weight (kg) *</label>
+          <input type="number" id="weight" name="weight" placeholder="70.5" step="0.1" min="30" max="250" required>
+        </div>
+        <div class="field">
+          <label for="waist">Waist (cm)</label>
+          <input type="number" id="waist" name="waist" placeholder="80" step="0.1" min="40" max="200">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-section-title">HOW DID THE WEEK GO?</div>
+      <div class="field">
+        <label>Workout Compliance (1 = skipped most, 10 = crushed it) *</label>
+        <div class="rating-group" id="complianceGroup">
+          <button type="button" class="rating-btn" data-value="1">1</button>
+          <button type="button" class="rating-btn" data-value="2">2</button>
+          <button type="button" class="rating-btn" data-value="3">3</button>
+          <button type="button" class="rating-btn" data-value="4">4</button>
+          <button type="button" class="rating-btn" data-value="5">5</button>
+          <button type="button" class="rating-btn" data-value="6">6</button>
+          <button type="button" class="rating-btn" data-value="7">7</button>
+          <button type="button" class="rating-btn" data-value="8">8</button>
+          <button type="button" class="rating-btn" data-value="9">9</button>
+          <button type="button" class="rating-btn" data-value="10">10</button>
+        </div>
+        <input type="hidden" id="compliance_score" name="compliance_score" required>
+      </div>
+      <div class="field">
+        <label>Energy Level (1 = exhausted, 10 = full energy) *</label>
+        <div class="rating-group" id="energyGroup">
+          <button type="button" class="rating-btn" data-value="1">1</button>
+          <button type="button" class="rating-btn" data-value="2">2</button>
+          <button type="button" class="rating-btn" data-value="3">3</button>
+          <button type="button" class="rating-btn" data-value="4">4</button>
+          <button type="button" class="rating-btn" data-value="5">5</button>
+          <button type="button" class="rating-btn" data-value="6">6</button>
+          <button type="button" class="rating-btn" data-value="7">7</button>
+          <button type="button" class="rating-btn" data-value="8">8</button>
+          <button type="button" class="rating-btn" data-value="9">9</button>
+          <button type="button" class="rating-btn" data-value="10">10</button>
+        </div>
+        <input type="hidden" id="energy" name="energy" required>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-section-title">DETAILS & PHOTOS</div>
+      <div class="field">
+        <label for="issues">Any issues, pain, or concerns this week?</label>
+        <textarea id="issues" name="issues" placeholder="E.g., shoulder felt tight during pressing, sleep was poor, had a stressful week..."></textarea>
+      </div>
+      <div class="field">
+        <label>Progress Photos (front, side, back)</label>
+        <div class="photo-upload" id="photoUpload">
+          <div class="photo-upload-icon">📸</div>
+          <div class="photo-upload-text">Tap to upload up to 3 photos</div>
+        </div>
+        <input type="file" id="photoInput" accept="image/*" multiple style="display:none" max="3">
+        <div class="photo-preview" id="photoPreview"></div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-submit" id="submitBtn">SUBMIT CHECK-IN</button>
+    <div id="formMessage" class="form-message"></div>
+  </form>
+
+  <div class="form-footer">
+    <p class="form-footer-text">Your data is private and only shared with your coach.</p>
+    <p class="form-footer-brand">FITNESS BY MADDY</p>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w');
+  if (clientId) document.getElementById('clientId').value = clientId;
+  if (weekNo) {
+    document.getElementById('weekNo').value = weekNo;
+    document.getElementById('weekLabel').textContent = 'Week ' + weekNo + ' — Track your progress. Takes less than 5 minutes.';
+  }
+
+  function setupRating(groupId, inputId) {
+    var group = document.getElementById(groupId);
+    var input = document.getElementById(inputId);
+    var buttons = group.querySelectorAll('.rating-btn');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener('click', function() {
+        for (var j = 0; j < buttons.length; j++) buttons[j].classList.remove('active');
+        this.classList.add('active');
+        input.value = this.getAttribute('data-value');
+      });
+    }
+  }
+  setupRating('complianceGroup', 'compliance_score');
+  setupRating('energyGroup', 'energy');
+
+  var photoUpload = document.getElementById('photoUpload');
+  var photoInput = document.getElementById('photoInput');
+  var photoPreview = document.getElementById('photoPreview');
+  var selectedFiles = [];
+
+  photoUpload.addEventListener('click', function() {
+    photoInput.click();
+  });
+
+  photoInput.addEventListener('change', function() {
+    var files = Array.from(this.files).slice(0, 3);
+    selectedFiles = files;
+    photoPreview.innerHTML = '';
+    files.forEach(function(file) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = document.createElement('img');
+        img.src = e.target.result;
+        img.className = 'photo-thumb';
+        photoPreview.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  document.getElementById('checkinForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('submitBtn');
+    var msg = document.getElementById('formMessage');
+    btn.disabled = true;
+    btn.textContent = 'SUBMITTING...';
+    msg.className = 'form-message';
+    msg.style.display = 'none';
+
+    var data = {
+      client_id: document.getElementById('clientId').value,
+      week_no: document.getElementById('weekNo').value,
+      weight: document.getElementById('weight').value,
+      waist: document.getElementById('waist').value,
+      compliance_score: document.getElementById('compliance_score').value,
+      energy: document.getElementById('energy').value,
+      issues: document.getElementById('issues').value,
+      photos_urls: []
+    };
+
+    if (!data.client_id || !data.week_no) {
+      msg.textContent = 'Invalid check-in link. Please use the link from your WhatsApp message.';
+      msg.className = 'form-message error';
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT CHECK-IN';
+      return;
+    }
+
+    fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+      if (result.success) {
+        msg.textContent = 'Check-in submitted! Your updated program will arrive soon on WhatsApp.';
+        msg.className = 'form-message success';
+        e.target.reset();
+        photoPreview.innerHTML = '';
+        var activeButtons = document.querySelectorAll('.rating-btn.active');
+        for (var i = 0; i < activeButtons.length; i++) activeButtons[i].classList.remove('active');
+      } else {
+        throw new Error(result.error || 'Submission failed');
+      }
+    })
+    .catch(function(err) {
+      msg.textContent = 'Something went wrong. Please try again or message us on WhatsApp.';
+      msg.className = 'form-message error';
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT CHECK-IN';
+    });
+  });
+})();
+</script>
+</body>
+</html>
