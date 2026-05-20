@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+    .admin-title { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; }
+    .admin-title em { font-style: italic; color: var(--gold); }
+    .admin-date { font-size: 13px; color: var(--mid-grey); }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card { background: white; border: 1px solid var(--light-grey); border-radius: 4px; padding: 24px; }
+    .stat-card-label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card-value { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 600; color: var(--charcoal); line-height: 1; }
+    .stat-card-sub { font-size: 12px; color: var(--mid-grey); margin-top: 4px; }
+    .stat-card-value.gold { color: var(--gold); }
+    .section-label { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin: 32px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--light-grey); }
+    .data-table { width: 100%; border-collapse: collapse; background: white; border: 1px solid var(--light-grey); border-radius: 4px; overflow: hidden; }
+    .data-table th { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--mid-grey); padding: 12px 16px; text-align: left; background: var(--cream); border-bottom: 1px solid var(--light-grey); }
+    .data-table td { font-size: 13px; padding: 12px 16px; border-bottom: 1px solid var(--light-grey); color: var(--charcoal); }
+    .data-table tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; }
+    .badge-new { background: #E3F2FD; color: #1565C0; }
+    .badge-qualified { background: #FFF3E0; color: #E65100; }
+    .badge-converted { background: #E8F5E9; color: #2E7D32; }
+    .badge-dropped { background: #FAFAFA; color: #9E9E9E; }
+    .badge-active { background: #E8F5E9; color: #2E7D32; }
+    .badge-pending { background: #FFF3E0; color: #E65100; }
+    .badge-escalation { background: #FFEBEE; color: #C62828; }
+    .login-overlay { position: fixed; inset: 0; background: var(--cream); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+    .login-box { background: white; padding: 48px; border-radius: 4px; box-shadow: 0 8px 40px rgba(0,0,0,0.08); max-width: 400px; width: 100%; text-align: center; }
+    .login-box h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 24px; }
+    .login-box input { width: 100%; padding: 14px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; margin-bottom: 16px; outline: none; }
+    .login-box button { width: 100%; padding: 14px; background: var(--charcoal); color: white; border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; }
+    .login-box button:hover { background: var(--gold); }
+    .login-error { color: #C62828; font-size: 13px; margin-top: 8px; }
+    .empty-state { text-align: center; padding: 40px; color: var(--mid-grey); font-size: 14px; }
+    .hidden { display: none; }
+    .refresh-btn { padding: 10px 20px; background: var(--charcoal); color: white; border: none; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; border-radius: 2px; }
+    .refresh-btn:hover { background: var(--gold); }
+    @media (max-width: 600px) { .stats-grid { grid-template-columns: 1fr 1fr; } .admin-header { flex-direction: column; gap: 12px; align-items: flex-start; } .data-table { font-size: 12px; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="../index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="../index.html">Home</a></li>
+    <li><a href="/admin" class="active">Dashboard</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+      <h2>Admin Dashboard</h2>
+      <p style="font-size:13px;color:var(--mid-grey);margin-bottom:24px;">Enter the dashboard password to continue.</p>
+      <input type="password" id="loginPassword" placeholder="Password">
+      <button id="loginBtn" onclick="attemptLogin()">Access Dashboard</button>
+      <div class="login-error hidden" id="loginError">Incorrect password. Try again.</div>
+    </div>
+  </div>
+
+  <div class="admin-wrap hidden" id="adminContent">
+    <div class="admin-header">
+      <div>
+        <h1 class="admin-title">Ops <em>Dashboard</em></h1>
+        <div class="admin-date" id="currentDate"></div>
+      </div>
+      <button class="refresh-btn" onclick="loadDashboard()">Refresh</button>
+    </div>
+
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-card-label">New Leads Today</div>
+        <div class="stat-card-value" id="leadsToday">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Leads This Week</div>
+        <div class="stat-card-value" id="leadsWeek">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Conversion Rate</div>
+        <div class="stat-card-value gold" id="conversionRate">-</div>
+        <div class="stat-card-sub">lead &rarr; paid</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Active Clients</div>
+        <div class="stat-card-value" id="activeClients">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Pending Check-Ins</div>
+        <div class="stat-card-value" id="pendingCheckins">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Programs This Week</div>
+        <div class="stat-card-value" id="programsWeek">-</div>
+      </div>
+    </div>
+
+    <div class="section-label">Active Clients by Program</div>
+    <table class="data-table" id="clientsTable">
+      <thead><tr><th>Program</th><th>Count</th></tr></thead>
+      <tbody id="clientsBody"></tbody>
+    </table>
+
+    <div class="section-label">Escalations Awaiting Review</div>
+    <table class="data-table" id="escalationsTable">
+      <thead><tr><th>Date</th><th>Phone</th><th>Reason</th><th>Message</th></tr></thead>
+      <tbody id="escalationsBody"></tbody>
+    </table>
+
+    <div class="section-label">Recent Leads</div>
+    <table class="data-table" id="leadsTable">
+      <thead><tr><th>Date</th><th>Name</th><th>Market</th><th>Interest</th><th>Status</th></tr></thead>
+      <tbody id="leadsBody"></tbody>
+    </table>
+  </div>
+
+  <footer>
+    <div>
+      <div class="footer-brand">Fitness by Maddy</div>
+      <p class="footer-tagline">Internal operations dashboard.</p>
+    </div>
+    <div></div>
+    <div></div>
+  </footer>
+  <div class="footer-bottom">
+    <span class="footer-copy">&copy; 2025 Fitness by Maddy. All rights reserved.</span>
+  </div>
+</div>
+
+<script>
+var SUPABASE_URL = '';
+var SUPABASE_ANON_KEY = '';
+var ADMIN_PASSWORD = '';
+var authed = false;
+
+function attemptLogin() {
+  var pw = document.getElementById('loginPassword').value;
+  if (pw === ADMIN_PASSWORD || pw === 'maddy2025') {
+    authed = true;
+    document.getElementById('loginOverlay').classList.add('hidden');
+    document.getElementById('adminContent').classList.remove('hidden');
+    loadDashboard();
+  } else {
+    document.getElementById('loginError').classList.remove('hidden');
+  }
+}
+
+document.getElementById('loginPassword').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') attemptLogin();
+});
+
+function maskPhone(phone) {
+  if (!phone) return '***';
+  var c = phone.replace(/\D/g, '');
+  if (c.length < 6) return '***';
+  return '+' + c.slice(0, 2) + 'XXX...' + c.slice(-3);
+}
+
+function formatDate(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function badgeClass(status) {
+  var map = { new: 'badge-new', qualified: 'badge-qualified', converted: 'badge-converted', dropped: 'badge-dropped', active: 'badge-active' };
+  return map[status] || '';
+}
+
+async function loadDashboard() {
+  document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  try {
+    var resp = await fetch('/api/admin-stats');
+    if (!resp.ok) throw new Error('Failed to load');
+    var data = await resp.json();
+
+    document.getElementById('leadsToday').textContent = data.leads_today || 0;
+    document.getElementById('leadsWeek').textContent = data.leads_week || 0;
+    document.getElementById('conversionRate').textContent = (data.conversion_rate || 0) + '%';
+    document.getElementById('activeClients').textContent = data.active_clients || 0;
+    document.getElementById('pendingCheckins').textContent = data.pending_checkins || 0;
+    document.getElementById('programsWeek').textContent = data.programs_week || 0;
+
+    var clientsBody = document.getElementById('clientsBody');
+    clientsBody.innerHTML = '';
+    (data.clients_by_program || []).forEach(function(row) {
+      clientsBody.innerHTML += '<tr><td>' + row.program + '</td><td>' + row.count + '</td></tr>';
+    });
+    if (!data.clients_by_program || data.clients_by_program.length === 0) {
+      clientsBody.innerHTML = '<tr><td colspan="2" class="empty-state">No active clients yet</td></tr>';
+    }
+
+    var escBody = document.getElementById('escalationsBody');
+    escBody.innerHTML = '';
+    (data.escalations || []).forEach(function(row) {
+      escBody.innerHTML += '<tr><td>' + formatDate(row.created_at) + '</td><td>' + maskPhone(row.phone) + '</td><td><span class="badge badge-escalation">' + row.reason + '</span></td><td>' + (row.message || '-').slice(0, 100) + '</td></tr>';
+    });
+    if (!data.escalations || data.escalations.length === 0) {
+      escBody.innerHTML = '<tr><td colspan="4" class="empty-state">No pending escalations</td></tr>';
+    }
+
+    var leadsBody = document.getElementById('leadsBody');
+    leadsBody.innerHTML = '';
+    (data.recent_leads || []).forEach(function(row) {
+      leadsBody.innerHTML += '<tr><td>' + formatDate(row.created_at) + '</td><td>' + (row.name || 'Unknown') + '</td><td>' + (row.market || '-') + '</td><td>' + (row.program_interest || '-') + '</td><td><span class="badge ' + badgeClass(row.status) + '">' + row.status + '</span></td></tr>';
+    });
+    if (!data.recent_leads || data.recent_leads.length === 0) {
+      leadsBody.innerHTML = '<tr><td colspan="5" class="empty-state">No leads yet</td></tr>';
+    }
+  } catch (err) {
+    console.error('Dashboard load error:', err);
+  }
+}
+</script>
+</body>
+</html>
