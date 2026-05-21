@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-in | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .form-page { max-width: 640px; margin: 0 auto; padding: 40px 24px 80px; }
+    .form-hero { text-align: center; margin-bottom: 48px; }
+    .form-card { background: white; padding: 48px 40px; border-radius: 4px; box-shadow: 0 4px 32px rgba(0,0,0,0.06); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey);
+      border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif;
+      color: var(--charcoal); background: var(--cream); transition: border-color 0.3s; outline: none;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--gold); }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    .form-select { appearance: none; }
+    .form-hint { font-size: 11px; color: var(--mid-grey); margin-top: 4px; }
+    .form-section-title {
+      font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400;
+      color: var(--charcoal); margin: 32px 0 20px; padding-top: 24px;
+      border-top: 1px solid var(--light-grey);
+    }
+    .form-section-title:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
+    .btn-submit {
+      width: 100%; padding: 16px; background: var(--charcoal); color: white;
+      font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+      border: none; cursor: pointer; border-radius: 2px; transition: background 0.3s;
+      margin-top: 24px;
+    }
+    .btn-submit:hover { background: var(--gold); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .slider-group { position: relative; }
+    .slider-value { position: absolute; right: 0; top: 0; font-size: 20px; font-family: 'Cormorant Garamond', serif; font-weight: 600; color: var(--gold); }
+    .form-slider {
+      -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px;
+      background: var(--light-grey); outline: none; margin-top: 8px;
+    }
+    .form-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
+      background: var(--gold); cursor: pointer; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .photo-upload { border: 2px dashed var(--light-grey); border-radius: 4px; padding: 32px; text-align: center; cursor: pointer; transition: border-color 0.3s; }
+    .photo-upload:hover { border-color: var(--gold); }
+    .photo-upload input { display: none; }
+    .photo-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .photo-preview img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; }
+    .week-badge {
+      display: inline-block; background: var(--charcoal); color: var(--gold-light);
+      font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+      padding: 6px 16px; border-radius: 2px; margin-bottom: 16px;
+    }
+    .success-msg { text-align: center; padding: 60px 24px; }
+    .success-msg h2 { font-family: 'Cormorant Garamond', serif; font-size: 32px; color: var(--charcoal); margin-bottom: 16px; }
+    .success-msg p { color: var(--mid-grey); font-size: 16px; line-height: 1.7; }
+    .error-msg { background: #fee; border: 1px solid #fcc; padding: 12px 16px; border-radius: 4px; color: #c00; font-size: 13px; margin-bottom: 16px; display: none; }
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .form-card { padding: 32px 20px; }
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+  </ul>
+</nav>
+<div class="page-wrap">
+  <div class="form-page">
+    <div class="form-hero">
+      <div class="week-badge" id="week-badge">Week —</div>
+      <h1 class="section-title">Weekly <em>Check-in</em></h1>
+      <p class="section-body" style="margin:12px auto 0">Quick update so Maddy can fine-tune your next week's plan.</p>
+    </div>
+
+    <div id="form-container">
+      <div class="form-card">
+        <div class="error-msg" id="error-msg"></div>
+        <form id="checkin-form">
+          <input type="hidden" id="client_id" name="client_id">
+          <input type="hidden" id="week_no" name="week_no">
+
+          <div class="form-section-title">Body Stats</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="weight">Current Weight (kg) *</label>
+              <input class="form-input" type="number" id="weight" name="weight" step="0.1" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="waist">Waist (cm)</label>
+              <input class="form-input" type="number" id="waist" name="waist" step="0.1">
+            </div>
+          </div>
+
+          <div class="form-section-title">Self-Assessment</div>
+          <div class="form-group slider-group">
+            <label class="form-label">Plan Compliance</label>
+            <span class="slider-value" id="compliance-val">7</span>
+            <input class="form-slider" type="range" id="compliance_score" name="compliance_score" min="1" max="10" value="7">
+            <p class="form-hint">1 = barely followed · 10 = nailed every workout & meal</p>
+          </div>
+          <div class="form-group slider-group">
+            <label class="form-label">Energy Level</label>
+            <span class="slider-value" id="energy-val">7</span>
+            <input class="form-slider" type="range" id="energy" name="energy" min="1" max="10" value="7">
+            <p class="form-hint">1 = exhausted all week · 10 = unstoppable</p>
+          </div>
+
+          <div class="form-section-title">Notes & Issues</div>
+          <div class="form-group">
+            <label class="form-label" for="issues">Anything to flag?</label>
+            <textarea class="form-textarea" id="issues" name="issues" placeholder="Pain, soreness, schedule issues, food cravings, sleep, stress..."></textarea>
+          </div>
+
+          <div class="form-section-title">Progress Photos</div>
+          <div class="form-group">
+            <div class="photo-upload" id="photo-upload">
+              <p style="font-size:24px; margin-bottom:8px">📸</p>
+              <p style="font-size:13px; color:var(--mid-grey)">Tap to upload up to 3 photos<br>(front, side, back)</p>
+              <input type="file" id="photo-input" accept="image/*" multiple>
+            </div>
+            <div class="photo-preview" id="photo-preview"></div>
+          </div>
+
+          <button type="submit" class="btn-submit" id="submit-btn">Submit Check-in</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="success-container" class="success-msg" style="display:none">
+      <h2>Check-in Received!</h2>
+      <p>Great job staying consistent. Maddy will review your progress and your updated program will be sent via WhatsApp.</p>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w') || '1';
+  if (clientId) document.getElementById('client_id').value = clientId;
+  document.getElementById('week_no').value = weekNo;
+  document.getElementById('week-badge').textContent = 'Week ' + weekNo;
+
+  document.getElementById('compliance_score').addEventListener('input', function() {
+    document.getElementById('compliance-val').textContent = this.value;
+  });
+  document.getElementById('energy').addEventListener('input', function() {
+    document.getElementById('energy-val').textContent = this.value;
+  });
+
+  var photoUpload = document.getElementById('photo-upload');
+  var photoInput = document.getElementById('photo-input');
+  var photoPreview = document.getElementById('photo-preview');
+  var selectedFiles = [];
+
+  photoUpload.addEventListener('click', function() { photoInput.click(); });
+  photoInput.addEventListener('change', function() {
+    var files = Array.from(this.files).slice(0, 3);
+    selectedFiles = files;
+    photoPreview.innerHTML = '';
+    files.forEach(function(f) {
+      var img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      photoPreview.appendChild(img);
+    });
+  });
+
+  document.getElementById('checkin-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('submit-btn');
+    var errEl = document.getElementById('error-msg');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+    errEl.style.display = 'none';
+
+    var data = {
+      client_id: document.getElementById('client_id').value,
+      week_no: document.getElementById('week_no').value,
+      weight: document.getElementById('weight').value,
+      waist: document.getElementById('waist').value,
+      compliance_score: document.getElementById('compliance_score').value,
+      energy: document.getElementById('energy').value,
+      issues: document.getElementById('issues').value,
+      photos_urls: []
+    };
+
+    fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json().then(function(j) { return { ok: r.ok, body: j }; }); })
+    .then(function(res) {
+      if (res.ok) {
+        document.getElementById('form-container').style.display = 'none';
+        document.getElementById('success-container').style.display = 'block';
+      } else {
+        errEl.textContent = res.body.error || 'Something went wrong. Please try again.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Submit Check-in';
+      }
+    })
+    .catch(function() {
+      errEl.textContent = 'Network error. Check your connection and try again.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Submit Check-in';
+    });
+  });
+})();
+</script>
+</body>
+</html>
