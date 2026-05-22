@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+    .admin-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 400; }
+    .admin-header h1 em { color: var(--gold); }
+    .logout-btn { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--mid-grey); background: none; border: 1px solid var(--light-grey);
+      padding: 8px 16px; cursor: pointer; border-radius: 2px; }
+    .logout-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* Login */
+    .login-wrap { max-width: 400px; margin: 80px auto; text-align: center; }
+    .login-wrap h2 { font-family: 'Cormorant Garamond', serif; font-size: 32px; margin-bottom: 8px; }
+    .login-wrap p { font-size: 14px; color: var(--mid-grey); margin-bottom: 32px; }
+    .login-wrap .form-group { text-align: left; }
+
+    /* Stats grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card {
+      background: white; border: 1px solid var(--light-grey); padding: 24px;
+      border-radius: 2px; text-align: center;
+    }
+    .stat-card .stat-value {
+      font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600;
+      color: var(--charcoal); line-height: 1;
+    }
+    .stat-card .stat-title {
+      font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--mid-grey); margin-top: 8px;
+    }
+    .stat-card.gold { border-color: var(--gold); }
+    .stat-card.gold .stat-value { color: var(--gold); }
+
+    /* Tables */
+    .section-block { margin-bottom: 40px; }
+    .section-block h3 {
+      font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400;
+      margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--light-grey);
+    }
+    .section-block h3 em { color: var(--gold); }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .data-table th {
+      text-align: left; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--mid-grey); padding: 10px 12px; border-bottom: 2px solid var(--light-grey);
+    }
+    .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--light-grey); color: var(--charcoal); }
+    .data-table tr:hover td { background: rgba(184,150,90,0.03); }
+    .badge {
+      display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; padding: 3px 8px; border-radius: 2px;
+    }
+    .badge-red { background: #FEE; color: #C33; }
+    .badge-gold { background: rgba(184,150,90,0.15); color: var(--gold); }
+    .badge-green { background: #EFE; color: #393; }
+    .empty-state { text-align: center; padding: 40px; color: var(--mid-grey); font-size: 14px; }
+    .resolve-btn {
+      font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+      background: var(--charcoal); color: white; border: none; padding: 4px 10px;
+      cursor: pointer; border-radius: 2px;
+    }
+    .resolve-btn:hover { background: var(--gold); }
+    .refresh-time { font-size: 11px; color: var(--mid-grey); text-align: right; margin-bottom: 16px; }
+
+    .dashboard-content { display: none; }
+    .login-content { display: block; }
+    .table-scroll { overflow-x: auto; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- LOGIN -->
+  <div class="login-content" id="loginContent">
+    <div class="login-wrap">
+      <p class="hero-eyebrow" style="margin-bottom:16px;">Admin Access</p>
+      <h2>Dashboard <em>Login</em></h2>
+      <p>Sign in with your Supabase admin credentials.</p>
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" id="loginEmail" required placeholder="support@fitnessbymaddy.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="loginPassword" required placeholder="Your password">
+        </div>
+        <button type="submit" class="btn-primary" style="width:100%; margin-top:8px;">Sign In</button>
+        <p id="loginError" style="color:#C33; font-size:13px; margin-top:12px; display:none;"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard-content" id="dashboardContent">
+    <div class="admin-wrap">
+      <div class="admin-header">
+        <h1>Ops <em>Dashboard</em></h1>
+        <button class="logout-btn" onclick="logout()">Sign Out</button>
+      </div>
+      <div class="refresh-time" id="refreshTime"></div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <!-- Escalations -->
+      <div class="section-block">
+        <h3>Escalations <em>Awaiting Maddy</em></h3>
+        <div class="table-scroll">
+          <table class="data-table" id="escalationsTable">
+            <thead><tr><th>Phone</th><th>Trigger</th><th>Message</th><th>Time</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Active Clients -->
+      <div class="section-block">
+        <h3>Active <em>Clients</em></h3>
+        <div class="table-scroll">
+          <table class="data-table" id="clientsTable">
+            <thead><tr><th>Name</th><th>Phone</th><th>Program</th><th>Started</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pending Check-ins -->
+      <div class="section-block">
+        <h3>Pending <em>Check-Ins</em></h3>
+        <div class="table-scroll">
+          <table class="data-table" id="checkinsTable">
+            <thead><tr><th>Client</th><th>Week</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recent Messages -->
+      <div class="section-block">
+        <h3>Recent <em>Messages</em></h3>
+        <div class="table-scroll">
+          <table class="data-table" id="messagesTable">
+            <thead><tr><th>Phone</th><th>Dir</th><th>Message</th><th>Template</th><th>Time</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+var SUPABASE_URL = '';
+var token = null;
+
+function initSupabase() {
+  var meta = document.querySelector('meta[name="supabase-url"]');
+  SUPABASE_URL = meta ? meta.content : '';
+}
+
+function getToken() {
+  return localStorage.getItem('fbm_admin_token');
+}
+
+function setToken(t) {
+  token = t;
+  localStorage.setItem('fbm_admin_token', t);
+}
+
+function logout() {
+  localStorage.removeItem('fbm_admin_token');
+  token = null;
+  document.getElementById('loginContent').style.display = 'block';
+  document.getElementById('dashboardContent').style.display = 'none';
+}
+
+function showDashboard() {
+  document.getElementById('loginContent').style.display = 'none';
+  document.getElementById('dashboardContent').style.display = 'block';
+  loadDashboard();
+}
+
+function loadDashboard() {
+  var t = getToken();
+  if (!t) { logout(); return; }
+
+  fetch('/api/admin/dashboard', {
+    headers: { 'Authorization': 'Bearer ' + t },
+  })
+  .then(function(r) {
+    if (r.status === 401) { logout(); throw new Error('Session expired'); }
+    return r.json();
+  })
+  .then(function(d) { renderDashboard(d); })
+  .catch(function(e) { console.error('Dashboard load error:', e); });
+}
+
+function renderDashboard(d) {
+  document.getElementById('refreshTime').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+
+  var programLabels = {
+    '6wk_gym': '6W Gym', '6wk_home': '6W Home', '12wk': '12 Week',
+    'pcos': 'PCOS', '40plus': '40+', 'zoom_trial': 'Zoom Trial', 'zoom_pack': 'Zoom Pack'
+  };
+
+  var stats = [
+    { value: d.leads.today, title: 'Leads Today' },
+    { value: d.leads.this_week, title: 'Leads This Week' },
+    { value: d.leads.conversion_rate, title: 'Conversion Rate', gold: true },
+    { value: d.clients.active, title: 'Active Clients', gold: true },
+    { value: d.programs.generated_this_week, title: 'Programs Generated' },
+    { value: d.escalations.length, title: 'Open Escalations', gold: d.escalations.length > 0 },
+  ];
+
+  var grid = document.getElementById('statsGrid');
+  grid.innerHTML = stats.map(function(s) {
+    return '<div class="stat-card' + (s.gold ? ' gold' : '') + '">' +
+      '<div class="stat-value">' + s.value + '</div>' +
+      '<div class="stat-title">' + s.title + '</div></div>';
+  }).join('');
+
+  // Clients by program
+  var byProg = d.clients.by_program || {};
+  var progCards = Object.keys(byProg).map(function(k) {
+    return '<div class="stat-card"><div class="stat-value">' + byProg[k] + '</div>' +
+      '<div class="stat-title">' + (programLabels[k] || k) + '</div></div>';
+  }).join('');
+  if (progCards) grid.innerHTML += progCards;
+
+  // Escalations
+  var escBody = document.querySelector('#escalationsTable tbody');
+  if (d.escalations.length === 0) {
+    escBody.innerHTML = '<tr><td colspan="5" class="empty-state">No open escalations</td></tr>';
+  } else {
+    escBody.innerHTML = d.escalations.map(function(e) {
+      return '<tr><td>' + e.phone + '</td><td><span class="badge badge-red">' + e.trigger + '</span></td>' +
+        '<td>' + (e.message || '') + '</td><td>' + new Date(e.created_at).toLocaleString() + '</td>' +
+        '<td><button class="resolve-btn" onclick="resolveEsc(\'' + e.id + '\')">Resolve</button></td></tr>';
+    }).join('');
+  }
+
+  // Active clients
+  var cBody = document.querySelector('#clientsTable tbody');
+  if (!d.clients.list || d.clients.list.length === 0) {
+    cBody.innerHTML = '<tr><td colspan="4" class="empty-state">No active clients</td></tr>';
+  } else {
+    cBody.innerHTML = d.clients.list.map(function(c) {
+      return '<tr><td>' + (c.name || 'N/A') + '</td><td>' + c.phone + '</td>' +
+        '<td><span class="badge badge-gold">' + (programLabels[c.program] || c.program) + '</span></td>' +
+        '<td>' + new Date(c.started).toLocaleDateString() + '</td></tr>';
+    }).join('');
+  }
+
+  // Pending checkins
+  var chBody = document.querySelector('#checkinsTable tbody');
+  if (!d.checkins.pending || d.checkins.pending.length === 0) {
+    chBody.innerHTML = '<tr><td colspan="2" class="empty-state">All check-ins up to date</td></tr>';
+  } else {
+    chBody.innerHTML = d.checkins.pending.map(function(c) {
+      return '<tr><td>' + (c.name || 'N/A') + '</td><td>Week ' + c.week_no + '</td></tr>';
+    }).join('');
+  }
+
+  // Messages
+  var mBody = document.querySelector('#messagesTable tbody');
+  if (!d.recent_messages || d.recent_messages.length === 0) {
+    mBody.innerHTML = '<tr><td colspan="5" class="empty-state">No messages yet</td></tr>';
+  } else {
+    mBody.innerHTML = d.recent_messages.slice(0, 20).map(function(m) {
+      var dirBadge = m.direction === 'in' ? '<span class="badge badge-green">IN</span>' : '<span class="badge badge-gold">OUT</span>';
+      return '<tr><td>' + m.phone + '</td><td>' + dirBadge + '</td><td>' + (m.body || '') + '</td>' +
+        '<td>' + (m.template || '—') + '</td><td>' + new Date(m.sent_at).toLocaleString() + '</td></tr>';
+    }).join('');
+  }
+}
+
+function resolveEsc(id) {
+  alert('Escalation ' + id + ' marked as resolved. (Connect Supabase to persist.)');
+}
+
+// Login
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var email = document.getElementById('loginEmail').value;
+  var pw = document.getElementById('loginPassword').value;
+  var errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': document.querySelector('meta[name="supabase-anon-key"]')?.content || '',
+    },
+    body: JSON.stringify({ email: email, password: pw }),
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.access_token) {
+      setToken(d.access_token);
+      showDashboard();
+    } else {
+      errEl.textContent = d.error_description || 'Invalid credentials';
+      errEl.style.display = 'block';
+    }
+  })
+  .catch(function() {
+    errEl.textContent = 'Network error. Please try again.';
+    errEl.style.display = 'block';
+  });
+});
+
+// Auto-login check
+(function() {
+  var saved = getToken();
+  if (saved) {
+    token = saved;
+    showDashboard();
+  }
+})();
+</script>
+</body>
+</html>
