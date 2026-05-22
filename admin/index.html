@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --sand: #F0EAE0; --gold: #B8965A; --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C; --mid-grey: #6B6B6B; --light-grey: #E8E3DC;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); }
+
+    /* Auth screen */
+    .auth-screen {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 24px;
+    }
+    .auth-screen h1 { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; }
+    .auth-screen input {
+      padding: 14px 20px; width: 300px; border: 1.5px solid var(--light-grey);
+      border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif;
+      background: white; outline: none;
+    }
+    .auth-screen input:focus { border-color: var(--gold); }
+    .auth-screen button {
+      padding: 14px 40px; background: var(--charcoal); color: white; border: none;
+      font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+      cursor: pointer; border-radius: 2px; transition: background 0.3s;
+    }
+    .auth-screen button:hover { background: var(--gold); }
+
+    /* Dashboard */
+    .dashboard { display: none; }
+    .dash-header {
+      background: var(--charcoal); padding: 20px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dash-logo { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: white; letter-spacing: 2px; text-transform: uppercase; }
+    .dash-user { font-size: 12px; color: rgba(255,255,255,0.6); }
+    .dash-logout {
+      padding: 8px 16px; background: transparent; border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.7); font-size: 11px; cursor: pointer; border-radius: 2px;
+      letter-spacing: 1px; text-transform: uppercase; transition: all 0.3s;
+    }
+    .dash-logout:hover { border-color: var(--gold); color: var(--gold); }
+
+    .dash-content { padding: 40px; max-width: 1200px; margin: 0 auto; }
+    .dash-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; margin-bottom: 8px; }
+    .dash-subtitle { font-size: 13px; color: var(--mid-grey); margin-bottom: 32px; }
+
+    /* Stats grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card {
+      background: white; padding: 24px; border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04); border-left: 3px solid var(--light-grey);
+    }
+    .stat-card.gold { border-left-color: var(--gold); }
+    .stat-card.green { border-left-color: #27ae60; }
+    .stat-card.red { border-left-color: #e74c3c; }
+    .stat-card-label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card-value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; line-height: 1; }
+    .stat-card-sub { font-size: 11px; color: var(--mid-grey); margin-top: 4px; }
+
+    /* Tables */
+    .section-block { margin-bottom: 40px; }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .section-label { font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--charcoal); }
+    .table-wrap { background: white; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--light-grey); }
+    td { font-size: 13px; padding: 12px 16px; border-bottom: 1px solid var(--light-grey); color: var(--charcoal); }
+    tr:last-child td { border-bottom: none; }
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 2px;
+      font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .badge-new { background: #eaf4fc; color: #2980b9; }
+    .badge-qualified { background: #fef9e7; color: #b8965a; }
+    .badge-converted { background: #eafaf1; color: #27ae60; }
+    .badge-dropped { background: #fdecea; color: #e74c3c; }
+    .badge-active { background: #eafaf1; color: #27ae60; }
+    .badge-paused { background: #fef9e7; color: #b8965a; }
+
+    .empty-state { text-align: center; padding: 40px; color: var(--mid-grey); font-size: 13px; }
+    .loading { text-align: center; padding: 60px; color: var(--mid-grey); }
+
+    @media (max-width: 768px) {
+      .dash-content { padding: 20px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .table-wrap { overflow-x: auto; }
+      table { min-width: 600px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-screen" id="authScreen">
+  <h1>Fitness by Maddy</h1>
+  <p style="font-size: 13px; color: var(--mid-grey);">Admin Dashboard</p>
+  <input type="password" id="adminPass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')login()">
+  <button onclick="login()">Access Dashboard</button>
+  <p id="authError" style="color:#e74c3c; font-size:12px; display:none;">Invalid password</p>
+</div>
+
+<div class="dashboard" id="dashboard">
+  <div class="dash-header">
+    <div class="dash-logo">Fitness by Maddy</div>
+    <div style="display:flex; align-items:center; gap:20px;">
+      <span class="dash-user">Admin Dashboard</span>
+      <button class="dash-logout" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="dash-content">
+    <h1 class="dash-title">Operations <em style="color:var(--gold); font-family:'Cormorant Garamond',serif;">Dashboard</em></h1>
+    <p class="dash-subtitle" id="dashDate">Loading...</p>
+
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card gold"><div class="stat-card-label">Leads Today</div><div class="stat-card-value" id="leadsToday">—</div></div>
+      <div class="stat-card"><div class="stat-card-label">Leads This Week</div><div class="stat-card-value" id="leadsWeek">—</div></div>
+      <div class="stat-card green"><div class="stat-card-label">Conversion Rate</div><div class="stat-card-value" id="convRate">—</div><div class="stat-card-sub">lead to paid</div></div>
+      <div class="stat-card gold"><div class="stat-card-label">Active Clients</div><div class="stat-card-value" id="activeClients">—</div></div>
+      <div class="stat-card"><div class="stat-card-label">Pending Check-Ins</div><div class="stat-card-value" id="pendingCheckins">—</div></div>
+      <div class="stat-card green"><div class="stat-card-label">Programs This Week</div><div class="stat-card-value" id="programsWeek">—</div></div>
+      <div class="stat-card red"><div class="stat-card-label">Escalations</div><div class="stat-card-value" id="escalations">—</div></div>
+    </div>
+
+    <!-- Active Clients by Program -->
+    <div class="section-block">
+      <div class="section-header">
+        <span class="section-label">Active Clients by Program</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program</th><th>Count</th><th>Revenue</th></tr></thead>
+          <tbody id="programsTable"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Leads -->
+    <div class="section-block">
+      <div class="section-header">
+        <span class="section-label">Recent Leads</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Phone</th><th>Name</th><th>Source</th><th>Interest</th><th>Status</th><th>Created</th></tr></thead>
+          <tbody id="leadsTable"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Check-Ins -->
+    <div class="section-block">
+      <div class="section-header">
+        <span class="section-label">Recent Check-Ins</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Client</th><th>Week</th><th>Weight</th><th>Compliance</th><th>Energy</th><th>Issues</th><th>Date</th></tr></thead>
+          <tbody id="checkinsTable"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var SUPABASE_URL = '';
+  var SUPABASE_ANON_KEY = '';
+  var ADMIN_PASS = '';
+
+  function login() {
+    var pass = document.getElementById('adminPass').value;
+    if (!pass) return;
+    sessionStorage.setItem('fbm_admin', pass);
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadDashboard();
+  }
+
+  function logout() {
+    sessionStorage.removeItem('fbm_admin');
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('authScreen').style.display = 'flex';
+  }
+
+  (function() {
+    if (sessionStorage.getItem('fbm_admin')) {
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadDashboard();
+    }
+  })();
+
+  async function loadDashboard() {
+    var now = new Date();
+    document.getElementById('dashDate').textContent = now.toLocaleDateString('en-IN', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    try {
+      var res = await fetch('/api/admin/stats', {
+        headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('fbm_admin') }
+      });
+      if (!res.ok) {
+        if (res.status === 401) { logout(); return; }
+        throw new Error('Failed to load');
+      }
+      var data = await res.json();
+      renderStats(data);
+    } catch (err) {
+      console.error('Dashboard load error:', err);
+    }
+  }
+
+  function renderStats(data) {
+    document.getElementById('leadsToday').textContent = data.leads_today || 0;
+    document.getElementById('leadsWeek').textContent = data.leads_week || 0;
+    document.getElementById('convRate').textContent = (data.conversion_rate || 0) + '%';
+    document.getElementById('activeClients').textContent = data.active_clients || 0;
+    document.getElementById('pendingCheckins').textContent = data.pending_checkins || 0;
+    document.getElementById('programsWeek').textContent = data.programs_week || 0;
+    document.getElementById('escalations').textContent = data.escalations || 0;
+
+    // Programs table
+    var pt = document.getElementById('programsTable');
+    if (data.programs_by_type && data.programs_by_type.length > 0) {
+      pt.innerHTML = data.programs_by_type.map(function(p) {
+        return '<tr><td>' + (p.program || 'Unknown') + '</td><td>' + p.count + '</td><td>$' + (p.revenue || 0) + '</td></tr>';
+      }).join('');
+    } else {
+      pt.innerHTML = '<tr><td colspan="3" class="empty-state">No active clients yet</td></tr>';
+    }
+
+    // Leads table
+    var lt = document.getElementById('leadsTable');
+    if (data.recent_leads && data.recent_leads.length > 0) {
+      lt.innerHTML = data.recent_leads.map(function(l) {
+        var phone = l.phone ? l.phone.slice(0,3) + 'XXX...' + l.phone.slice(-3) : '—';
+        var badgeClass = 'badge-' + (l.status || 'new');
+        var created = l.created_at ? new Date(l.created_at).toLocaleDateString('en-IN') : '—';
+        return '<tr>' +
+          '<td>' + phone + '</td>' +
+          '<td>' + (l.name || '—') + '</td>' +
+          '<td>' + (l.source || 'whatsapp') + '</td>' +
+          '<td>' + (l.program_interest || '—') + '</td>' +
+          '<td><span class="badge ' + badgeClass + '">' + (l.status || 'new') + '</span></td>' +
+          '<td>' + created + '</td></tr>';
+      }).join('');
+    } else {
+      lt.innerHTML = '<tr><td colspan="6" class="empty-state">No leads yet</td></tr>';
+    }
+
+    // Check-ins table
+    var ct = document.getElementById('checkinsTable');
+    if (data.recent_checkins && data.recent_checkins.length > 0) {
+      ct.innerHTML = data.recent_checkins.map(function(c) {
+        var date = c.form_submitted_at ? new Date(c.form_submitted_at).toLocaleDateString('en-IN') : '—';
+        return '<tr>' +
+          '<td>' + (c.client_name || '—') + '</td>' +
+          '<td>Week ' + c.week_no + '</td>' +
+          '<td>' + (c.weight || '—') + ' kg</td>' +
+          '<td>' + (c.compliance_score || '—') + '/10</td>' +
+          '<td>' + (c.energy || '—') + '/10</td>' +
+          '<td>' + (c.issues ? c.issues.slice(0, 50) : '—') + '</td>' +
+          '<td>' + date + '</td></tr>';
+      }).join('');
+    } else {
+      ct.innerHTML = '<tr><td colspan="7" class="empty-state">No check-ins yet</td></tr>';
+    }
+  }
+
+  setInterval(loadDashboard, 60000);
+</script>
+</body>
+</html>
