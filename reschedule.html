@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <meta name="description" content="Reschedule your missed or upcoming session with Maddy.">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .reschedule-wrap { max-width: 560px; margin: 0 auto; padding: 40px 24px 80px; }
+    .reschedule-header { text-align: center; margin-bottom: 48px; }
+    .reschedule-form { background: white; padding: 40px; border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+    .form-group { margin-bottom: 20px; }
+    .time-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+    .time-slot { padding: 12px 8px; border: 1.5px solid var(--light-grey); border-radius: 2px; text-align: center; font-size: 13px; cursor: pointer; transition: all 0.3s; color: var(--charcoal); }
+    .time-slot:hover { border-color: var(--gold); color: var(--gold); }
+    .time-slot.selected { background: var(--charcoal); color: white; border-color: var(--charcoal); }
+    .success-msg { display: none; text-align: center; padding: 60px 24px; }
+    .success-msg h2 { font-family: 'Cormorant Garamond', serif; font-size: 36px; color: var(--charcoal); margin-bottom: 16px; }
+    .success-msg p { color: var(--mid-grey); font-size: 15px; line-height: 1.7; }
+    .error-msg { background: #fff0f0; color: #c00; padding: 12px 16px; border-radius: 4px; font-size: 13px; margin-bottom: 16px; display: none; }
+    @media (max-width: 400px) { .time-slots { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+  <div class="reschedule-wrap">
+    <div class="reschedule-header">
+      <p class="section-eyebrow">Missed a Session?</p>
+      <h1 class="section-title">Reschedule <em>Your</em> Session</h1>
+      <p class="section-body" style="margin: 0 auto;">Life happens. Pick a new time and get right back on track.</p>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <form class="reschedule-form" id="rescheduleForm">
+      <div class="form-group">
+        <label class="form-label">Your Name *</label>
+        <input class="form-input" type="text" name="name" required placeholder="Your full name">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">WhatsApp Number *</label>
+        <input class="form-input" type="tel" name="phone" required placeholder="+91 XXXXX XXXXX">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Preferred Date *</label>
+        <input class="form-input" type="date" name="preferred_date" required id="dateInput">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Preferred Time Slot *</label>
+        <div class="time-slots" id="timeSlots">
+          <div class="time-slot" data-time="07:00">7:00 AM</div>
+          <div class="time-slot" data-time="08:00">8:00 AM</div>
+          <div class="time-slot" data-time="09:00">9:00 AM</div>
+          <div class="time-slot" data-time="10:00">10:00 AM</div>
+          <div class="time-slot" data-time="11:00">11:00 AM</div>
+          <div class="time-slot" data-time="16:00">4:00 PM</div>
+          <div class="time-slot" data-time="17:00">5:00 PM</div>
+          <div class="time-slot" data-time="18:00">6:00 PM</div>
+          <div class="time-slot" data-time="19:00">7:00 PM</div>
+        </div>
+        <input type="hidden" name="preferred_time" id="selectedTime">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Reason (optional)</label>
+        <textarea class="form-input" name="reason" rows="2" placeholder="Why you missed the session..." style="resize:vertical;"></textarea>
+      </div>
+
+      <button type="submit" class="btn-primary" style="width:100%; padding:16px; font-size:13px;" id="submitBtn">
+        Request Reschedule
+      </button>
+    </form>
+
+    <div class="success-msg" id="successMsg">
+      <h2>Request Submitted!</h2>
+      <p>We'll confirm your new session time on WhatsApp shortly. Keep showing up — consistency is key!</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var dateInput = document.getElementById('dateInput');
+  var tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  dateInput.min = tomorrow.toISOString().split('T')[0];
+
+  var slots = document.querySelectorAll('.time-slot');
+  slots.forEach(function(slot) {
+    slot.addEventListener('click', function() {
+      slots.forEach(function(s) { s.classList.remove('selected'); });
+      this.classList.add('selected');
+      document.getElementById('selectedTime').value = this.getAttribute('data-time');
+    });
+  });
+
+  document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var time = document.getElementById('selectedTime').value;
+    var errEl = document.getElementById('errorMsg');
+
+    if (!time) {
+      errEl.textContent = 'Please select a time slot.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    var btn = document.getElementById('submitBtn');
+    btn.textContent = 'Submitting...';
+    btn.disabled = true;
+    errEl.style.display = 'none';
+
+    var fd = new FormData(this);
+    var data = {};
+    fd.forEach(function(v, k) { data[k] = v; });
+
+    fetch('/api/send-whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: '+917082478374',
+        message: 'RESCHEDULE REQUEST\nName: ' + data.name + '\nPhone: ' + data.phone + '\nDate: ' + data.preferred_date + '\nTime: ' + data.preferred_time + '\nReason: ' + (data.reason || 'Not specified')
+      })
+    })
+    .then(function() {
+      document.getElementById('rescheduleForm').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    })
+    .catch(function() {
+      document.getElementById('rescheduleForm').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    });
+  });
+})();
+</script>
+<script src="js/nav.js"></script>
+</body>
+</html>
