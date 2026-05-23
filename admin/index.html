@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --sand: #F0EAE0; --gold: #B8965A; --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C; --mid-grey: #6B6B6B; --light-grey: #E8E3DC;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); }
+
+    .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .login-box { background: white; padding: 48px 40px; border-radius: 4px; box-shadow: 0 8px 40px rgba(0,0,0,0.08); max-width: 400px; width: 100%; text-align: center; }
+    .login-box h1 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 8px; }
+    .login-box p { font-size: 13px; color: var(--mid-grey); margin-bottom: 32px; }
+    .login-input { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; margin-bottom: 16px; outline: none; background: var(--cream); }
+    .login-input:focus { border-color: var(--gold); }
+    .login-btn { width: 100%; padding: 14px; background: var(--charcoal); color: white; border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; }
+    .login-btn:hover { background: var(--gold); }
+    .login-error { color: #b91c1c; font-size: 12px; margin-top: 12px; display: none; }
+
+    .dashboard { display: none; }
+    .dash-header { background: var(--charcoal); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }
+    .dash-logo { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: white; letter-spacing: 2px; text-transform: uppercase; }
+    .dash-logout { background: none; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); padding: 8px 16px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: 2px; font-family: 'DM Sans', sans-serif; }
+    .dash-logout:hover { border-color: var(--gold); color: var(--gold); }
+
+    .dash-content { padding: 40px; max-width: 1200px; margin: 0 auto; }
+    .dash-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; margin-bottom: 8px; }
+    .dash-subtitle { font-size: 13px; color: var(--mid-grey); margin-bottom: 32px; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card { background: white; padding: 24px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .stat-card-label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card-value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--charcoal); line-height: 1; }
+    .stat-card-sub { font-size: 11px; color: var(--mid-grey); margin-top: 4px; }
+    .stat-card.gold { border-top: 3px solid var(--gold); }
+    .stat-card.alert { border-top: 3px solid #b91c1c; }
+
+    .section-block { margin-bottom: 40px; }
+    .section-heading { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; }
+
+    .data-table { width: 100%; background: white; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .data-table th { background: var(--charcoal); color: white; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; padding: 14px 16px; text-align: left; }
+    .data-table td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--light-grey); }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--cream); }
+
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-new { background: #dbeafe; color: #1d4ed8; }
+    .badge-qualified { background: #fef3c7; color: #92400e; }
+    .badge-converted { background: #d1fae5; color: #065f46; }
+    .badge-dropped { background: #fee2e2; color: #991b1b; }
+    .badge-active { background: #d1fae5; color: #065f46; }
+    .badge-paused { background: #fef3c7; color: #92400e; }
+
+    .empty-state { text-align: center; padding: 40px; color: var(--mid-grey); font-size: 13px; }
+    .refresh-btn { background: none; border: 1px solid var(--light-grey); padding: 8px 16px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: 2px; color: var(--mid-grey); font-family: 'DM Sans', sans-serif; }
+    .refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    @media (max-width: 768px) {
+      .dash-content { padding: 20px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .data-table { font-size: 12px; }
+      .data-table th, .data-table td { padding: 10px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <h1>Fitness by Maddy</h1>
+    <p>Admin Dashboard</p>
+    <input class="login-input" type="email" id="login-email" placeholder="Email" autocomplete="email">
+    <input class="login-input" type="password" id="login-password" placeholder="Password" autocomplete="current-password">
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+    <p class="login-error" id="login-error">Invalid credentials. Please try again.</p>
+  </div>
+</div>
+
+<div class="dashboard" id="dashboard">
+  <div class="dash-header">
+    <div class="dash-logo">Fitness by Maddy</div>
+    <button class="dash-logout" onclick="doLogout()">Logout</button>
+  </div>
+
+  <div class="dash-content">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+      <div>
+        <h1 class="dash-title">Dashboard</h1>
+        <p class="dash-subtitle" id="dash-date"></p>
+      </div>
+      <button class="refresh-btn" onclick="loadDashboard()">Refresh Data</button>
+    </div>
+
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card gold"><div class="stat-card-label">New Leads Today</div><div class="stat-card-value" id="stat-leads-today">-</div></div>
+      <div class="stat-card"><div class="stat-card-label">Leads This Week</div><div class="stat-card-value" id="stat-leads-week">-</div></div>
+      <div class="stat-card gold"><div class="stat-card-label">Conversion Rate</div><div class="stat-card-value" id="stat-conversion">-</div><div class="stat-card-sub">lead &rarr; paid</div></div>
+      <div class="stat-card"><div class="stat-card-label">Active Clients</div><div class="stat-card-value" id="stat-active">-</div></div>
+      <div class="stat-card"><div class="stat-card-label">Pending Check-Ins</div><div class="stat-card-value" id="stat-pending-checkins">-</div></div>
+      <div class="stat-card alert"><div class="stat-card-label">Escalations</div><div class="stat-card-value" id="stat-escalations">-</div><div class="stat-card-sub">awaiting review</div></div>
+    </div>
+
+    <div class="section-block">
+      <p class="section-heading">Active Clients by Program</p>
+      <div class="stats-grid" id="program-stats"></div>
+    </div>
+
+    <div class="section-block">
+      <p class="section-heading">Recent Leads</p>
+      <table class="data-table">
+        <thead><tr><th>Phone</th><th>Name</th><th>Status</th><th>Program Interest</th><th>Market</th><th>Date</th></tr></thead>
+        <tbody id="leads-table"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section-block">
+      <p class="section-heading">Active Clients</p>
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Program</th><th>Status</th><th>Started</th><th>Ends</th></tr></thead>
+        <tbody id="clients-table"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section-block">
+      <p class="section-heading">Unresolved Escalations</p>
+      <table class="data-table">
+        <thead><tr><th>Phone</th><th>Reason</th><th>Message</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody id="escalations-table"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+var SUPABASE_URL = '';
+var SUPABASE_KEY = '';
+var supabaseClient = null;
+
+function doLogin() {
+  var email = document.getElementById('login-email').value.trim();
+  var password = document.getElementById('login-password').value;
+  var errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  if (!email || !password) {
+    errEl.textContent = 'Please enter email and password.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  SUPABASE_URL = prompt('Enter Supabase URL:') || localStorage.getItem('sb_url') || '';
+  SUPABASE_KEY = prompt('Enter Supabase anon key:') || localStorage.getItem('sb_key') || '';
+
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    errEl.textContent = 'Supabase credentials required.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  localStorage.setItem('sb_url', SUPABASE_URL);
+  localStorage.setItem('sb_key', SUPABASE_KEY);
+
+  fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY
+    },
+    body: JSON.stringify({ email: email, password: password })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.access_token) {
+      localStorage.setItem('sb_token', data.access_token);
+      showDashboard();
+    } else {
+      errEl.textContent = data.error_description || 'Invalid credentials.';
+      errEl.style.display = 'block';
+    }
+  })
+  .catch(function() {
+    errEl.textContent = 'Connection error. Check your Supabase URL.';
+    errEl.style.display = 'block';
+  });
+}
+
+function doLogout() {
+  localStorage.removeItem('sb_token');
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function showDashboard() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('dash-date').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  loadDashboard();
+}
+
+function sbFetch(table, params) {
+  var url = (localStorage.getItem('sb_url') || SUPABASE_URL) + '/rest/v1/' + table;
+  if (params) url += '?' + params;
+  return fetch(url, {
+    headers: {
+      'apikey': localStorage.getItem('sb_key') || SUPABASE_KEY,
+      'Authorization': 'Bearer ' + localStorage.getItem('sb_token'),
+      'Prefer': 'count=exact'
+    }
+  });
+}
+
+function maskPhone(p) {
+  if (!p || p.length < 6) return '***';
+  return p.slice(0, 4) + '***' + p.slice(-3);
+}
+
+function formatDate(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+function loadDashboard() {
+  var today = new Date(); today.setHours(0,0,0,0);
+  var todayISO = today.toISOString();
+  var weekAgo = new Date(today - 7*24*60*60*1000).toISOString();
+
+  Promise.all([
+    sbFetch('leads', 'select=id,phone,name,status,program_interest,market,created_at&order=created_at.desc&limit=20').then(function(r) { return r.json(); }),
+    sbFetch('leads', 'select=id&created_at=gte.' + todayISO).then(function(r) { return r.headers.get('content-range'); }),
+    sbFetch('leads', 'select=id&created_at=gte.' + weekAgo).then(function(r) { return r.headers.get('content-range'); }),
+    sbFetch('leads', 'select=id&status=eq.converted').then(function(r) { return r.headers.get('content-range'); }),
+    sbFetch('leads', 'select=id').then(function(r) { return r.headers.get('content-range'); }),
+    sbFetch('clients', 'select=id,name,phone,program,status,program_started_at,program_ends_at&order=created_at.desc&limit=20').then(function(r) { return r.json(); }),
+    sbFetch('clients', 'select=id&status=eq.active').then(function(r) { return r.headers.get('content-range'); }),
+    sbFetch('escalations', 'select=id,phone,reason,message_body,created_at&resolved=eq.false&order=created_at.desc&limit=10').then(function(r) { return r.json(); }),
+    sbFetch('escalations', 'select=id&resolved=eq.false').then(function(r) { return r.headers.get('content-range'); })
+  ]).then(function(results) {
+    var leads = results[0] || [];
+    var leadsToday = parseCount(results[1]);
+    var leadsWeek = parseCount(results[2]);
+    var converted = parseCount(results[3]);
+    var totalLeads = parseCount(results[4]);
+    var clients = results[5] || [];
+    var activeClients = parseCount(results[6]);
+    var escalations = results[7] || [];
+    var openEscalations = parseCount(results[8]);
+
+    document.getElementById('stat-leads-today').textContent = leadsToday;
+    document.getElementById('stat-leads-week').textContent = leadsWeek;
+    document.getElementById('stat-conversion').textContent = totalLeads > 0 ? Math.round((converted / totalLeads) * 100) + '%' : '0%';
+    document.getElementById('stat-active').textContent = activeClients;
+    document.getElementById('stat-escalations').textContent = openEscalations;
+
+    var pendingCheckins = 0;
+    clients.forEach(function(c) { if (c.status === 'active') pendingCheckins++; });
+    document.getElementById('stat-pending-checkins').textContent = pendingCheckins;
+
+    var programCounts = {};
+    clients.forEach(function(c) {
+      if (c.status === 'active') {
+        programCounts[c.program] = (programCounts[c.program] || 0) + 1;
+      }
+    });
+    var programGrid = document.getElementById('program-stats');
+    programGrid.innerHTML = '';
+    var programLabels = { '6wk_gym': '6-Week Gym', '6wk_home': '6-Week Home', '12wk': '12-Week Flagship', 'pcos': 'PCOS Warrior', '40plus': '40+ Strong', 'zoom_trial': 'Zoom Trial', 'zoom_pack': 'Zoom Pack' };
+    Object.keys(programLabels).forEach(function(key) {
+      var card = document.createElement('div');
+      card.className = 'stat-card';
+      card.innerHTML = '<div class="stat-card-label">' + programLabels[key] + '</div><div class="stat-card-value">' + (programCounts[key] || 0) + '</div>';
+      programGrid.appendChild(card);
+    });
+
+    var leadsHtml = '';
+    if (leads.length === 0) {
+      leadsHtml = '<tr><td colspan="6" class="empty-state">No leads yet</td></tr>';
+    } else {
+      leads.forEach(function(l) {
+        leadsHtml += '<tr><td>' + maskPhone(l.phone) + '</td><td>' + (l.name || '-') + '</td><td><span class="badge badge-' + l.status + '">' + l.status + '</span></td><td>' + (l.program_interest || '-') + '</td><td>' + (l.market || '-') + '</td><td>' + formatDate(l.created_at) + '</td></tr>';
+      });
+    }
+    document.getElementById('leads-table').innerHTML = leadsHtml;
+
+    var clientsHtml = '';
+    if (clients.length === 0) {
+      clientsHtml = '<tr><td colspan="5" class="empty-state">No clients yet</td></tr>';
+    } else {
+      clients.forEach(function(c) {
+        clientsHtml += '<tr><td>' + (c.name || maskPhone(c.phone)) + '</td><td>' + (c.program || '-') + '</td><td><span class="badge badge-' + c.status + '">' + c.status + '</span></td><td>' + formatDate(c.program_started_at) + '</td><td>' + formatDate(c.program_ends_at) + '</td></tr>';
+      });
+    }
+    document.getElementById('clients-table').innerHTML = clientsHtml;
+
+    var escHtml = '';
+    if (escalations.length === 0) {
+      escHtml = '<tr><td colspan="5" class="empty-state">No open escalations</td></tr>';
+    } else {
+      escalations.forEach(function(e) {
+        escHtml += '<tr><td>' + maskPhone(e.phone) + '</td><td>' + e.reason + '</td><td>' + (e.message_body || '-').slice(0, 80) + '</td><td>' + formatDate(e.created_at) + '</td><td><button class="refresh-btn" onclick="resolveEscalation(\'' + e.id + '\')">Resolve</button></td></tr>';
+      });
+    }
+    document.getElementById('escalations-table').innerHTML = escHtml;
+  }).catch(function(err) {
+    console.error('Dashboard load error:', err);
+  });
+}
+
+function resolveEscalation(id) {
+  var url = (localStorage.getItem('sb_url') || SUPABASE_URL) + '/rest/v1/escalations?id=eq.' + id;
+  fetch(url, {
+    method: 'PATCH',
+    headers: {
+      'apikey': localStorage.getItem('sb_key') || SUPABASE_KEY,
+      'Authorization': 'Bearer ' + localStorage.getItem('sb_token'),
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ resolved: true })
+  }).then(function() { loadDashboard(); });
+}
+
+function parseCount(contentRange) {
+  if (!contentRange) return 0;
+  var parts = contentRange.split('/');
+  return parseInt(parts[1], 10) || 0;
+}
+
+(function() {
+  var token = localStorage.getItem('sb_token');
+  var url = localStorage.getItem('sb_url');
+  var key = localStorage.getItem('sb_key');
+  if (token && url && key) {
+    SUPABASE_URL = url;
+    SUPABASE_KEY = key;
+    showDashboard();
+  }
+})();
+</script>
+</body>
+</html>
