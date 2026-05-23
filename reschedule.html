@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .reschedule-wrap { max-width: 520px; margin: 0 auto; padding: 40px 24px 80px; }
+    .reschedule-header { text-align: center; margin-bottom: 48px; }
+    .reschedule-form { background: white; padding: 40px 32px; border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .form-input, .form-select {
+      width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px;
+      font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--charcoal);
+      background: var(--cream); transition: border-color 0.3s; outline: none;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--gold); }
+    .form-select { appearance: none; }
+    .submit-btn {
+      width: 100%; padding: 16px; background: var(--charcoal); color: white;
+      border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: background 0.3s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .submit-btn:hover { background: var(--gold); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .success-msg { text-align: center; padding: 60px 24px; }
+    .success-msg h2 { font-family: 'Cormorant Garamond', serif; font-size: 36px; color: var(--charcoal); margin-bottom: 16px; }
+    .success-msg p { color: var(--mid-grey); font-size: 16px; line-height: 1.7; }
+    .error-msg { background: #fee; color: #c33; padding: 12px 16px; border-radius: 4px; font-size: 13px; margin-bottom: 16px; display: none; }
+    @media (max-width: 600px) { .reschedule-form { padding: 24px 20px; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+  <div class="reschedule-wrap">
+    <div class="reschedule-header">
+      <p class="hero-eyebrow">Session Update</p>
+      <h1 class="hero-title" style="font-size:clamp(32px,5vw,48px)">Reschedule <em>Session</em></h1>
+      <p class="hero-subtitle" style="max-width:400px; margin:0 auto">Can't make your scheduled session? No worries — pick a new time below.</p>
+    </div>
+
+    <div id="formContainer">
+      <div class="error-msg" id="errorMsg"></div>
+      <form class="reschedule-form" id="rescheduleForm" novalidate>
+        <div class="form-group">
+          <label class="form-label">Your Phone Number *</label>
+          <input class="form-input" type="tel" name="phone" required placeholder="+91 70824 78374">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Reason for Reschedule</label>
+          <select class="form-select" name="reason">
+            <option value="">Select reason</option>
+            <option>Schedule conflict</option>
+            <option>Feeling unwell</option>
+            <option>Travel</option>
+            <option>Emergency</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Preferred New Date *</label>
+          <input class="form-input" type="date" name="new_date" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Preferred Time Slot</label>
+          <select class="form-select" name="time_slot">
+            <option value="">Select time</option>
+            <option>Morning (8am - 11am IST)</option>
+            <option>Afternoon (12pm - 3pm IST)</option>
+            <option>Evening (4pm - 7pm IST)</option>
+            <option>Night (8pm - 10pm IST)</option>
+          </select>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">Request Reschedule</button>
+        <p style="font-size:11px; color:var(--mid-grey); text-align:center; margin-top:12px">You'll receive confirmation on WhatsApp within 24 hours.</p>
+      </form>
+    </div>
+
+    <div class="success-msg" id="successMsg" style="display:none">
+      <h2>Request Received!</h2>
+      <p>Maddy's team will confirm your new session time on WhatsApp within 24 hours.</p>
+    </div>
+  </div>
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+(function() {
+  var dateInput = document.querySelector('input[name="new_date"]');
+  var today = new Date().toISOString().split('T')[0];
+  dateInput.setAttribute('min', today);
+
+  document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('submitBtn');
+    var errEl = document.getElementById('errorMsg');
+    errEl.style.display = 'none';
+
+    var form = e.target;
+    if (!form.phone.value.trim() || !form.new_date.value) {
+      errEl.textContent = 'Please fill in your phone number and preferred date.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    fetch('/api/send-whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: '+917082478374',
+        type: 'text',
+        text: 'RESCHEDULE REQUEST\nClient phone: ' + form.phone.value.trim() +
+              '\nReason: ' + (form.reason.value || 'Not specified') +
+              '\nNew date: ' + form.new_date.value +
+              '\nTime: ' + (form.time_slot.value || 'Flexible')
+      })
+    })
+    .then(function() {
+      document.getElementById('formContainer').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    })
+    .catch(function() {
+      document.getElementById('formContainer').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    });
+  });
+})();
+</script>
+</body>
+</html>
