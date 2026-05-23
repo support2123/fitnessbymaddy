@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Request | Fitness by Maddy</title>
+  <meta name="description" content="Request a program reschedule with Fitness by Maddy. Let Maddy know your new preferred start date.">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ===== FORM PAGE LAYOUT ===== */
+    .form-page-hero {
+      background: var(--charcoal);
+      padding: 64px 80px 56px;
+      position: relative;
+      overflow: hidden;
+    }
+    .form-page-hero::before {
+      content: 'RESCHEDULE';
+      position: absolute;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 110px; font-weight: 700;
+      color: rgba(184,150,90,0.07);
+      top: 50%; right: -20px;
+      transform: translateY(-50%);
+      white-space: nowrap; pointer-events: none;
+    }
+    .form-page-hero .section-eyebrow { color: var(--gold-light); }
+    .form-page-hero .section-title { color: white; margin-bottom: 12px; }
+    .form-page-hero .section-body { color: rgba(255,255,255,0.55); max-width: 540px; }
+
+    .form-container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 64px 24px 80px;
+    }
+
+    /* ===== INFO STRIP ===== */
+    .info-strip {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: rgba(184,150,90,0.08);
+      border: 1px solid rgba(184,150,90,0.25);
+      border-radius: 2px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+    }
+    .info-strip-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .info-strip p {
+      font-size: 13px;
+      color: var(--mid-grey);
+      line-height: 1.6;
+      margin: 0;
+    }
+    .info-strip strong { color: var(--charcoal); font-weight: 500; }
+
+    /* ===== FORM CARD ===== */
+    .form-card {
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.07);
+      overflow: hidden;
+    }
+    .form-section-header {
+      padding: 28px 40px 0;
+      border-top: 3px solid var(--gold);
+    }
+    .form-section-header:first-child { border-top: none; }
+    .form-section-label {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 3px; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 4px;
+    }
+    .form-section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px; font-weight: 400;
+      color: var(--charcoal); margin-bottom: 24px;
+    }
+    .form-body {
+      padding: 0 40px 40px;
+    }
+
+    /* ===== FORM TEXTAREA ===== */
+    .form-textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid var(--light-grey);
+      border-radius: 2px;
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--charcoal);
+      background: var(--cream);
+      transition: border-color 0.3s;
+      outline: none;
+      resize: vertical;
+      min-height: 96px;
+      line-height: 1.6;
+    }
+    .form-textarea:focus { border-color: var(--gold); }
+
+    /* ===== DATE INPUT ===== */
+    input[type="date"].form-input {
+      cursor: pointer;
+      color: var(--charcoal);
+    }
+    input[type="date"].form-input::-webkit-calendar-picker-indicator {
+      opacity: 0.5;
+      cursor: pointer;
+      filter: invert(0.4);
+    }
+
+    /* ===== CONDITIONAL FIELD ===== */
+    .conditional-field {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.35s ease, opacity 0.25s ease, margin 0.25s ease;
+      margin-bottom: 0;
+    }
+    .conditional-field.visible {
+      max-height: 120px;
+      opacity: 1;
+      margin-bottom: 20px;
+    }
+
+    /* ===== DIVIDER ===== */
+    .form-divider {
+      height: 1px;
+      background: var(--light-grey);
+      margin: 0 40px;
+    }
+
+    /* ===== SUBMIT AREA ===== */
+    .form-submit-area {
+      padding: 32px 40px 40px;
+      border-top: 1px solid var(--light-grey);
+      background: var(--cream);
+    }
+    .form-submit-note {
+      font-size: 12px; color: var(--mid-grey);
+      margin-top: 14px; line-height: 1.6;
+      text-align: center;
+    }
+
+    /* ===== BTN FULL WIDTH ===== */
+    .btn-primary-full {
+      background: var(--charcoal); color: white;
+      padding: 18px 36px; font-size: 12px; font-weight: 500;
+      letter-spacing: 2px; text-transform: uppercase;
+      border: none; cursor: pointer; transition: all 0.3s;
+      border-radius: 2px; width: 100%;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .btn-primary-full:hover:not(:disabled) { background: var(--gold); }
+    .btn-primary-full:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* ===== LOADING SPINNER ===== */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-primary-full.loading .spinner { display: block; }
+    .btn-primary-full.loading .btn-text { opacity: 0.7; }
+
+    /* ===== VALIDATION ===== */
+    .form-input.error,
+    .form-select.error,
+    .form-textarea.error {
+      border-color: #C0392B;
+    }
+    .field-error {
+      font-size: 11px; color: #C0392B;
+      margin-top: 5px; letter-spacing: 0.3px;
+      display: none;
+    }
+    .field-error.visible { display: block; }
+
+    /* ===== SUCCESS STATE ===== */
+    .success-card {
+      display: none;
+      text-align: center;
+      padding: 64px 40px;
+    }
+    .success-card.visible { display: block; }
+    .success-icon {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 28px;
+      font-size: 28px;
+    }
+    .success-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px; font-weight: 300;
+      color: var(--charcoal); margin-bottom: 16px;
+    }
+    .success-title em { font-style: italic; color: var(--gold); }
+    .success-body {
+      font-size: 15px; color: var(--mid-grey);
+      line-height: 1.8; max-width: 400px; margin: 0 auto 32px;
+    }
+    .success-details {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 10px;
+      background: var(--sand);
+      border: 1px solid var(--light-grey);
+      border-radius: 2px;
+      padding: 20px 28px;
+      margin-bottom: 28px;
+      text-align: left;
+    }
+    .success-detail-row {
+      display: flex;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .success-detail-label {
+      color: var(--mid-grey);
+      min-width: 100px;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding-top: 1px;
+    }
+    .success-detail-value {
+      color: var(--charcoal);
+      font-weight: 500;
+    }
+    .success-whatsapp {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: #25D366; color: white;
+      padding: 14px 28px; border-radius: 2px;
+      font-size: 13px; font-weight: 500; letter-spacing: 1px;
+      text-decoration: none; transition: opacity 0.3s;
+    }
+    .success-whatsapp:hover { opacity: 0.85; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      .form-page-hero { padding: 48px 24px 40px; }
+      .form-container { padding: 32px 16px 60px; }
+      .form-section-header { padding: 24px 24px 0; }
+      .form-body { padding: 0 24px 32px; }
+      .form-divider { margin: 0 24px; }
+      .form-submit-area { padding: 24px 24px 32px; }
+      .success-card { padding: 48px 24px; }
+      .success-details { width: 100%; }
+    }
+
+    @media (max-width: 480px) {
+      .form-page-hero::before { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+    <li><a href="vip.html" class="nav-cta">Apply Now</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- HERO -->
+  <div class="form-page-hero">
+    <p class="section-eyebrow">Program Management</p>
+    <h1 class="section-title">Reschedule <em>Request</em></h1>
+    <p class="section-body">Life happens. Let Maddy's team know your updated start date and we'll adjust your program accordingly.</p>
+  </div>
+
+  <!-- FORM -->
+  <div class="form-container">
+
+    <!-- INFO STRIP -->
+    <div class="info-strip">
+      <div class="info-strip-icon">&#9432;</div>
+      <p>Reschedule requests are usually processed within <strong>24 hours</strong>. You'll receive confirmation on WhatsApp once your new start date is confirmed.</p>
+    </div>
+
+    <div class="form-card" id="formCard">
+
+      <!-- SUCCESS STATE -->
+      <div class="success-card" id="successCard">
+        <div class="success-icon">&#10003;</div>
+        <h2 class="success-title">Request <em>Received!</em></h2>
+        <p class="success-body">Maddy's team will confirm your new start date on WhatsApp within 24 hours.</p>
+        <div class="success-details" id="successDetails">
+          <div class="success-detail-row">
+            <span class="success-detail-label">New Date</span>
+            <span class="success-detail-value" id="confirmedDate">—</span>
+          </div>
+          <div class="success-detail-row">
+            <span class="success-detail-label">Reason</span>
+            <span class="success-detail-value" id="confirmedReason">—</span>
+          </div>
+        </div>
+        <a href="https://wa.me/message/fitnessbymaddy" class="success-whatsapp">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Message on WhatsApp
+        </a>
+      </div>
+
+      <!-- ACTUAL FORM -->
+      <form id="rescheduleForm" novalidate>
+        <input type="hidden" name="client_id" id="clientId">
+        <input type="hidden" name="type" value="reschedule">
+        <input type="hidden" name="form_type" value="reschedule">
+
+        <!-- SECTION 1: Reason -->
+        <div class="form-section-header" style="border-top:none; padding-top:40px;">
+          <div class="form-section-label">01 — Reason</div>
+          <div class="form-section-title">Why Are You Rescheduling?</div>
+        </div>
+        <div class="form-body">
+          <div class="form-group">
+            <label class="form-label" for="rescheduleReason">Reason for Reschedule <span style="color:var(--gold)">*</span></label>
+            <select class="form-select" id="rescheduleReason" name="reschedule_reason" required>
+              <option value="">Select a reason</option>
+              <option value="travel">Travel</option>
+              <option value="illness">Illness</option>
+              <option value="personal">Personal Reasons</option>
+              <option value="schedule_change">Schedule Change</option>
+              <option value="other">Other</option>
+            </select>
+            <div class="field-error" id="reasonErr">Please select a reason for rescheduling.</div>
+          </div>
+
+          <!-- Conditional: Other reason -->
+          <div class="conditional-field" id="otherReasonField">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="otherReason">Please Specify <span style="color:var(--gold)">*</span></label>
+              <input class="form-input" type="text" id="otherReason" name="other_reason" placeholder="Briefly describe your reason">
+              <div class="field-error" id="otherReasonErr">Please specify your reason.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-divider"></div>
+
+        <!-- SECTION 2: New Date -->
+        <div class="form-section-header">
+          <div class="form-section-label">02 — New Start Date</div>
+          <div class="form-section-title">When Would You Like to Begin?</div>
+        </div>
+        <div class="form-body">
+          <div class="form-group">
+            <label class="form-label" for="newStartDate">Preferred New Start Date <span style="color:var(--gold)">*</span></label>
+            <input class="form-input" type="date" id="newStartDate" name="new_start_date" required>
+            <div class="field-error" id="dateErr">Please select a valid future date.</div>
+          </div>
+          <p style="font-size:12px; color:var(--mid-grey); line-height:1.6; margin-top:-8px;">
+            Choose a Monday for best program alignment. Maddy may suggest a slight adjustment for program flow.
+          </p>
+        </div>
+
+        <div class="form-divider"></div>
+
+        <!-- SECTION 3: Notes -->
+        <div class="form-section-header">
+          <div class="form-section-label">03 — Additional Notes</div>
+          <div class="form-section-title">Anything Else?</div>
+        </div>
+        <div class="form-body">
+          <div class="form-group">
+            <label class="form-label" for="additionalNotes">Additional Notes <span style="color:var(--mid-grey); font-size:10px; text-transform:none; letter-spacing:0">(optional)</span></label>
+            <textarea class="form-textarea" id="additionalNotes" name="additional_notes" placeholder="Anything Maddy should know about this reschedule, or any program adjustments you'd like when you resume."></textarea>
+          </div>
+        </div>
+
+        <!-- SUBMIT -->
+        <div class="form-submit-area">
+          <div id="formError" style="display:none; padding:12px 16px; background:#FDF2F2; border:1px solid #FADBD8; border-radius:2px; color:#C0392B; font-size:13px; margin-bottom:16px;"></div>
+          <button type="submit" class="btn-primary-full" id="submitBtn">
+            <div class="spinner" id="submitSpinner"></div>
+            <span class="btn-text">Submit Reschedule Request</span>
+          </button>
+          <p class="form-submit-note">You'll receive WhatsApp confirmation within 24 hours. Your progress and program are fully preserved.</p>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>
+      <div class="footer-brand">Fitness by Maddy</div>
+      <p class="footer-tagline">Elite online fitness coaching for those who are serious about transforming their body and their life.</p>
+    </div>
+    <div>
+      <div class="footer-heading">Programs</div>
+      <ul class="footer-links">
+        <li><a href="shred.html">6 Week Shred Challenge</a></li>
+        <li><a href="custom.html">12 Week Custom Program</a></li>
+        <li><a href="vip.html">1-on-1 Live Coaching</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-heading">Connect</div>
+      <ul class="footer-links">
+        <li><a href="https://instagram.com/fitnessbymaddy_" target="_blank">Instagram @fitnessbymaddy_</a></li>
+        <li><a href="https://www.fitnessbymaddy.com">fitnessbymaddy.com</a></li>
+      </ul>
+    </div>
+  </footer>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2025 Fitness by Maddy. All rights reserved.</span>
+    <div class="social-links">
+      <a class="social-link" href="https://instagram.com/fitnessbymaddy_" target="_blank">IG</a>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/nav.js"></script>
+<script>
+  // ===== URL PARAMS =====
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var clientId = params.get('c');
+    if (clientId) document.getElementById('clientId').value = clientId;
+  })();
+
+  // ===== SET MIN DATE TO TODAY =====
+  (function () {
+    var today = new Date();
+    var yyyy = today.getFullYear();
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var dd = String(today.getDate()).padStart(2, '0');
+    document.getElementById('newStartDate').min = yyyy + '-' + mm + '-' + dd;
+  })();
+
+  // ===== REASON LABELS MAP =====
+  var reasonLabels = {
+    travel: 'Travel',
+    illness: 'Illness',
+    personal: 'Personal Reasons',
+    schedule_change: 'Schedule Change',
+    other: 'Other'
+  };
+
+  // ===== CONDITIONAL OTHER FIELD =====
+  var reasonSelect = document.getElementById('rescheduleReason');
+  var otherReasonField = document.getElementById('otherReasonField');
+  var otherReasonInput = document.getElementById('otherReason');
+
+  reasonSelect.addEventListener('change', function () {
+    var isOther = this.value === 'other';
+    if (isOther) {
+      otherReasonField.classList.add('visible');
+      otherReasonInput.setAttribute('required', '');
+    } else {
+      otherReasonField.classList.remove('visible');
+      otherReasonInput.removeAttribute('required');
+      otherReasonInput.classList.remove('error');
+      document.getElementById('otherReasonErr').classList.remove('visible');
+    }
+    // Clear reason error on change
+    reasonSelect.classList.remove('error');
+    document.getElementById('reasonErr').classList.remove('visible');
+  });
+
+  // Clear date error on input
+  document.getElementById('newStartDate').addEventListener('change', function () {
+    this.classList.remove('error');
+    document.getElementById('dateErr').classList.remove('visible');
+  });
+
+  // ===== VALIDATION =====
+  function validateForm() {
+    var valid = true;
+
+    // Reason
+    var reason = reasonSelect.value;
+    if (!reason) {
+      reasonSelect.classList.add('error');
+      document.getElementById('reasonErr').classList.add('visible');
+      valid = false;
+    } else {
+      reasonSelect.classList.remove('error');
+      document.getElementById('reasonErr').classList.remove('visible');
+    }
+
+    // Other reason (conditional)
+    if (reason === 'other') {
+      var otherVal = otherReasonInput.value.trim();
+      if (!otherVal) {
+        otherReasonInput.classList.add('error');
+        document.getElementById('otherReasonErr').classList.add('visible');
+        valid = false;
+      } else {
+        otherReasonInput.classList.remove('error');
+        document.getElementById('otherReasonErr').classList.remove('visible');
+      }
+    }
+
+    // Date
+    var dateInput = document.getElementById('newStartDate');
+    var dateVal = dateInput.value;
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var selectedDate = new Date(dateVal);
+    var dateOk = dateVal && selectedDate >= today;
+    if (!dateOk) {
+      dateInput.classList.add('error');
+      document.getElementById('dateErr').classList.add('visible');
+      valid = false;
+    } else {
+      dateInput.classList.remove('error');
+      document.getElementById('dateErr').classList.remove('visible');
+    }
+
+    return valid;
+  }
+
+  // ===== FORMAT DATE FOR SUCCESS CARD =====
+  function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    var parts = dateStr.split('-');
+    var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  }
+
+  // ===== SUBMIT =====
+  document.getElementById('rescheduleForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      var firstError = document.querySelector('.form-input.error, .form-select.error');
+      if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    var btn = document.getElementById('submitBtn');
+    var spinner = document.getElementById('submitSpinner');
+    var formErr = document.getElementById('formError');
+
+    btn.classList.add('loading');
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    formErr.style.display = 'none';
+
+    try {
+      var formData = new FormData(this);
+
+      var response = await fetch('/api/lead-intake', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Server returned ' + response.status);
+      }
+
+      // Populate success card details
+      var selectedReason = reasonSelect.value;
+      var reasonLabel = reasonLabels[selectedReason] || selectedReason;
+      if (selectedReason === 'other') {
+        var otherVal = document.getElementById('otherReason').value.trim();
+        if (otherVal) reasonLabel = 'Other — ' + otherVal;
+      }
+
+      document.getElementById('confirmedDate').textContent = formatDate(document.getElementById('newStartDate').value);
+      document.getElementById('confirmedReason').textContent = reasonLabel;
+
+      // SUCCESS
+      document.getElementById('rescheduleForm').style.display = 'none';
+      var successCard = document.getElementById('successCard');
+      successCard.classList.add('visible');
+      successCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    } catch (err) {
+      formErr.textContent = 'Something went wrong. Please try again or message us directly on WhatsApp.';
+      formErr.style.display = 'block';
+      formErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      spinner.style.display = 'none';
+    }
+  });
+</script>
+</body>
+</html>
