@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+    :root { --gold: #B8965A; --gold-light: #D4AF7A; --charcoal: #2C2C2C; --bg: #111; --card: #1a1a1a; --border: #2a2a2a; --text: #e0e0e0; --muted: #888; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* Login */
+    .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    .login-box { background: var(--card); padding: 48px; border-radius: 4px; width: 100%; max-width: 400px; text-align: center; }
+    .login-box h1 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--gold); letter-spacing: 3px; margin-bottom: 8px; }
+    .login-box p { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+    .login-input { width: 100%; padding: 14px 16px; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-size: 14px; border-radius: 2px; margin-bottom: 16px; outline: none; font-family: 'DM Sans', sans-serif; }
+    .login-input:focus { border-color: var(--gold); }
+    .login-btn { width: 100%; padding: 14px; background: var(--gold); color: #111; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; border: none; cursor: pointer; border-radius: 2px; font-family: 'DM Sans', sans-serif; }
+    .login-error { color: #e74c3c; font-size: 13px; margin-top: 12px; display: none; }
+
+    /* Dashboard */
+    .dashboard { display: none; }
+    .dash-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .dash-logo { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--gold); letter-spacing: 2px; }
+    .dash-logout { font-size: 12px; color: var(--muted); cursor: pointer; text-decoration: underline; }
+    .dash-body { padding: 32px; max-width: 1200px; margin: 0 auto; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); padding: 24px; border-radius: 4px; }
+    .stat-card .num { font-family: 'Bebas Neue', sans-serif; font-size: 42px; color: var(--gold); line-height: 1; }
+    .stat-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    /* Tables */
+    .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--gold); letter-spacing: 2px; margin: 32px 0 16px; }
+    .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 32px; }
+    .data-table th { background: var(--border); color: var(--gold); font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; padding: 12px 16px; text-align: left; }
+    .data-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-new { background: rgba(52,152,219,0.2); color: #3498db; }
+    .badge-qualified { background: rgba(241,196,15,0.2); color: #f1c40f; }
+    .badge-converted { background: rgba(46,204,113,0.2); color: #2ecc71; }
+    .badge-dropped { background: rgba(231,76,60,0.2); color: #e74c3c; }
+    .badge-active { background: rgba(46,204,113,0.2); color: #2ecc71; }
+    .badge-paused { background: rgba(241,196,15,0.2); color: #f1c40f; }
+    .badge-completed { background: rgba(149,165,166,0.2); color: #95a5a6; }
+    .badge-urgent { background: rgba(231,76,60,0.2); color: #e74c3c; }
+
+    .tab-bar { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .tab { padding: 12px 24px; font-size: 12px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.3s; }
+    .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    .loading { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+    .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
+
+    @media (max-width: 768px) {
+      .dash-body { padding: 16px; }
+      .data-table { font-size: 12px; }
+      .data-table th, .data-table td { padding: 8px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div class="login-wrap" id="loginView">
+    <div class="login-box">
+      <h1>FITNESS BY MADDY</h1>
+      <p>Admin Dashboard</p>
+      <input type="email" class="login-input" id="loginEmail" placeholder="Email">
+      <input type="password" class="login-input" id="loginPassword" placeholder="Password">
+      <button class="login-btn" onclick="login()">Sign In</button>
+      <div class="login-error" id="loginError"></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard" id="dashView">
+    <div class="dash-header">
+      <div class="dash-logo">FITNESS BY MADDY ADMIN</div>
+      <span class="dash-logout" onclick="logout()">Sign Out</span>
+    </div>
+
+    <div class="dash-body">
+      <!-- Stats -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="num" id="statLeadsToday">-</div><div class="label">Leads Today</div></div>
+        <div class="stat-card"><div class="num" id="statLeadsWeek">-</div><div class="label">Leads This Week</div></div>
+        <div class="stat-card"><div class="num" id="statConversion">-</div><div class="label">Conversion Rate</div></div>
+        <div class="stat-card"><div class="num" id="statActiveClients">-</div><div class="label">Active Clients</div></div>
+        <div class="stat-card"><div class="num" id="statPendingCheckins">-</div><div class="label">Pending Check-Ins</div></div>
+        <div class="stat-card"><div class="num" id="statProgramsWeek">-</div><div class="label">Programs This Week</div></div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <div class="tab active" onclick="switchTab('leads')">Leads</div>
+        <div class="tab" onclick="switchTab('clients')">Clients</div>
+        <div class="tab" onclick="switchTab('checkins')">Check-Ins</div>
+        <div class="tab" onclick="switchTab('escalations')">Escalations</div>
+      </div>
+
+      <!-- Tab Content -->
+      <div id="tabContent">
+        <div class="loading">Loading data...</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  let supabaseUrl = '';
+  let supabaseKey = '';
+  let accessToken = '';
+  let currentTab = 'leads';
+
+  async function login() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const errEl = document.getElementById('loginError');
+    errEl.style.display = 'none';
+
+    supabaseUrl = prompt('Supabase URL (e.g. https://xxx.supabase.co):');
+    supabaseKey = prompt('Supabase anon key:');
+
+    if (!supabaseUrl || !supabaseKey) {
+      errEl.textContent = 'Supabase credentials required';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    try {
+      const res = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error_description || data.msg || 'Login failed');
+
+      accessToken = data.access_token;
+      localStorage.setItem('sb_url', supabaseUrl);
+      localStorage.setItem('sb_key', supabaseKey);
+      localStorage.setItem('sb_token', accessToken);
+
+      showDashboard();
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('sb_token');
+    localStorage.removeItem('sb_url');
+    localStorage.removeItem('sb_key');
+    document.getElementById('loginView').style.display = 'flex';
+    document.getElementById('dashView').style.display = 'none';
+  }
+
+  async function showDashboard() {
+    document.getElementById('loginView').style.display = 'none';
+    document.getElementById('dashView').style.display = 'block';
+    await loadStats();
+    await loadTab('leads');
+  }
+
+  async function sbQuery(table, params) {
+    const query = new URLSearchParams(params).toString();
+    const res = await fetch(`${supabaseUrl}/rest/v1/${table}?${query}`, {
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return res.json();
+  }
+
+  async function sbCount(table, filters) {
+    const query = new URLSearchParams({ select: 'id', ...filters }).toString();
+    const res = await fetch(`${supabaseUrl}/rest/v1/${table}?${query}`, {
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${accessToken}`,
+        'Prefer': 'count=exact',
+        'Range': '0-0'
+      }
+    });
+    const range = res.headers.get('content-range');
+    return range ? parseInt(range.split('/')[1]) || 0 : 0;
+  }
+
+  async function loadStats() {
+    const today = new Date().toISOString().split('T')[0];
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const [leadsToday, leadsWeek, totalLeads, convertedLeads, activeClients, programsWeek] = await Promise.all([
+      sbCount('leads', { 'created_at': `gte.${today}` }),
+      sbCount('leads', { 'created_at': `gte.${weekAgo}` }),
+      sbCount('leads', {}),
+      sbCount('leads', { 'status': 'eq.converted' }),
+      sbCount('clients', { 'status': 'eq.active' }),
+      sbCount('programs', { 'created_at': `gte.${weekAgo}` })
+    ]);
+
+    document.getElementById('statLeadsToday').textContent = leadsToday;
+    document.getElementById('statLeadsWeek').textContent = leadsWeek;
+    document.getElementById('statConversion').textContent = totalLeads > 0 ? Math.round((convertedLeads / totalLeads) * 100) + '%' : '0%';
+    document.getElementById('statActiveClients').textContent = activeClients;
+    document.getElementById('statProgramsWeek').textContent = programsWeek;
+
+    // Pending check-ins is harder to calculate client-side, show placeholder
+    document.getElementById('statPendingCheckins').textContent = '-';
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    loadTab(tab);
+  }
+
+  async function loadTab(tab) {
+    const container = document.getElementById('tabContent');
+    container.innerHTML = '<div class="loading">Loading...</div>';
+
+    if (tab === 'leads') {
+      const data = await sbQuery('leads', { select: '*', order: 'created_at.desc', limit: 50 });
+      if (!data.length) { container.innerHTML = '<div class="empty">No leads yet</div>'; return; }
+      container.innerHTML = `<table class="data-table">
+        <tr><th>Name</th><th>Phone</th><th>Status</th><th>Program Interest</th><th>Market</th><th>Created</th></tr>
+        ${data.map(l => `<tr>
+          <td>${l.name || '-'}</td>
+          <td>${maskPhone(l.phone)}</td>
+          <td><span class="badge badge-${l.status}">${l.status}</span></td>
+          <td>${l.program_interest || '-'}</td>
+          <td>${l.market || '-'}</td>
+          <td>${formatDate(l.created_at)}</td>
+        </tr>`).join('')}
+      </table>`;
+    }
+
+    if (tab === 'clients') {
+      const data = await sbQuery('clients', { select: '*', order: 'created_at.desc', limit: 50 });
+      if (!data.length) { container.innerHTML = '<div class="empty">No clients yet</div>'; return; }
+      container.innerHTML = `<table class="data-table">
+        <tr><th>Name</th><th>Phone</th><th>Program</th><th>Status</th><th>Paid</th><th>Started</th><th>Ends</th></tr>
+        ${data.map(c => `<tr>
+          <td>${c.name || '-'}</td>
+          <td>${maskPhone(c.phone)}</td>
+          <td>${c.program}</td>
+          <td><span class="badge badge-${c.status}">${c.status}</span></td>
+          <td>${c.paid_amount ? '$' + c.paid_amount : '-'}</td>
+          <td>${formatDate(c.program_started_at)}</td>
+          <td>${formatDate(c.program_ends_at)}</td>
+        </tr>`).join('')}
+      </table>`;
+    }
+
+    if (tab === 'checkins') {
+      const data = await sbQuery('checkins', { select: '*', order: 'created_at.desc', limit: 50 });
+      if (!data.length) { container.innerHTML = '<div class="empty">No check-ins yet</div>'; return; }
+      container.innerHTML = `<table class="data-table">
+        <tr><th>Client</th><th>Week</th><th>Weight</th><th>Waist</th><th>Compliance</th><th>Energy</th><th>Issues</th><th>Submitted</th></tr>
+        ${data.map(c => `<tr>
+          <td>${c.client_id.slice(0, 8)}...</td>
+          <td>${c.week_no}</td>
+          <td>${c.weight || '-'}</td>
+          <td>${c.waist || '-'}</td>
+          <td>${c.compliance_score || '-'}/10</td>
+          <td>${c.energy || '-'}/10</td>
+          <td>${(c.issues || '-').slice(0, 40)}</td>
+          <td>${formatDate(c.form_submitted_at)}</td>
+        </tr>`).join('')}
+      </table>`;
+    }
+
+    if (tab === 'escalations') {
+      const data = await sbQuery('escalations', { select: '*', order: 'created_at.desc', limit: 50, resolved: 'eq.false' });
+      if (!data.length) { container.innerHTML = '<div class="empty">No pending escalations</div>'; return; }
+      container.innerHTML = `<table class="data-table">
+        <tr><th>Phone</th><th>Reason</th><th>Message</th><th>Created</th><th>Action</th></tr>
+        ${data.map(e => `<tr>
+          <td>${maskPhone(e.phone)}</td>
+          <td><span class="badge badge-urgent">${e.reason}</span></td>
+          <td>${(e.message_body || '-').slice(0, 60)}</td>
+          <td>${formatDate(e.created_at)}</td>
+          <td><button onclick="resolveEscalation('${e.id}')" style="padding:4px 12px; background:var(--gold); color:#111; border:none; font-size:11px; cursor:pointer; border-radius:2px;">Resolve</button></td>
+        </tr>`).join('')}
+      </table>`;
+    }
+  }
+
+  async function resolveEscalation(id) {
+    await fetch(`${supabaseUrl}/rest/v1/escalations?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ resolved: true })
+    });
+    loadTab('escalations');
+  }
+
+  function maskPhone(phone) {
+    if (!phone || phone.length < 6) return '***';
+    return phone.slice(0, 4) + 'XXX...' + phone.slice(-3);
+  }
+
+  function formatDate(d) {
+    if (!d) return '-';
+    return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' });
+  }
+
+  // Auto-login if cached
+  const cached = localStorage.getItem('sb_token');
+  if (cached) {
+    supabaseUrl = localStorage.getItem('sb_url');
+    supabaseKey = localStorage.getItem('sb_key');
+    accessToken = cached;
+    showDashboard();
+  }
+</script>
+
+</body>
+</html>
