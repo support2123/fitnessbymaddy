@@ -1,0 +1,84 @@
+const { getSupabase } = require('../../lib/supabase');
+const { sendWhatsApp } = require('../../lib/whatsapp');
+const { createEscalation } = require('../../lib/escalation');
+
+module.exports = async function handler(req, res) {
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const authHeader = req.headers.authorization;
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}` && !req.headers['x-vercel-cron']) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const db = getSupabase();
+
+  const { data: clients } = await db.from('clients')
+    .select('*')
+    .eq('status', 'active');
+
+  if (!clients || clients.length === 0) {
+    return res.status(200).json({ message: 'No active clients' });
+  }
+
+  let sent = 0;
+  let escalated = 0;
+
+  for (const client of clients) {
+    const startDate = new Date(client.program_started_at);
+    const now = new Date();
+    const daysSinceStart = Math.floor((now - startDate) / 86400000);
+    const currentWeek = Math.ceil(daysSinceStart / 7);
+
+    if (currentWeek < 1) continue;
+
+    const { data: existing } = await db.from('checkins')
+      .select('id')
+      .eq('client_id', client.id)
+      .eq('week_no', currentWeek)
+      .single();
+
+    if (existing) continue;
+
+    const { data: missed } = await db.from('checkins')
+      .select('week_no')
+      .eq('client_id', client.id)
+      .order('week_no', { ascending: false })
+      .limit(3);
+
+    const lastCheckinWeek = missed && missed.length > 0 ? missed[0].week_no : 0;
+    const missedWeeks = currentWeek - lastCheckinWeek - 1;
+
+    if (missedWeeks >= 2) {
+      await createEscalation(
+        'client',
+        client.id,
+        client.phone,
+        '2 consecutive missed check-ins',
+        `Client ${client.name} has missed ${missedWeeks} consecutive check-ins`
+      );
+      escalated++;
+    }
+
+    const formUrl = `https://fitnessbymaddy.com/checkin?c=${client.id}&w=${currentWeek}`;
+
+    await sendWhatsApp(client.phone, 'weekly_checkin', {
+      name: client.name || 'there',
+      templateParams: [
+        client.name || 'there',
+        String(currentWeek),
+        formUrl
+      ]
+    });
+
+    sent++;
+  }
+
+  return res.status(200).json({
+    success: true,
+    sent,
+    escalated,
+    total_clients: clients.length
+  });
+};
