@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --gold: #B8965A; --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C; --mid-grey: #6B6B6B; --sand: #F0EAE0;
+      --light-grey: #E8E3DC; --success: #4CAF50; --warning: #FF9800; --danger: #F44336;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream); color: var(--charcoal);
+      min-height: 100vh;
+    }
+    .login-overlay {
+      position: fixed; inset: 0; background: var(--charcoal);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    .login-box {
+      background: white; padding: 48px; border-radius: 4px;
+      text-align: center; max-width: 400px; width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .login-box h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px; font-weight: 300; color: var(--charcoal);
+      margin-bottom: 8px;
+    }
+    .login-box p { font-size: 13px; color: var(--mid-grey); margin-bottom: 24px; }
+    .login-input {
+      width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey);
+      border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif;
+      text-align: center; outline: none; margin-bottom: 16px;
+    }
+    .login-input:focus { border-color: var(--gold); }
+    .login-btn {
+      width: 100%; padding: 14px; background: var(--charcoal); color: white;
+      border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; cursor: pointer; border-radius: 2px;
+      transition: background 0.3s;
+    }
+    .login-btn:hover { background: var(--gold); }
+    .login-error { color: var(--danger); font-size: 13px; margin-top: 12px; display: none; }
+
+    .dashboard { display: none; }
+    .dash-header {
+      background: var(--charcoal); padding: 20px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dash-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px; font-weight: 600; color: var(--gold);
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+    .dash-meta { font-size: 12px; color: rgba(255,255,255,0.5); }
+    .dash-body { padding: 32px; max-width: 1200px; margin: 0 auto; }
+
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px; margin-bottom: 32px;
+    }
+    .stat-card {
+      background: white; padding: 24px; border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      border-left: 3px solid var(--light-grey);
+    }
+    .stat-card.gold { border-left-color: var(--gold); }
+    .stat-card.success { border-left-color: var(--success); }
+    .stat-card.warning { border-left-color: var(--warning); }
+    .stat-card.danger { border-left-color: var(--danger); }
+    .stat-card-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px;
+    }
+    .stat-card-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px; font-weight: 600; color: var(--charcoal); line-height: 1;
+    }
+    .stat-card-sub { font-size: 12px; color: var(--mid-grey); margin-top: 4px; }
+
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px; font-weight: 400; color: var(--charcoal);
+      margin-bottom: 16px; padding-bottom: 8px;
+      border-bottom: 1px solid var(--light-grey);
+    }
+    .table-wrap {
+      background: white; border-radius: 4px; overflow-x: auto;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 32px;
+    }
+    table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+    }
+    th {
+      text-align: left; padding: 12px 16px; font-size: 11px;
+      font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--mid-grey); background: var(--sand);
+      border-bottom: 1px solid var(--light-grey);
+    }
+    td {
+      padding: 12px 16px; border-bottom: 1px solid var(--light-grey);
+      color: var(--charcoal);
+    }
+    tr:last-child td { border-bottom: none; }
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 2px;
+      font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .badge-new { background: #E3F2FD; color: #1565C0; }
+    .badge-qualified { background: #FFF3E0; color: #E65100; }
+    .badge-converted { background: #E8F5E9; color: #2E7D32; }
+    .badge-dropped { background: #FAFAFA; color: #9E9E9E; }
+    .badge-active { background: #E8F5E9; color: #2E7D32; }
+    .badge-paused { background: #FFF3E0; color: #E65100; }
+    .badge-completed { background: #E3F2FD; color: #1565C0; }
+    .refresh-note {
+      text-align: center; font-size: 11px; color: var(--mid-grey);
+      padding: 16px; letter-spacing: 1px;
+    }
+
+    @media (max-width: 768px) {
+      .dash-body { padding: 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+      <h1>Admin Dashboard</h1>
+      <p>Fitness by Maddy — Operations</p>
+      <input type="password" class="login-input" id="loginPassword" placeholder="Enter admin password">
+      <button class="login-btn" id="loginBtn">Access Dashboard</button>
+      <div class="login-error" id="loginError">Invalid password. Try again.</div>
+    </div>
+  </div>
+
+  <div class="dashboard" id="dashboard">
+    <div class="dash-header">
+      <div class="dash-logo">Fitness by Maddy</div>
+      <div class="dash-meta">Admin Dashboard — <span id="lastUpdate"></span></div>
+    </div>
+
+    <div class="dash-body">
+      <div class="stats-grid">
+        <div class="stat-card gold">
+          <div class="stat-card-label">Leads Today</div>
+          <div class="stat-card-value" id="leadsToday">—</div>
+          <div class="stat-card-sub" id="leadsWeek">This week: —</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-card-label">Conversion Rate</div>
+          <div class="stat-card-value" id="conversionRate">—</div>
+          <div class="stat-card-sub">Lead → Paid</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-card-label">Active Clients</div>
+          <div class="stat-card-value" id="activeClients">—</div>
+          <div class="stat-card-sub" id="clientsByProgram"></div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-card-label">Pending Check-ins</div>
+          <div class="stat-card-value" id="pendingCheckins">—</div>
+          <div class="stat-card-sub">This week</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-card-label">Programs Generated</div>
+          <div class="stat-card-value" id="programsGenerated">—</div>
+          <div class="stat-card-sub">This week</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-card-label">Escalations</div>
+          <div class="stat-card-value" id="escalations">—</div>
+          <div class="stat-card-sub">Awaiting review</div>
+        </div>
+      </div>
+
+      <div class="section-title">Recent Leads</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Phone</th>
+              <th>Name</th>
+              <th>Market</th>
+              <th>Interest</th>
+              <th>Status</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody id="leadsTable"><tr><td colspan="6">Loading...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="section-title">Active Clients</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Program</th>
+              <th>Started</th>
+              <th>Ends</th>
+              <th>Paid</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="clientsTable"><tr><td colspan="6">Loading...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="section-title">Recent Check-ins</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Week</th>
+              <th>Weight</th>
+              <th>Compliance</th>
+              <th>Energy</th>
+              <th>Submitted</th>
+            </tr>
+          </thead>
+          <tbody id="checkinsTable"><tr><td colspan="6">Loading...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="refresh-note">Auto-refreshes every 60 seconds</div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    var supabaseClient = null;
+    var SUPABASE_URL = '';
+    var SUPABASE_KEY = '';
+
+    document.getElementById('loginBtn').addEventListener('click', doLogin);
+    document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') doLogin();
+    });
+
+    function doLogin() {
+      var password = document.getElementById('loginPassword').value;
+      fetch('/api/admin-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: password })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.success) {
+          SUPABASE_URL = data.supabase_url;
+          SUPABASE_KEY = data.supabase_key;
+          supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+          document.getElementById('loginOverlay').style.display = 'none';
+          document.getElementById('dashboard').style.display = 'block';
+          loadDashboard();
+          setInterval(loadDashboard, 60000);
+        } else {
+          document.getElementById('loginError').style.display = 'block';
+        }
+      })
+      .catch(function() {
+        document.getElementById('loginError').style.display = 'block';
+      });
+    }
+
+    function loadDashboard() {
+      document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+      loadStats();
+      loadLeads();
+      loadClients();
+      loadCheckins();
+    }
+
+    async function loadStats() {
+      var today = new Date(); today.setHours(0,0,0,0);
+      var weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+
+      // Leads today
+      var { count: todayCount } = await supabaseClient
+        .from('leads').select('*', { count: 'exact', head: true })
+        .gte('created_at', today.toISOString());
+      document.getElementById('leadsToday').textContent = todayCount || 0;
+
+      // Leads this week
+      var { count: weekCount } = await supabaseClient
+        .from('leads').select('*', { count: 'exact', head: true })
+        .gte('created_at', weekAgo.toISOString());
+      document.getElementById('leadsWeek').textContent = 'This week: ' + (weekCount || 0);
+
+      // Conversion rate
+      var { count: totalLeads } = await supabaseClient
+        .from('leads').select('*', { count: 'exact', head: true });
+      var { count: converted } = await supabaseClient
+        .from('leads').select('*', { count: 'exact', head: true })
+        .eq('status', 'converted');
+      var rate = totalLeads > 0 ? Math.round((converted / totalLeads) * 100) : 0;
+      document.getElementById('conversionRate').textContent = rate + '%';
+
+      // Active clients
+      var { data: activeData, count: activeCount } = await supabaseClient
+        .from('clients').select('program', { count: 'exact' })
+        .eq('status', 'active');
+      document.getElementById('activeClients').textContent = activeCount || 0;
+
+      if (activeData && activeData.length > 0) {
+        var byProgram = {};
+        activeData.forEach(function(c) { byProgram[c.program] = (byProgram[c.program] || 0) + 1; });
+        var parts = Object.entries(byProgram).map(function(e) { return e[0] + ': ' + e[1]; });
+        document.getElementById('clientsByProgram').textContent = parts.join(', ');
+      }
+
+      // Programs generated this week
+      var { count: progCount } = await supabaseClient
+        .from('programs').select('*', { count: 'exact', head: true })
+        .gte('generated_at', weekAgo.toISOString());
+      document.getElementById('programsGenerated').textContent = progCount || 0;
+
+      // Pending check-ins (active clients without a check-in this week)
+      // Simplified: count active clients minus check-ins submitted this week
+      var { count: weekCheckins } = await supabaseClient
+        .from('checkins').select('*', { count: 'exact', head: true })
+        .gte('form_submitted_at', weekAgo.toISOString());
+      var pending = Math.max(0, (activeCount || 0) - (weekCheckins || 0));
+      document.getElementById('pendingCheckins').textContent = pending;
+
+      // Escalations (messages containing escalation in last 7 days)
+      var { count: escCount } = await supabaseClient
+        .from('messages').select('*', { count: 'exact', head: true })
+        .eq('template_name', 'escalation_alert')
+        .gte('sent_at', weekAgo.toISOString());
+      document.getElementById('escalations').textContent = escCount || 0;
+    }
+
+    async function loadLeads() {
+      var { data: leads } = await supabaseClient
+        .from('leads').select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      var tbody = document.getElementById('leadsTable');
+      if (!leads || leads.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="color:var(--mid-grey)">No leads yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = leads.map(function(l) {
+        var maskedPhone = l.phone ? l.phone.slice(0,3) + 'XXX...' + l.phone.slice(-3) : '—';
+        return '<tr>' +
+          '<td>' + maskedPhone + '</td>' +
+          '<td>' + (l.name || '—') + '</td>' +
+          '<td>' + (l.market || '—') + '</td>' +
+          '<td>' + (l.program_interest || '—') + '</td>' +
+          '<td><span class="badge badge-' + l.status + '">' + l.status + '</span></td>' +
+          '<td>' + new Date(l.created_at).toLocaleDateString() + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    async function loadClients() {
+      var { data: clients } = await supabaseClient
+        .from('clients').select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      var tbody = document.getElementById('clientsTable');
+      if (!clients || clients.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="color:var(--mid-grey)">No clients yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = clients.map(function(c) {
+        return '<tr>' +
+          '<td>' + (c.name || '—') + '</td>' +
+          '<td>' + (c.program || '—') + '</td>' +
+          '<td>' + new Date(c.program_started_at).toLocaleDateString() + '</td>' +
+          '<td>' + (c.program_ends_at ? new Date(c.program_ends_at).toLocaleDateString() : '—') + '</td>' +
+          '<td>$' + ((c.paid_amount || 0) / 100) + '</td>' +
+          '<td><span class="badge badge-' + c.status + '">' + c.status + '</span></td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    async function loadCheckins() {
+      var { data: checkins } = await supabaseClient
+        .from('checkins').select('*, clients(name)')
+        .order('form_submitted_at', { ascending: false })
+        .limit(20);
+
+      var tbody = document.getElementById('checkinsTable');
+      if (!checkins || checkins.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="color:var(--mid-grey)">No check-ins yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = checkins.map(function(ci) {
+        return '<tr>' +
+          '<td>' + (ci.clients?.name || '—') + '</td>' +
+          '<td>Week ' + ci.week_no + '</td>' +
+          '<td>' + (ci.weight ? ci.weight + ' kg' : '—') + '</td>' +
+          '<td>' + (ci.compliance_score || '—') + '/10</td>' +
+          '<td>' + (ci.energy || '—') + '/10</td>' +
+          '<td>' + new Date(ci.form_submitted_at).toLocaleDateString() + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+  </script>
+</body>
+</html>
