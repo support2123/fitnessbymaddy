@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="admin-wrap">
+  <!-- Login -->
+  <div id="loginView" class="admin-login">
+    <div class="login-card">
+      <h2 class="login-title">Fitness by Maddy</h2>
+      <p class="login-subtitle">Admin Dashboard</p>
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="loginEmail">Email</label>
+          <input class="form-input" type="email" id="loginEmail" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="loginPassword">Password</label>
+          <input class="form-input" type="password" id="loginPassword" required>
+        </div>
+        <button type="submit" class="btn-primary" style="width:100%">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboardView" style="display:none">
+    <header class="admin-header">
+      <h1 class="admin-logo">FBM Admin</h1>
+      <div class="admin-nav">
+        <button class="admin-tab active" data-view="overview">Overview</button>
+        <button class="admin-tab" data-view="leads">Leads</button>
+        <button class="admin-tab" data-view="clients">Clients</button>
+        <button class="admin-tab" data-view="escalations">Escalations</button>
+      </div>
+      <button id="logoutBtn" class="admin-logout">Logout</button>
+    </header>
+
+    <!-- Overview -->
+    <section id="overviewPanel" class="admin-panel">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-label">New Leads Today</div>
+          <div class="stat-card-value" id="leadsToday">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Leads This Week</div>
+          <div class="stat-card-value" id="leadsWeek">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Conversion Rate</div>
+          <div class="stat-card-value" id="conversionRate">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Active Clients</div>
+          <div class="stat-card-value" id="activeClients">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Pending Check-Ins</div>
+          <div class="stat-card-value" id="pendingCheckins">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Programs This Week</div>
+          <div class="stat-card-value" id="programsWeek">—</div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <h3 class="panel-title">Clients by Program</h3>
+        <div id="programBreakdown" class="program-bars"></div>
+      </div>
+    </section>
+
+    <!-- Leads -->
+    <section id="leadsPanel" class="admin-panel" style="display:none">
+      <div class="panel-header">
+        <h3 class="panel-title">All Leads</h3>
+        <select id="leadFilter" class="admin-filter">
+          <option value="all">All Status</option>
+          <option value="new">New</option>
+          <option value="qualified">Qualified</option>
+          <option value="converted">Converted</option>
+          <option value="dropped">Dropped</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Status</th>
+              <th>Program Interest</th>
+              <th>Market</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody id="leadsTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Clients -->
+    <section id="clientsPanel" class="admin-panel" style="display:none">
+      <div class="panel-header">
+        <h3 class="panel-title">Active Clients</h3>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Program</th>
+              <th>Started</th>
+              <th>Ends</th>
+              <th>Status</th>
+              <th>Paid</th>
+            </tr>
+          </thead>
+          <tbody id="clientsTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Escalations -->
+    <section id="escalationsPanel" class="admin-panel" style="display:none">
+      <div class="panel-header">
+        <h3 class="panel-title">Escalations</h3>
+      </div>
+      <div id="escalationsList" class="escalations-list">
+        <p class="empty-state">Loading escalations...</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function() {
+  var supabaseUrl = '';
+  var supabaseKey = '';
+  var session = null;
+
+  var SUPABASE_META = document.querySelector('meta[name="supabase-url"]');
+  if (SUPABASE_META) supabaseUrl = SUPABASE_META.content;
+
+  function init() {
+    var stored = localStorage.getItem('fbm_admin_session');
+    if (stored) {
+      try {
+        session = JSON.parse(stored);
+        showDashboard();
+      } catch(e) { showLogin(); }
+    } else {
+      showLogin();
+    }
+  }
+
+  function showLogin() {
+    document.getElementById('loginView').style.display = 'flex';
+    document.getElementById('dashboardView').style.display = 'none';
+  }
+
+  function showDashboard() {
+    document.getElementById('loginView').style.display = 'none';
+    document.getElementById('dashboardView').style.display = 'block';
+    loadOverview();
+  }
+
+  document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var email = document.getElementById('loginEmail').value;
+    var password = document.getElementById('loginPassword').value;
+
+    fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: password })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        session = data;
+        localStorage.setItem('fbm_admin_session', JSON.stringify(data));
+        showDashboard();
+      } else {
+        alert(data.error || 'Login failed');
+      }
+    })
+    .catch(function() { alert('Login failed. Check credentials.'); });
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', function() {
+    session = null;
+    localStorage.removeItem('fbm_admin_session');
+    showLogin();
+  });
+
+  document.querySelectorAll('.admin-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.admin-tab').forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      var view = tab.getAttribute('data-view');
+      document.querySelectorAll('.admin-panel').forEach(function(p) { p.style.display = 'none'; });
+      document.getElementById(view + 'Panel').style.display = 'block';
+
+      if (view === 'leads') loadLeads();
+      if (view === 'clients') loadClients();
+      if (view === 'escalations') loadEscalations();
+    });
+  });
+
+  function apiGet(path) {
+    return fetch('/api/admin/' + path, {
+      headers: { 'Authorization': 'Bearer ' + (session && session.token || '') }
+    }).then(function(r) { return r.json(); });
+  }
+
+  function loadOverview() {
+    apiGet('stats').then(function(data) {
+      if (!data.ok) return;
+      document.getElementById('leadsToday').textContent = data.leads_today || 0;
+      document.getElementById('leadsWeek').textContent = data.leads_week || 0;
+      document.getElementById('conversionRate').textContent = (data.conversion_rate || 0) + '%';
+      document.getElementById('activeClients').textContent = data.active_clients || 0;
+      document.getElementById('pendingCheckins').textContent = data.pending_checkins || 0;
+      document.getElementById('programsWeek').textContent = data.programs_week || 0;
+
+      var bars = document.getElementById('programBreakdown');
+      bars.innerHTML = '';
+      if (data.by_program) {
+        Object.keys(data.by_program).forEach(function(prog) {
+          bars.innerHTML += '<div class="program-bar-row"><span class="program-bar-label">' + prog + '</span><span class="program-bar-count">' + data.by_program[prog] + '</span></div>';
+        });
+      }
+    });
+  }
+
+  function loadLeads() {
+    apiGet('leads').then(function(data) {
+      if (!data.ok) return;
+      var tbody = document.getElementById('leadsTable');
+      tbody.innerHTML = '';
+      (data.leads || []).forEach(function(l) {
+        tbody.innerHTML += '<tr><td>' + (l.name || '—') + '</td><td>' + maskPhone(l.phone) + '</td><td><span class="status-badge status-' + l.status + '">' + l.status + '</span></td><td>' + (l.program_interest || '—') + '</td><td>' + (l.market || '—') + '</td><td>' + formatDate(l.created_at) + '</td></tr>';
+      });
+    });
+  }
+
+  function loadClients() {
+    apiGet('clients').then(function(data) {
+      if (!data.ok) return;
+      var tbody = document.getElementById('clientsTable');
+      tbody.innerHTML = '';
+      (data.clients || []).forEach(function(c) {
+        tbody.innerHTML += '<tr><td>' + c.name + '</td><td>' + c.program + '</td><td>' + formatDate(c.program_started_at) + '</td><td>' + formatDate(c.program_ends_at) + '</td><td><span class="status-badge status-' + c.status + '">' + c.status + '</span></td><td>$' + (c.paid_amount || 0) + '</td></tr>';
+      });
+    });
+  }
+
+  function loadEscalations() {
+    apiGet('escalations').then(function(data) {
+      var list = document.getElementById('escalationsList');
+      if (!data.ok || !data.messages || data.messages.length === 0) {
+        list.innerHTML = '<p class="empty-state">No pending escalations.</p>';
+        return;
+      }
+      list.innerHTML = '';
+      data.messages.forEach(function(m) {
+        list.innerHTML += '<div class="escalation-card"><div class="escalation-phone">' + maskPhone(m.phone) + '</div><div class="escalation-body">' + m.body + '</div><div class="escalation-time">' + formatDate(m.sent_at) + '</div></div>';
+      });
+    });
+  }
+
+  function maskPhone(phone) {
+    if (!phone || phone.length < 6) return '***';
+    return phone.slice(0, 5) + '***' + phone.slice(-3);
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  document.getElementById('leadFilter').addEventListener('change', function() {
+    loadLeads();
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>
