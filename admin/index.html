@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Fitness by Maddy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF8F4; --gold: #B8965A; --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C; --mid-grey: #6B6B6B; --light-grey: #E8E3DC;
+      --sand: #F0EAE0; --green: #4CAF50; --red: #E53935; --blue: #1976D2;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); min-height: 100vh; }
+
+    .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    .login-box { background: white; padding: 48px; border-radius: 4px; box-shadow: 0 8px 40px rgba(0,0,0,0.06); max-width: 400px; width: 100%; text-align: center; }
+    .login-box h1 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 8px; }
+    .login-box p { font-size: 13px; color: var(--mid-grey); margin-bottom: 32px; }
+    .login-box input { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; margin-bottom: 16px; outline: none; }
+    .login-box input:focus { border-color: var(--gold); }
+    .login-box button { width: 100%; padding: 14px; background: var(--charcoal); color: white; border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; }
+    .login-box button:hover { background: var(--gold); }
+
+    .dashboard { display: none; }
+    .dash-nav { background: var(--charcoal); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+    .dash-nav h1 { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: white; letter-spacing: 2px; text-transform: uppercase; }
+    .dash-nav button { background: none; border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.7); padding: 8px 16px; font-size: 11px; letter-spacing: 1px; cursor: pointer; border-radius: 2px; }
+    .dash-nav button:hover { border-color: var(--gold); color: var(--gold); }
+
+    .dash-content { padding: 32px; max-width: 1200px; margin: 0 auto; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: white; padding: 24px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .stat-card .label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card .value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--charcoal); }
+    .stat-card .sub { font-size: 12px; color: var(--mid-grey); margin-top: 4px; }
+
+    .section-title { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; margin-top: 32px; }
+    .data-table { width: 100%; background: white; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .data-table th { text-align: left; padding: 12px 16px; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--mid-grey); background: var(--sand); border-bottom: 1px solid var(--light-grey); }
+    .data-table td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--light-grey); }
+    .data-table tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-new { background: #E3F2FD; color: var(--blue); }
+    .badge-qualified { background: #FFF3E0; color: #F57C00; }
+    .badge-converted { background: #E8F5E9; color: var(--green); }
+    .badge-dropped { background: #FFEBEE; color: var(--red); }
+    .badge-active { background: #E8F5E9; color: var(--green); }
+
+    .loading { text-align: center; padding: 40px; color: var(--mid-grey); font-size: 13px; }
+    @media (max-width: 600px) { .stats-grid { grid-template-columns: 1fr 1fr; } .dash-content { padding: 16px; } }
+  </style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h1>Fitness by Maddy</h1>
+    <p>Admin Dashboard</p>
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Password">
+    <button id="loginBtn">Sign In</button>
+  </div>
+</div>
+
+<div class="dashboard" id="dashboard">
+  <div class="dash-nav">
+    <h1>Fitness by Maddy</h1>
+    <button id="logoutBtn">Sign Out</button>
+  </div>
+
+  <div class="dash-content">
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card"><div class="label">New Leads Today</div><div class="value" id="leadsToday">-</div></div>
+      <div class="stat-card"><div class="label">Leads This Week</div><div class="value" id="leadsWeek">-</div></div>
+      <div class="stat-card"><div class="label">Conversion Rate</div><div class="value" id="convRate">-</div><div class="sub">lead → paid</div></div>
+      <div class="stat-card"><div class="label">Active Clients</div><div class="value" id="activeClients">-</div></div>
+      <div class="stat-card"><div class="label">Pending Check-ins</div><div class="value" id="pendingCheckins">-</div></div>
+      <div class="stat-card"><div class="label">Programs Generated</div><div class="value" id="programsWeek">-</div><div class="sub">this week</div></div>
+    </div>
+
+    <div class="section-title">Active Clients by Program</div>
+    <div id="clientsByProgram" class="stats-grid"></div>
+
+    <div class="section-title">Recent Leads</div>
+    <table class="data-table" id="leadsTable">
+      <thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Interest</th><th>Date</th></tr></thead>
+      <tbody id="leadsBody"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
+    </table>
+
+    <div class="section-title">Escalations</div>
+    <table class="data-table" id="escalationsTable">
+      <thead><tr><th>Phone</th><th>Message</th><th>Time</th></tr></thead>
+      <tbody id="escalationsBody"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(function() {
+  var SUPABASE_URL = '';
+  var SUPABASE_ANON_KEY = '';
+  var session = null;
+
+  function initConfig() {
+    SUPABASE_URL = localStorage.getItem('fbm_supabase_url') || prompt('Enter Supabase URL:');
+    SUPABASE_ANON_KEY = localStorage.getItem('fbm_supabase_key') || prompt('Enter Supabase Anon Key:');
+    localStorage.setItem('fbm_supabase_url', SUPABASE_URL);
+    localStorage.setItem('fbm_supabase_key', SUPABASE_ANON_KEY);
+  }
+
+  function apiCall(path, options) {
+    var headers = { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+    if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
+    return fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({ headers: headers }, options || {}))
+      .then(function(r) { return r.json(); });
+  }
+
+  function authCall(path, body) {
+    return fetch(SUPABASE_URL + '/auth/v1/' + path, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(function(r) { return r.json(); });
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', function() {
+    if (!SUPABASE_URL) initConfig();
+
+    var email = document.getElementById('loginEmail').value;
+    var password = document.getElementById('loginPassword').value;
+
+    authCall('token?grant_type=password', { email: email, password: password })
+      .then(function(data) {
+        if (data.access_token) {
+          session = data;
+          localStorage.setItem('fbm_session', JSON.stringify(data));
+          showDashboard();
+        } else {
+          alert('Login failed: ' + (data.error_description || data.msg || 'Invalid credentials'));
+        }
+      });
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', function() {
+    session = null;
+    localStorage.removeItem('fbm_session');
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+  });
+
+  function showDashboard() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadStats();
+  }
+
+  function loadStats() {
+    var today = new Date().toISOString().split('T')[0];
+    var weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    apiCall('leads?select=id,status,created_at').then(function(leads) {
+      if (!Array.isArray(leads)) return;
+      var todayLeads = leads.filter(function(l) { return l.created_at && l.created_at.startsWith(today); });
+      var weekLeads = leads.filter(function(l) { return l.created_at >= weekAgo; });
+      var converted = leads.filter(function(l) { return l.status === 'converted'; });
+      document.getElementById('leadsToday').textContent = todayLeads.length;
+      document.getElementById('leadsWeek').textContent = weekLeads.length;
+      document.getElementById('convRate').textContent = leads.length > 0 ? Math.round((converted.length / leads.length) * 100) + '%' : '0%';
+    });
+
+    apiCall('clients?select=id,program,status&status=eq.active').then(function(clients) {
+      if (!Array.isArray(clients)) return;
+      document.getElementById('activeClients').textContent = clients.length;
+
+      var byProgram = {};
+      clients.forEach(function(c) { byProgram[c.program] = (byProgram[c.program] || 0) + 1; });
+      var html = '';
+      var programNames = { '6wk_gym': '6-Week Gym', '6wk_home': '6-Week Home', '12wk': '12-Week', 'pcos': 'PCOS', '40plus': '40+', 'zoom_trial': 'Zoom Trial', 'zoom_pack': 'Zoom Pack' };
+      Object.keys(byProgram).forEach(function(p) {
+        html += '<div class="stat-card"><div class="label">' + (programNames[p] || p) + '</div><div class="value">' + byProgram[p] + '</div></div>';
+      });
+      document.getElementById('clientsByProgram').innerHTML = html || '<div class="stat-card"><div class="label">No active clients yet</div><div class="value">0</div></div>';
+    });
+
+    apiCall('leads?select=name,phone,status,program_interest,created_at&order=created_at.desc&limit=20').then(function(leads) {
+      if (!Array.isArray(leads) || leads.length === 0) {
+        document.getElementById('leadsBody').innerHTML = '<tr><td colspan="5">No leads yet</td></tr>';
+        return;
+      }
+      var html = '';
+      leads.forEach(function(l) {
+        var masked = l.phone ? l.phone.slice(0, 4) + '***' + l.phone.slice(-3) : '-';
+        var date = l.created_at ? new Date(l.created_at).toLocaleDateString() : '-';
+        html += '<tr><td>' + (l.name || '-') + '</td><td>' + masked + '</td><td><span class="badge badge-' + l.status + '">' + l.status + '</span></td><td>' + (l.program_interest || '-') + '</td><td>' + date + '</td></tr>';
+      });
+      document.getElementById('leadsBody').innerHTML = html;
+    });
+
+    apiCall('programs?select=id,generated_at&generated_at=gte.' + weekAgo).then(function(programs) {
+      document.getElementById('programsWeek').textContent = Array.isArray(programs) ? programs.length : 0;
+    });
+
+    apiCall('messages?select=phone,body,sent_at&direction=eq.in&order=sent_at.desc&limit=10').then(function(msgs) {
+      if (!Array.isArray(msgs) || msgs.length === 0) {
+        document.getElementById('escalationsBody').innerHTML = '<tr><td colspan="3">No recent messages</td></tr>';
+        return;
+      }
+      var escalationKeywords = ['refund', 'pain', 'dizzy', 'injury', 'complaint', 'side effect'];
+      var escalations = msgs.filter(function(m) {
+        return escalationKeywords.some(function(kw) { return (m.body || '').toLowerCase().includes(kw); });
+      });
+      if (escalations.length === 0) {
+        document.getElementById('escalationsBody').innerHTML = '<tr><td colspan="3">No escalations</td></tr>';
+        return;
+      }
+      var html = '';
+      escalations.forEach(function(m) {
+        var masked = m.phone ? m.phone.slice(0, 4) + '***' + m.phone.slice(-3) : '-';
+        var time = m.sent_at ? new Date(m.sent_at).toLocaleString() : '-';
+        html += '<tr><td>' + masked + '</td><td>' + (m.body || '').slice(0, 80) + '</td><td>' + time + '</td></tr>';
+      });
+      document.getElementById('escalationsBody').innerHTML = html;
+    });
+
+    apiCall('checkins?select=id').then(function() {
+      document.getElementById('pendingCheckins').textContent = '-';
+    });
+  }
+
+  // Auto-login from stored session
+  if (!SUPABASE_URL) {
+    SUPABASE_URL = localStorage.getItem('fbm_supabase_url') || '';
+    SUPABASE_ANON_KEY = localStorage.getItem('fbm_supabase_key') || '';
+  }
+  var stored = localStorage.getItem('fbm_session');
+  if (stored && SUPABASE_URL) {
+    try {
+      session = JSON.parse(stored);
+      showDashboard();
+    } catch(e) {}
+  }
+})();
+</script>
+</body>
+</html>
