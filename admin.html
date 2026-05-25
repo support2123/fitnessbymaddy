@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-wrap { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+    .admin-header { margin-bottom: 40px; }
+    .admin-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 36px; color: var(--charcoal); }
+
+    /* Login */
+    .login-box { max-width: 400px; margin: 120px auto; background: white; padding: 48px 36px; border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); text-align: center; }
+    .login-box h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 24px; color: var(--charcoal); }
+    .login-input { width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey); border-radius: 2px; font-size: 14px; font-family: 'DM Sans', sans-serif; margin-bottom: 12px; outline: none; background: var(--cream); }
+    .login-input:focus { border-color: var(--gold); }
+    .login-btn { width: 100%; padding: 14px; background: var(--charcoal); color: white; border: none; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; font-family: 'DM Sans', sans-serif; }
+    .login-btn:hover { background: var(--gold); }
+    .login-error { color: #c0392b; font-size: 12px; margin-top: 8px; }
+
+    /* Dashboard */
+    .hidden { display: none; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card { background: white; padding: 28px 24px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+    .stat-card-label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .stat-card-value { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 600; color: var(--charcoal); line-height: 1; }
+    .stat-card-sub { font-size: 12px; color: var(--mid-grey); margin-top: 4px; }
+
+    .section-box { background: white; padding: 28px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 24px; }
+    .section-box h3 { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--charcoal); margin-bottom: 16px; }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .data-table th { text-align: left; padding: 10px 12px; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); border-bottom: 2px solid var(--light-grey); }
+    .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--light-grey); color: var(--charcoal); }
+    .data-table tr:hover { background: var(--cream); }
+
+    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .status-new { background: #EBF5FB; color: #2980B9; }
+    .status-qualified { background: #FEF9E7; color: #F39C12; }
+    .status-converted { background: #E8F8F5; color: #27AE60; }
+    .status-dropped { background: #FDEDEC; color: #E74C3C; }
+    .status-active { background: #E8F8F5; color: #27AE60; }
+    .status-paused { background: #FEF9E7; color: #F39C12; }
+
+    .escalation-card { border-left: 3px solid #E74C3C; padding: 16px; background: #FFF5F5; margin-bottom: 12px; border-radius: 0 4px 4px 0; }
+    .escalation-card .esc-reason { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #E74C3C; margin-bottom: 4px; }
+    .escalation-card .esc-msg { font-size: 13px; color: var(--charcoal); line-height: 1.5; }
+    .escalation-card .esc-time { font-size: 11px; color: var(--mid-grey); margin-top: 6px; }
+    .resolve-btn { padding: 6px 14px; background: var(--charcoal); color: white; border: none; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: 2px; margin-top: 8px; }
+    .resolve-btn:hover { background: #27AE60; }
+
+    .refresh-btn { padding: 10px 24px; background: transparent; border: 1.5px solid var(--charcoal); color: var(--charcoal); font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 2px; }
+    .refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    .table-scroll { overflow-x: auto; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="admin.html" class="active">Admin</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- LOGIN -->
+  <div id="login-screen">
+    <div class="login-box">
+      <h2>Admin Access</h2>
+      <input class="login-input" type="email" id="login-email" placeholder="Email">
+      <input class="login-input" type="password" id="login-password" placeholder="Password">
+      <button class="login-btn" id="login-btn">Sign In</button>
+      <div class="login-error hidden" id="login-error"></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="admin-wrap hidden">
+    <div class="admin-header" style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <p class="hero-eyebrow">Dashboard</p>
+        <h1>Operations <em style="font-style:italic; color:var(--gold);">Hub</em></h1>
+      </div>
+      <div>
+        <button class="refresh-btn" id="refresh-btn">Refresh</button>
+        <button class="refresh-btn" id="logout-btn" style="margin-left:8px;">Logout</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="stat-card-label">Leads Today</div><div class="stat-card-value" id="leads-today">—</div></div>
+      <div class="stat-card"><div class="stat-card-label">Leads This Week</div><div class="stat-card-value" id="leads-week">—</div></div>
+      <div class="stat-card"><div class="stat-card-label">Conversion Rate</div><div class="stat-card-value" id="conv-rate">—</div><div class="stat-card-sub">lead to paid</div></div>
+      <div class="stat-card"><div class="stat-card-label">Active Clients</div><div class="stat-card-value" id="active-clients">—</div></div>
+      <div class="stat-card"><div class="stat-card-label">Pending Check-Ins</div><div class="stat-card-value" id="pending-checkins">—</div></div>
+      <div class="stat-card"><div class="stat-card-label">Programs This Week</div><div class="stat-card-value" id="programs-week">—</div></div>
+    </div>
+
+    <!-- Escalations -->
+    <div class="section-box">
+      <h3>Escalations Awaiting Review</h3>
+      <div id="escalations-list"><p style="color:var(--mid-grey);font-size:13px;">Loading...</p></div>
+    </div>
+
+    <!-- Active Clients by Program -->
+    <div class="section-box">
+      <h3>Active Clients by Program</h3>
+      <div class="table-scroll">
+        <table class="data-table" id="clients-table">
+          <thead><tr><th>Name</th><th>Phone</th><th>Program</th><th>Started</th><th>Status</th></tr></thead>
+          <tbody id="clients-body"><tr><td colspan="5" style="color:var(--mid-grey)">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Leads -->
+    <div class="section-box">
+      <h3>Recent Leads</h3>
+      <div class="table-scroll">
+        <table class="data-table" id="leads-table">
+          <thead><tr><th>Phone</th><th>Name</th><th>Source</th><th>Interest</th><th>Status</th><th>Created</th></tr></thead>
+          <tbody id="leads-body"><tr><td colspan="6" style="color:var(--mid-grey)">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function() {
+  var SUPABASE_URL = '';
+  var SUPABASE_ANON_KEY = '';
+  var session = null;
+
+  function $(id) { return document.getElementById(id); }
+
+  function initSupabase() {
+    SUPABASE_URL = localStorage.getItem('fbm_sb_url') || prompt('Enter Supabase URL:');
+    SUPABASE_ANON_KEY = localStorage.getItem('fbm_sb_key') || prompt('Enter Supabase anon key:');
+    if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+      localStorage.setItem('fbm_sb_url', SUPABASE_URL);
+      localStorage.setItem('fbm_sb_key', SUPABASE_ANON_KEY);
+    }
+  }
+
+  function sbFetch(table, params) {
+    var url = SUPABASE_URL + '/rest/v1/' + table + '?' + (params || '');
+    var headers = {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + (session || SUPABASE_ANON_KEY),
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    };
+    return fetch(url, { headers: headers }).then(function(r) { return r.json(); });
+  }
+
+  function sbPatch(table, id, data) {
+    var url = SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id;
+    return fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + (session || SUPABASE_ANON_KEY),
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(data)
+    });
+  }
+
+  function maskPhone(p) {
+    if (!p || p.length < 6) return '***';
+    return p.slice(0,3) + 'XXX...' + p.slice(-3);
+  }
+
+  function fmtDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+  }
+
+  function statusBadge(s) {
+    return '<span class="status-badge status-' + s + '">' + s + '</span>';
+  }
+
+  async function loadDashboard() {
+    var today = new Date(); today.setHours(0,0,0,0);
+    var weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+
+    var [leads, clients, checkins, programs, escalations] = await Promise.all([
+      sbFetch('leads', 'order=created_at.desc&limit=50'),
+      sbFetch('clients', 'order=created_at.desc&limit=100'),
+      sbFetch('checkins', 'order=created_at.desc&limit=100'),
+      sbFetch('programs', 'order=created_at.desc&limit=50'),
+      sbFetch('escalations', 'resolved=eq.false&order=created_at.desc')
+    ]);
+
+    var leadsToday = (leads || []).filter(function(l) { return new Date(l.created_at) >= today; }).length;
+    var leadsWeek = (leads || []).filter(function(l) { return new Date(l.created_at) >= weekAgo; }).length;
+    var totalLeads = (leads || []).length;
+    var converted = (leads || []).filter(function(l) { return l.status === 'converted'; }).length;
+    var convRate = totalLeads > 0 ? Math.round((converted / totalLeads) * 100) : 0;
+    var activeCount = (clients || []).filter(function(c) { return c.status === 'active'; }).length;
+    var programsWeek = (programs || []).filter(function(p) { return new Date(p.created_at) >= weekAgo; }).length;
+
+    $('leads-today').textContent = leadsToday;
+    $('leads-week').textContent = leadsWeek;
+    $('conv-rate').textContent = convRate + '%';
+    $('active-clients').textContent = activeCount;
+    $('pending-checkins').textContent = '—';
+    $('programs-week').textContent = programsWeek;
+
+    // Escalations
+    var escHtml = '';
+    if (!escalations || escalations.length === 0) {
+      escHtml = '<p style="color:var(--mid-grey);font-size:13px;">No pending escalations</p>';
+    } else {
+      escalations.forEach(function(esc) {
+        escHtml += '<div class="escalation-card">' +
+          '<div class="esc-reason">' + (esc.reason || 'unknown').replace(/_/g, ' ') + '</div>' +
+          '<div class="esc-msg">' + (esc.message_body || 'No message').slice(0, 300) + '</div>' +
+          '<div class="esc-time">Phone: ' + maskPhone(esc.phone) + ' | ' + fmtDate(esc.created_at) + '</div>' +
+          '<button class="resolve-btn" data-id="' + esc.id + '">Mark Resolved</button>' +
+          '</div>';
+      });
+    }
+    $('escalations-list').innerHTML = escHtml;
+
+    document.querySelectorAll('.resolve-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var id = this.getAttribute('data-id');
+        sbPatch('escalations', id, { resolved: true, resolved_at: new Date().toISOString() })
+          .then(function() { loadDashboard(); });
+      });
+    });
+
+    // Clients table
+    var cHtml = '';
+    (clients || []).filter(function(c) { return c.status === 'active'; }).forEach(function(c) {
+      cHtml += '<tr><td>' + (c.name || '—') + '</td><td>' + maskPhone(c.phone) + '</td>' +
+        '<td>' + (c.program || '—') + '</td><td>' + fmtDate(c.program_started_at) + '</td>' +
+        '<td>' + statusBadge(c.status) + '</td></tr>';
+    });
+    $('clients-body').innerHTML = cHtml || '<tr><td colspan="5" style="color:var(--mid-grey)">No active clients</td></tr>';
+
+    // Leads table
+    var lHtml = '';
+    (leads || []).slice(0, 20).forEach(function(l) {
+      lHtml += '<tr><td>' + maskPhone(l.phone) + '</td><td>' + (l.name || '—') + '</td>' +
+        '<td>' + (l.source || '—') + '</td><td>' + (l.program_interest || '—') + '</td>' +
+        '<td>' + statusBadge(l.status) + '</td><td>' + fmtDate(l.created_at) + '</td></tr>';
+    });
+    $('leads-body').innerHTML = lHtml || '<tr><td colspan="6" style="color:var(--mid-grey)">No leads yet</td></tr>';
+  }
+
+  // Login handler
+  $('login-btn').addEventListener('click', async function() {
+    var email = $('login-email').value;
+    var password = $('login-password').value;
+    if (!email || !password) return;
+
+    initSupabase();
+
+    try {
+      var res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: email, password: password })
+      });
+      var data = await res.json();
+
+      if (data.access_token) {
+        session = data.access_token;
+        $('login-screen').classList.add('hidden');
+        $('dashboard').classList.remove('hidden');
+        loadDashboard();
+      } else {
+        $('login-error').textContent = data.error_description || 'Login failed';
+        $('login-error').classList.remove('hidden');
+      }
+    } catch (err) {
+      $('login-error').textContent = 'Connection error. Check your Supabase URL.';
+      $('login-error').classList.remove('hidden');
+    }
+  });
+
+  $('refresh-btn')?.addEventListener('click', loadDashboard);
+  $('logout-btn')?.addEventListener('click', function() {
+    session = null;
+    $('dashboard').classList.add('hidden');
+    $('login-screen').classList.remove('hidden');
+  });
+})();
+</script>
+<script src="js/nav.js"></script>
+</body>
+</html>
