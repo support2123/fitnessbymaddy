@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <meta name="description" content="Operations dashboard for Fitness by Maddy coaching business.">
+  <meta name="supabase-url" content="">
+  <meta name="supabase-anon-key" content="">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    :root {
+      --cream: #FAF8F4;
+      --warm-white: #FFFFFF;
+      --sand: #F0EAE0;
+      --taupe: #C8B89A;
+      --gold: #B8965A;
+      --gold-light: #D4AF7A;
+      --charcoal: #2C2C2C;
+      --mid-grey: #6B6B6B;
+      --light-grey: #E8E3DC;
+      --accent: #8B6914;
+      --sidebar-bg: #1a1a1a;
+      --sidebar-hover: #2a2a2a;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--charcoal);
+      overflow-x: hidden;
+    }
+
+    /* ===== AUTH GATE ===== */
+    .auth-gate {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--cream);
+      padding: 24px;
+    }
+    .auth-card {
+      background: white;
+      padding: 60px 48px;
+      border-radius: 4px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+      text-align: center;
+      max-width: 420px;
+      width: 100%;
+    }
+    .auth-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--charcoal);
+      margin-bottom: 8px;
+    }
+    .auth-subtitle {
+      font-size: 12px;
+      color: var(--mid-grey);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 40px;
+    }
+    .auth-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid var(--light-grey);
+      border-radius: 2px;
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--charcoal);
+      background: var(--cream);
+      outline: none;
+      transition: border-color 0.3s;
+      text-align: center;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+    }
+    .auth-input:focus { border-color: var(--gold); }
+    .auth-input::placeholder { letter-spacing: 0; }
+    .auth-btn {
+      width: 100%;
+      background: var(--charcoal);
+      color: white;
+      padding: 16px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+      border-radius: 2px;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .auth-btn:hover { background: var(--gold); }
+    .auth-error {
+      color: #c0392b;
+      font-size: 13px;
+      margin-top: 12px;
+      display: none;
+    }
+    .auth-error.show { display: block; }
+
+    /* ===== DASHBOARD LAYOUT ===== */
+    .dashboard { display: none; min-height: 100vh; }
+    .dashboard.show { display: flex; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background: var(--sidebar-bg);
+      min-height: 100vh;
+      position: fixed;
+      left: 0; top: 0;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s;
+    }
+    .sidebar-logo {
+      padding: 28px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-logo-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: white;
+    }
+    .sidebar-logo-sub {
+      font-size: 10px;
+      color: var(--gold-light);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .sidebar-nav {
+      list-style: none;
+      padding: 16px 0;
+      flex: 1;
+    }
+    .sidebar-nav li {
+      padding: 0;
+    }
+    .sidebar-nav a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 24px;
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+    }
+    .sidebar-nav a:hover {
+      color: rgba(255,255,255,0.9);
+      background: var(--sidebar-hover);
+    }
+    .sidebar-nav a.active {
+      color: var(--gold-light);
+      background: var(--sidebar-hover);
+      border-left-color: var(--gold);
+    }
+    .sidebar-nav .nav-icon {
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
+    .sidebar-footer {
+      padding: 20px 24px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-footer a {
+      color: rgba(255,255,255,0.4);
+      font-size: 12px;
+      text-decoration: none;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .sidebar-footer a:hover { color: var(--gold-light); }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: 240px;
+      background: var(--cream);
+      min-height: 100vh;
+    }
+    .main-header {
+      background: white;
+      padding: 20px 40px;
+      border-bottom: 1px solid var(--light-grey);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .main-header-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px;
+      font-weight: 400;
+      color: var(--charcoal);
+    }
+    .main-header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .refresh-btn {
+      background: transparent;
+      border: 1.5px solid var(--light-grey);
+      padding: 8px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      cursor: pointer;
+      border-radius: 2px;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+    }
+    .refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .hamburger {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .hamburger span {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: var(--charcoal);
+      margin: 4px 0;
+      transition: 0.3s;
+    }
+
+    .main-body {
+      padding: 32px 40px;
+    }
+
+    /* Panels */
+    .panel {
+      display: none;
+    }
+    .panel.active {
+      display: block;
+    }
+
+    /* ===== OVERVIEW CARDS ===== */
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .overview-card {
+      background: white;
+      padding: 24px;
+      border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      border-top: 3px solid var(--light-grey);
+      transition: border-color 0.3s;
+    }
+    .overview-card:hover {
+      border-top-color: var(--gold);
+    }
+    .overview-card-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      margin-bottom: 12px;
+    }
+    .overview-card-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 600;
+      color: var(--charcoal);
+      line-height: 1;
+    }
+    .overview-card-sub {
+      font-size: 12px;
+      color: var(--mid-grey);
+      margin-top: 6px;
+    }
+
+    /* ===== TABLES ===== */
+    .table-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .table-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--charcoal);
+    }
+    .filter-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .filter-select {
+      padding: 8px 12px;
+      border: 1.5px solid var(--light-grey);
+      border-radius: 2px;
+      font-size: 12px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--charcoal);
+      background: white;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      min-width: 140px;
+    }
+    .filter-select:focus { border-color: var(--gold); }
+    .search-input {
+      padding: 8px 12px;
+      border: 1.5px solid var(--light-grey);
+      border-radius: 2px;
+      font-size: 12px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--charcoal);
+      background: white;
+      outline: none;
+      min-width: 200px;
+    }
+    .search-input:focus { border-color: var(--gold); }
+
+    .data-table-wrap {
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      overflow-x: auto;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .data-table th {
+      background: var(--charcoal);
+      color: rgba(255,255,255,0.85);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 14px 16px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--light-grey);
+      color: var(--charcoal);
+      vertical-align: middle;
+    }
+    .data-table tr:nth-child(even) td {
+      background: rgba(240,234,224,0.3);
+    }
+    .data-table tr:hover td {
+      background: rgba(184,150,90,0.06);
+    }
+    .data-table .empty-row td {
+      text-align: center;
+      color: var(--mid-grey);
+      padding: 40px 16px;
+      font-style: italic;
+    }
+
+    /* Status badges */
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 2px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .status-new { background: #dbeafe; color: #1e40af; }
+    .status-qualified { background: #fef3c7; color: #92400e; }
+    .status-converted { background: #d1fae5; color: #065f46; }
+    .status-dropped { background: #fee2e2; color: #991b1b; }
+    .status-active { background: #d1fae5; color: #065f46; }
+    .status-paused { background: #fef3c7; color: #92400e; }
+    .status-completed { background: #dbeafe; color: #1e40af; }
+    .status-refunded { background: #fee2e2; color: #991b1b; }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-submitted { background: #d1fae5; color: #065f46; }
+    .status-overdue { background: #fee2e2; color: #991b1b; }
+
+    /* Clickable row */
+    .data-table tr.clickable { cursor: pointer; }
+
+    /* ===== DETAIL PANEL ===== */
+    .detail-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+    }
+    .detail-overlay.show { display: block; }
+    .detail-panel {
+      position: fixed;
+      right: 0; top: 0; bottom: 0;
+      width: 480px;
+      max-width: 100vw;
+      background: white;
+      z-index: 201;
+      overflow-y: auto;
+      box-shadow: -4px 0 24px rgba(0,0,0,0.1);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+    .detail-panel.show { transform: translateX(0); }
+    .detail-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--light-grey);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 1;
+    }
+    .detail-header h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 400;
+    }
+    .detail-close {
+      background: none;
+      border: 1.5px solid var(--light-grey);
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--mid-grey);
+      border-radius: 2px;
+      transition: all 0.2s;
+    }
+    .detail-close:hover { border-color: var(--charcoal); color: var(--charcoal); }
+    .detail-body {
+      padding: 24px;
+    }
+    .detail-row {
+      margin-bottom: 16px;
+    }
+    .detail-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      margin-bottom: 4px;
+    }
+    .detail-value {
+      font-size: 14px;
+      color: var(--charcoal);
+      line-height: 1.5;
+    }
+
+    /* ===== ESCALATION ITEMS ===== */
+    .escalation-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .escalation-item {
+      background: white;
+      padding: 20px;
+      border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      border-left: 3px solid #f59e0b;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .escalation-item.resolved {
+      border-left-color: var(--light-grey);
+      opacity: 0.6;
+    }
+    .escalation-meta {
+      flex: 1;
+    }
+    .escalation-trigger {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--charcoal);
+      margin-bottom: 4px;
+    }
+    .escalation-body {
+      font-size: 13px;
+      color: var(--mid-grey);
+      line-height: 1.5;
+      margin-bottom: 6px;
+    }
+    .escalation-time {
+      font-size: 11px;
+      color: var(--taupe);
+    }
+    .resolve-btn {
+      background: transparent;
+      border: 1.5px solid var(--gold);
+      color: var(--gold);
+      padding: 6px 14px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .resolve-btn:hover { background: var(--gold); color: white; }
+    .resolve-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ===== MESSAGES LIST ===== */
+    .messages-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .msg-item {
+      background: white;
+      padding: 14px 20px;
+      border-radius: 4px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.03);
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .msg-direction {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .msg-in { background: #dbeafe; color: #1e40af; }
+    .msg-out { background: #d1fae5; color: #065f46; }
+    .msg-content { flex: 1; min-width: 0; }
+    .msg-phone {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--charcoal);
+      margin-bottom: 2px;
+    }
+    .msg-body {
+      font-size: 13px;
+      color: var(--mid-grey);
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .msg-time {
+      font-size: 11px;
+      color: var(--taupe);
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ===== LOADING ===== */
+    .loading-text {
+      text-align: center;
+      padding: 40px;
+      color: var(--mid-grey);
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1100px) {
+      .overview-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; }
+      .hamburger { display: block; }
+      .main-body { padding: 24px 20px; }
+      .main-header { padding: 16px 20px; }
+      .overview-grid { grid-template-columns: repeat(2, 1fr); }
+      .detail-panel { width: 100vw; }
+    }
+    @media (max-width: 600px) {
+      .overview-grid { grid-template-columns: 1fr; }
+      .table-controls { flex-direction: column; align-items: stretch; }
+      .filter-group { flex-direction: column; }
+      .filter-select, .search-input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== AUTH GATE ===== -->
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <div class="auth-logo">Fitness by Maddy</div>
+    <div class="auth-subtitle">Admin Dashboard</div>
+    <form id="authForm">
+      <input type="password" class="auth-input" id="authPassword" placeholder="Enter admin password" autocomplete="current-password">
+      <button type="submit" class="auth-btn">Access Dashboard</button>
+    </form>
+    <div class="auth-error" id="authError">Incorrect password. Please try again.</div>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div class="dashboard" id="dashboard">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-text">FBM Admin</div>
+      <div class="sidebar-logo-sub">Operations Dashboard</div>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a class="active" data-panel="overview"><span class="nav-icon">&#9632;</span> Overview</a></li>
+      <li><a data-panel="leads"><span class="nav-icon">&#8599;</span> Leads</a></li>
+      <li><a data-panel="clients"><span class="nav-icon">&#9733;</span> Clients</a></li>
+      <li><a data-panel="escalations"><span class="nav-icon">&#9888;</span> Escalations</a></li>
+      <li><a data-panel="messages"><span class="nav-icon">&#9993;</span> Messages</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <a id="logoutBtn">Sign Out</a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="main-header">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <button class="hamburger" id="hamburgerBtn">
+          <span></span><span></span><span></span>
+        </button>
+        <h1 class="main-header-title" id="headerTitle">Overview</h1>
+      </div>
+      <div class="main-header-right">
+        <button class="refresh-btn" id="refreshBtn">Refresh Data</button>
+      </div>
+    </div>
+    <div class="main-body">
+
+      <!-- ===== OVERVIEW PANEL ===== -->
+      <div class="panel active" id="panelOverview">
+        <div class="overview-grid">
+          <div class="overview-card">
+            <div class="overview-card-label">New Leads</div>
+            <div class="overview-card-value" id="statLeadsToday">-</div>
+            <div class="overview-card-sub" id="statLeadsWeek">- this week</div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-card-label">Conversion Rate</div>
+            <div class="overview-card-value" id="statConversion">-</div>
+            <div class="overview-card-sub">Leads to paid this month</div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-card-label">Active Clients</div>
+            <div class="overview-card-value" id="statActiveClients">-</div>
+            <div class="overview-card-sub">Currently on a program</div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-card-label">Pending Check-Ins</div>
+            <div class="overview-card-value" id="statPendingCheckins">-</div>
+            <div class="overview-card-sub">Due but not submitted</div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-card-label">Programs Generated</div>
+            <div class="overview-card-value" id="statProgramsGenerated">-</div>
+            <div class="overview-card-sub">This week</div>
+          </div>
+        </div>
+
+        <!-- Recent leads summary -->
+        <div class="table-controls">
+          <h2 class="table-title">Recent Leads</h2>
+        </div>
+        <div class="data-table-wrap" style="margin-bottom:40px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th>Program Interest</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody id="overviewLeadsBody">
+              <tr class="empty-row"><td colspan="5">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-controls">
+          <h2 class="table-title">Open Escalations</h2>
+        </div>
+        <div id="overviewEscalations" class="escalation-list">
+          <div class="loading-text">Loading...</div>
+        </div>
+      </div>
+
+      <!-- ===== LEADS PANEL ===== -->
+      <div class="panel" id="panelLeads">
+        <div class="table-controls">
+          <h2 class="table-title">Leads</h2>
+          <div class="filter-group">
+            <select class="filter-select" id="leadStatusFilter">
+              <option value="">All Statuses</option>
+              <option value="new">New</option>
+              <option value="qualified">Qualified</option>
+              <option value="converted">Converted</option>
+              <option value="dropped">Dropped</option>
+            </select>
+          </div>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th>Program Interest</th>
+                <th>Market</th>
+                <th>Created</th>
+                <th>Last Message</th>
+              </tr>
+            </thead>
+            <tbody id="leadsTableBody">
+              <tr class="empty-row"><td colspan="7">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== CLIENTS PANEL ===== -->
+      <div class="panel" id="panelClients">
+        <div class="table-controls">
+          <h2 class="table-title">Clients</h2>
+          <div class="filter-group">
+            <select class="filter-select" id="clientProgramFilter">
+              <option value="">All Programs</option>
+              <option value="6wk_gym">6 Week Gym</option>
+              <option value="6wk_home">6 Week Home</option>
+              <option value="12wk">12 Week Custom</option>
+              <option value="pcos">PCOS</option>
+              <option value="40plus">40+ Fitness</option>
+              <option value="zoom_trial">Zoom Trial</option>
+              <option value="zoom_pack">Zoom Pack</option>
+            </select>
+            <select class="filter-select" id="clientStatusFilter">
+              <option value="">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="paused">Paused</option>
+              <option value="completed">Completed</option>
+              <option value="refunded">Refunded</option>
+            </select>
+          </div>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Program</th>
+                <th>Status</th>
+                <th>Week</th>
+                <th>Started</th>
+                <th>Check-In</th>
+              </tr>
+            </thead>
+            <tbody id="clientsTableBody">
+              <tr class="empty-row"><td colspan="6">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== ESCALATIONS PANEL ===== -->
+      <div class="panel" id="panelEscalations">
+        <div class="table-controls">
+          <h2 class="table-title">Escalations</h2>
+          <div class="filter-group">
+            <select class="filter-select" id="escalationFilter">
+              <option value="open">Open</option>
+              <option value="resolved">Resolved</option>
+              <option value="all">All</option>
+            </select>
+          </div>
+        </div>
+        <div class="escalation-list" id="escalationsList">
+          <div class="loading-text">Loading...</div>
+        </div>
+      </div>
+
+      <!-- ===== MESSAGES PANEL ===== -->
+      <div class="panel" id="panelMessages">
+        <div class="table-controls">
+          <h2 class="table-title">Recent Messages</h2>
+          <div class="filter-group">
+            <input type="text" class="search-input" id="msgSearch" placeholder="Search by phone number...">
+          </div>
+        </div>
+        <div class="messages-list" id="messagesList">
+          <div class="loading-text">Loading...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Detail slide-over -->
+<div class="detail-overlay" id="detailOverlay"></div>
+<div class="detail-panel" id="detailPanel">
+  <div class="detail-header">
+    <h3 id="detailTitle">Details</h3>
+    <button class="detail-close" id="detailClose">&times;</button>
+  </div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ===== CONFIG =====
+  // SHA-256 hash of the admin password "password" (change in production)
+  var ADMIN_HASH = '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8';
+  var SESSION_KEY = 'fbm_admin_session';
+
+  // Supabase config from meta tags
+  var sbUrlMeta = document.querySelector('meta[name="supabase-url"]');
+  var sbKeyMeta = document.querySelector('meta[name="supabase-anon-key"]');
+  var SUPABASE_URL = (sbUrlMeta && sbUrlMeta.content) || '';
+  var SUPABASE_ANON_KEY = (sbKeyMeta && sbKeyMeta.content) || '';
+
+  var sb = null;
+  var useDemoData = false;
+
+  if (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } else {
+    useDemoData = true;
+  }
+
+  // ===== DEMO DATA =====
+  var demoData = {
+    leads: [
+      { id: '1', name: 'Arjun Patel', phone: '+919876543210', status: 'new', program_interest: '12wk', market: 'IN', source: 'instagram', created_at: new Date(Date.now() - 2*3600000).toISOString(), last_msg_at: new Date(Date.now() - 1800000).toISOString(), first_msg: 'Hi, I want to join the 12 week program', email: 'arjun@example.com', intake_data: null },
+      { id: '2', name: 'Priya Sharma', phone: '+919812345678', status: 'qualified', program_interest: 'pcos', market: 'IN', source: 'instagram', created_at: new Date(Date.now() - 86400000).toISOString(), last_msg_at: new Date(Date.now() - 43200000).toISOString(), first_msg: 'Looking for PCOS fitness coaching', email: 'priya@example.com', intake_data: null },
+      { id: '3', name: 'Mohammed Al-Rashid', phone: '+971501234567', status: 'converted', program_interest: '6wk_gym', market: 'UAE', source: 'whatsapp', created_at: new Date(Date.now() - 172800000).toISOString(), last_msg_at: new Date(Date.now() - 86400000).toISOString(), first_msg: 'I want the 6 week shred', email: 'mohammed@example.com', intake_data: null },
+      { id: '4', name: 'Sarah Johnson', phone: '+447912345678', status: 'new', program_interest: 'zoom_trial', market: 'UK', source: 'website', created_at: new Date(Date.now() - 7200000).toISOString(), last_msg_at: null, first_msg: 'Interested in 1-on-1 coaching', email: 'sarah@example.com', intake_data: null },
+      { id: '5', name: 'Rahul Mehra', phone: '+919555123456', status: 'dropped', program_interest: '6wk_home', market: 'IN', source: 'referral', created_at: new Date(Date.now() - 604800000).toISOString(), last_msg_at: new Date(Date.now() - 432000000).toISOString(), first_msg: 'Hey can you share the pricing?', email: null, intake_data: null },
+      { id: '6', name: 'Ananya Gupta', phone: '+919888777666', status: 'new', program_interest: '40plus', market: 'IN', source: 'instagram', created_at: new Date(Date.now() - 3600000).toISOString(), last_msg_at: new Date(Date.now() - 600000).toISOString(), first_msg: 'I am 45, need help getting fit again', email: 'ananya@example.com', intake_data: null }
+    ],
+    clients: [
+      { id: 'c1', name: 'Mohammed Al-Rashid', phone: '+971501234567', program: '6wk_gym', status: 'active', program_started_at: new Date(Date.now() - 14*86400000).toISOString(), email: 'mohammed@example.com' },
+      { id: 'c2', name: 'Vikram Singh', phone: '+919876000111', program: '12wk', status: 'active', program_started_at: new Date(Date.now() - 35*86400000).toISOString(), email: 'vikram@example.com' },
+      { id: 'c3', name: 'Neha Kapoor', phone: '+919876000222', program: 'pcos', status: 'active', program_started_at: new Date(Date.now() - 21*86400000).toISOString(), email: 'neha@example.com' },
+      { id: 'c4', name: 'James Wilson', phone: '+447900111222', program: 'zoom_pack', status: 'active', program_started_at: new Date(Date.now() - 42*86400000).toISOString(), email: 'james@example.com' },
+      { id: 'c5', name: 'Deepika Rao', phone: '+919876000333', program: '6wk_home', status: 'completed', program_started_at: new Date(Date.now() - 56*86400000).toISOString(), email: 'deepika@example.com' }
+    ],
+    checkins: [
+      { id: 'ch1', client_id: 'c1', week_no: 2, form_submitted_at: new Date(Date.now() - 86400000).toISOString(), weight: 82.5, compliance_score: 8 },
+      { id: 'ch2', client_id: 'c2', week_no: 5, form_submitted_at: new Date(Date.now() - 172800000).toISOString(), weight: 78.0, compliance_score: 7 },
+      { id: 'ch3', client_id: 'c3', week_no: 3, form_submitted_at: null, weight: null, compliance_score: null }
+    ],
+    programs: [
+      { id: 'p1', client_id: 'c1', week_no: 2, generated_at: new Date(Date.now() - 43200000).toISOString() },
+      { id: 'p2', client_id: 'c2', week_no: 5, generated_at: new Date(Date.now() - 86400000).toISOString() },
+      { id: 'p3', client_id: 'c4', week_no: 6, generated_at: new Date(Date.now() - 129600000).toISOString() }
+    ],
+    escalations: [
+      { id: 'e1', phone: '+919876543210', trigger_word: 'refund', message_body: 'I want a refund, this is not working for me at all', source: 'whatsapp', resolved: false, resolved_by: null, resolved_at: null, created_at: new Date(Date.now() - 7200000).toISOString() },
+      { id: 'e2', phone: '+919876000222', trigger_word: 'pain', message_body: 'I have severe knee pain after the leg day workout, should I stop?', source: 'whatsapp', resolved: false, resolved_by: null, resolved_at: null, created_at: new Date(Date.now() - 14400000).toISOString() },
+      { id: 'e3', phone: '+447900111222', trigger_word: 'cancel', message_body: 'Thinking about cancelling my subscription, not seeing enough results', source: 'whatsapp', resolved: true, resolved_by: 'Maddy', resolved_at: new Date(Date.now() - 43200000).toISOString(), created_at: new Date(Date.now() - 86400000).toISOString() }
+    ],
+    messages: [
+      { id: 'm1', phone: '+919876543210', direction: 'in', body: 'Hi, I want to join the 12 week program. What is the price?', sent_at: new Date(Date.now() - 7200000).toISOString() },
+      { id: 'm2', phone: '+919876543210', direction: 'out', body: 'Hey Arjun! Great to hear from you. The 12 Week Custom Program is $297 one-time. It includes a fully personalised workout and nutrition plan, bi-weekly adjustments, and WhatsApp support.', sent_at: new Date(Date.now() - 6600000).toISOString() },
+      { id: 'm3', phone: '+919812345678', direction: 'in', body: 'Looking for PCOS fitness coaching. Do you have something specific?', sent_at: new Date(Date.now() - 86400000).toISOString() },
+      { id: 'm4', phone: '+919812345678', direction: 'out', body: 'Hi Priya! Yes, we have a dedicated PCOS Management program designed specifically for hormonal balance and sustainable fitness.', sent_at: new Date(Date.now() - 82800000).toISOString() },
+      { id: 'm5', phone: '+971501234567', direction: 'in', body: 'Just finished week 2 workout. Feeling great!', sent_at: new Date(Date.now() - 43200000).toISOString() },
+      { id: 'm6', phone: '+971501234567', direction: 'out', body: 'Amazing Mohammed! Keep pushing. Your week 3 plan is being generated now.', sent_at: new Date(Date.now() - 39600000).toISOString() },
+      { id: 'm7', phone: '+919876000222', direction: 'in', body: 'I have severe knee pain after the leg day workout, should I stop?', sent_at: new Date(Date.now() - 14400000).toISOString() },
+      { id: 'm8', phone: '+447912345678', direction: 'in', body: 'Interested in 1-on-1 coaching with Maddy. How do I apply?', sent_at: new Date(Date.now() - 7200000).toISOString() },
+      { id: 'm9', phone: '+919876543210', direction: 'in', body: 'I want a refund, this is not working for me at all', sent_at: new Date(Date.now() - 7200000).toISOString() },
+      { id: 'm10', phone: '+919888777666', direction: 'in', body: 'I am 45, need help getting fit again. Is there a program for people my age?', sent_at: new Date(Date.now() - 3600000).toISOString() }
+    ]
+  };
+
+  // ===== HELPERS =====
+  function maskPhone(phone) {
+    if (!phone || phone.length < 6) return phone || '-';
+    return phone.slice(0, -4).replace(/\d/g, '*') + phone.slice(-4);
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '-';
+    var d = new Date(iso);
+    var now = new Date();
+    var diff = now - d;
+    if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+    if (diff < 604800000) return Math.floor(diff / 86400000) + 'd ago';
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function formatProgram(code) {
+    var map = {
+      '6wk_gym': '6 Wk Gym', '6wk_home': '6 Wk Home', '12wk': '12 Week Custom',
+      'pcos': 'PCOS', '40plus': '40+ Fitness', 'zoom_trial': 'Zoom Trial', 'zoom_pack': 'Zoom Pack'
+    };
+    return map[code] || code || '-';
+  }
+
+  function getWeekNumber(startDate) {
+    if (!startDate) return '-';
+    var start = new Date(startDate);
+    var now = new Date();
+    var weeks = Math.floor((now - start) / (7 * 86400000)) + 1;
+    return weeks > 0 ? weeks : 1;
+  }
+
+  function statusBadge(status) {
+    return '<span class="status-badge status-' + (status || 'new') + '">' + (status || 'new') + '</span>';
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ===== AUTH =====
+  var authGate = document.getElementById('authGate');
+  var dashboard = document.getElementById('dashboard');
+  var authForm = document.getElementById('authForm');
+  var authError = document.getElementById('authError');
+
+  async function hashPassword(pw) {
+    var encoded = new TextEncoder().encode(pw);
+    var buffer = await crypto.subtle.digest('SHA-256', encoded);
+    return Array.from(new Uint8Array(buffer)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+  }
+
+  function checkSession() {
+    var session = sessionStorage.getItem(SESSION_KEY);
+    if (session === 'authenticated') {
+      showDashboard();
+    }
+  }
+
+  function showDashboard() {
+    authGate.style.display = 'none';
+    dashboard.classList.add('show');
+    loadAllData();
+  }
+
+  authForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    authError.classList.remove('show');
+    var pw = document.getElementById('authPassword').value;
+    var hash = await hashPassword(pw);
+    if (hash === ADMIN_HASH) {
+      sessionStorage.setItem(SESSION_KEY, 'authenticated');
+      showDashboard();
+    } else {
+      authError.classList.add('show');
+      document.getElementById('authPassword').value = '';
+      document.getElementById('authPassword').focus();
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', function() {
+    sessionStorage.removeItem(SESSION_KEY);
+    dashboard.classList.remove('show');
+    authGate.style.display = 'flex';
+    document.getElementById('authPassword').value = '';
+  });
+
+  // ===== SIDEBAR NAVIGATION =====
+  var sidebarLinks = document.querySelectorAll('.sidebar-nav a');
+  var panels = document.querySelectorAll('.panel');
+  var headerTitle = document.getElementById('headerTitle');
+  var panelNames = {
+    overview: 'Overview',
+    leads: 'Leads',
+    clients: 'Clients',
+    escalations: 'Escalations',
+    messages: 'Messages'
+  };
+
+  sidebarLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+      var panelId = this.getAttribute('data-panel');
+      sidebarLinks.forEach(function(l) { l.classList.remove('active'); });
+      this.classList.add('active');
+      panels.forEach(function(p) { p.classList.remove('active'); });
+      var target = document.getElementById('panel' + panelId.charAt(0).toUpperCase() + panelId.slice(1));
+      if (target) target.classList.add('active');
+      headerTitle.textContent = panelNames[panelId] || 'Dashboard';
+      document.getElementById('sidebar').classList.remove('open');
+    });
+  });
+
+  // Mobile hamburger
+  document.getElementById('hamburgerBtn').addEventListener('click', function() {
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+
+  // Refresh
+  document.getElementById('refreshBtn').addEventListener('click', function() {
+    loadAllData();
+  });
+
+  // ===== DATA LOADING =====
+  var cachedLeads = [];
+  var cachedClients = [];
+  var cachedCheckins = [];
+  var cachedPrograms = [];
+  var cachedEscalations = [];
+  var cachedMessages = [];
+
+  async function loadAllData() {
+    if (useDemoData) {
+      cachedLeads = demoData.leads;
+      cachedClients = demoData.clients;
+      cachedCheckins = demoData.checkins;
+      cachedPrograms = demoData.programs;
+      cachedEscalations = demoData.escalations;
+      cachedMessages = demoData.messages;
+      renderAll();
+      return;
+    }
+
+    try {
+      var results = await Promise.all([
+        sb.from('leads').select('*').order('created_at', { ascending: false }).limit(200),
+        sb.from('clients').select('*').order('created_at', { ascending: false }).limit(200),
+        sb.from('checkins').select('*').order('form_submitted_at', { ascending: false }).limit(500),
+        sb.from('programs').select('*').order('generated_at', { ascending: false }).limit(200),
+        sb.from('escalations').select('*').order('created_at', { ascending: false }).limit(100),
+        sb.from('messages').select('*').order('sent_at', { ascending: false }).limit(50)
+      ]);
+
+      cachedLeads = (results[0].data || []);
+      cachedClients = (results[1].data || []);
+      cachedCheckins = (results[2].data || []);
+      cachedPrograms = (results[3].data || []);
+      cachedEscalations = (results[4].data || []);
+      cachedMessages = (results[5].data || []);
+    } catch (err) {
+      console.error('Error loading data from Supabase:', err);
+      cachedLeads = demoData.leads;
+      cachedClients = demoData.clients;
+      cachedCheckins = demoData.checkins;
+      cachedPrograms = demoData.programs;
+      cachedEscalations = demoData.escalations;
+      cachedMessages = demoData.messages;
+    }
+
+    renderAll();
+  }
+
+  function renderAll() {
+    renderOverview();
+    renderLeadsTable();
+    renderClientsTable();
+    renderEscalations();
+    renderMessages();
+  }
+
+  // ===== OVERVIEW =====
+  function renderOverview() {
+    var now = new Date();
+    var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var weekStart = new Date(todayStart);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    var leadsToday = cachedLeads.filter(function(l) { return new Date(l.created_at) >= todayStart; }).length;
+    var leadsWeek = cachedLeads.filter(function(l) { return new Date(l.created_at) >= weekStart; }).length;
+    document.getElementById('statLeadsToday').textContent = leadsToday;
+    document.getElementById('statLeadsWeek').textContent = leadsWeek + ' this week';
+
+    var monthLeads = cachedLeads.filter(function(l) { return new Date(l.created_at) >= monthStart; }).length;
+    var monthConverted = cachedLeads.filter(function(l) {
+      return new Date(l.created_at) >= monthStart && l.status === 'converted';
+    }).length;
+    var convRate = monthLeads > 0 ? Math.round((monthConverted / monthLeads) * 100) : 0;
+    document.getElementById('statConversion').textContent = convRate + '%';
+
+    var activeClients = cachedClients.filter(function(c) { return c.status === 'active'; }).length;
+    document.getElementById('statActiveClients').textContent = activeClients;
+
+    var activeClientList = cachedClients.filter(function(c) { return c.status === 'active'; });
+    var pendingCheckins = 0;
+    activeClientList.forEach(function(client) {
+      var currentWeek = getWeekNumber(client.program_started_at);
+      var hasCheckin = cachedCheckins.some(function(ch) {
+        return ch.client_id === client.id && ch.week_no === currentWeek && ch.form_submitted_at;
+      });
+      if (!hasCheckin) pendingCheckins++;
+    });
+    document.getElementById('statPendingCheckins').textContent = pendingCheckins;
+
+    var programsWeek = cachedPrograms.filter(function(p) { return new Date(p.generated_at) >= weekStart; }).length;
+    document.getElementById('statProgramsGenerated').textContent = programsWeek;
+
+    // Recent leads (top 5)
+    var recentLeads = cachedLeads.slice(0, 5);
+    var tbody = document.getElementById('overviewLeadsBody');
+    if (recentLeads.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No leads yet</td></tr>';
+    } else {
+      tbody.innerHTML = recentLeads.map(function(l) {
+        return '<tr class="clickable" data-lead-id="' + l.id + '">' +
+          '<td>' + escapeHtml(l.name || 'Unknown') + '</td>' +
+          '<td>' + maskPhone(l.phone) + '</td>' +
+          '<td>' + statusBadge(l.status) + '</td>' +
+          '<td>' + formatProgram(l.program_interest) + '</td>' +
+          '<td>' + formatDate(l.created_at) + '</td>' +
+        '</tr>';
+      }).join('');
+      attachLeadClickHandlers(tbody);
+    }
+
+    // Open escalations (top 3)
+    var openEsc = cachedEscalations.filter(function(e) { return !e.resolved; }).slice(0, 3);
+    var escContainer = document.getElementById('overviewEscalations');
+    if (openEsc.length === 0) {
+      escContainer.innerHTML = '<div class="loading-text">No open escalations</div>';
+    } else {
+      escContainer.innerHTML = openEsc.map(function(e) { return buildEscalationItem(e); }).join('');
+      attachResolveHandlers(escContainer);
+    }
+  }
+
+  // ===== LEADS TABLE =====
+  function renderLeadsTable(statusFilter) {
+    var leads = cachedLeads;
+    if (statusFilter) {
+      leads = leads.filter(function(l) { return l.status === statusFilter; });
+    }
+    var tbody = document.getElementById('leadsTableBody');
+    if (leads.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No leads found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = leads.map(function(l) {
+      return '<tr class="clickable" data-lead-id="' + l.id + '">' +
+        '<td>' + escapeHtml(l.name || 'Unknown') + '</td>' +
+        '<td>' + maskPhone(l.phone) + '</td>' +
+        '<td>' + statusBadge(l.status) + '</td>' +
+        '<td>' + formatProgram(l.program_interest) + '</td>' +
+        '<td>' + escapeHtml(l.market || 'GLOBAL') + '</td>' +
+        '<td>' + formatDate(l.created_at) + '</td>' +
+        '<td>' + formatDate(l.last_msg_at) + '</td>' +
+      '</tr>';
+    }).join('');
+    attachLeadClickHandlers(tbody);
+  }
+
+  document.getElementById('leadStatusFilter').addEventListener('change', function() {
+    renderLeadsTable(this.value || null);
+  });
+
+  function attachLeadClickHandlers(container) {
+    container.querySelectorAll('tr.clickable').forEach(function(row) {
+      row.addEventListener('click', function() {
+        var leadId = this.getAttribute('data-lead-id');
+        var lead = cachedLeads.find(function(l) { return l.id === leadId; });
+        if (lead) showLeadDetail(lead);
+      });
+    });
+  }
+
+  function showLeadDetail(lead) {
+    document.getElementById('detailTitle').textContent = lead.name || 'Lead Details';
+    var body = document.getElementById('detailBody');
+    var fields = [
+      { label: 'Name', value: escapeHtml(lead.name) },
+      { label: 'Phone', value: escapeHtml(lead.phone) },
+      { label: 'Email', value: escapeHtml(lead.email) },
+      { label: 'Status', value: statusBadge(lead.status) },
+      { label: 'Program Interest', value: formatProgram(lead.program_interest) },
+      { label: 'Source', value: escapeHtml(lead.source) },
+      { label: 'Market', value: escapeHtml(lead.market) },
+      { label: 'First Message', value: escapeHtml(lead.first_msg) },
+      { label: 'Created', value: formatDate(lead.created_at) },
+      { label: 'Last Message', value: formatDate(lead.last_msg_at) }
+    ];
+    if (lead.intake_data) {
+      fields.push({ label: 'Intake Data', value: '<pre style="font-size:11px;white-space:pre-wrap;background:var(--cream);padding:12px;border-radius:4px;max-height:300px;overflow:auto;">' + escapeHtml(JSON.stringify(lead.intake_data, null, 2)) + '</pre>' });
+    }
+    body.innerHTML = fields.map(function(f) {
+      return '<div class="detail-row"><div class="detail-label">' + f.label + '</div><div class="detail-value">' + (f.value || '-') + '</div></div>';
+    }).join('');
+    openDetail();
+  }
+
+  // ===== CLIENTS TABLE =====
+  function renderClientsTable(programFilter, statusFilter) {
+    var clients = cachedClients;
+    if (programFilter) {
+      clients = clients.filter(function(c) { return c.program === programFilter; });
+    }
+    if (statusFilter) {
+      clients = clients.filter(function(c) { return c.status === statusFilter; });
+    }
+    var tbody = document.getElementById('clientsTableBody');
+    if (clients.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No clients found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = clients.map(function(c) {
+      var week = getWeekNumber(c.program_started_at);
+      var hasCheckin = cachedCheckins.some(function(ch) {
+        return ch.client_id === c.id && ch.week_no === week && ch.form_submitted_at;
+      });
+      var checkinStatus = c.status !== 'active' ? '-' :
+        (hasCheckin ? statusBadge('submitted') : statusBadge('pending'));
+
+      return '<tr class="clickable" data-client-id="' + c.id + '">' +
+        '<td>' + escapeHtml(c.name) + '</td>' +
+        '<td>' + formatProgram(c.program) + '</td>' +
+        '<td>' + statusBadge(c.status) + '</td>' +
+        '<td>Week ' + week + '</td>' +
+        '<td>' + formatDate(c.program_started_at) + '</td>' +
+        '<td>' + checkinStatus + '</td>' +
+      '</tr>';
+    }).join('');
+
+    tbody.querySelectorAll('tr.clickable').forEach(function(row) {
+      row.addEventListener('click', function() {
+        var clientId = this.getAttribute('data-client-id');
+        var client = cachedClients.find(function(c) { return c.id === clientId; });
+        if (client) showClientDetail(client);
+      });
+    });
+  }
+
+  document.getElementById('clientProgramFilter').addEventListener('change', function() {
+    renderClientsTable(this.value || null, document.getElementById('clientStatusFilter').value || null);
+  });
+  document.getElementById('clientStatusFilter').addEventListener('change', function() {
+    renderClientsTable(document.getElementById('clientProgramFilter').value || null, this.value || null);
+  });
+
+  function showClientDetail(client) {
+    document.getElementById('detailTitle').textContent = client.name;
+    var body = document.getElementById('detailBody');
+    var week = getWeekNumber(client.program_started_at);
+
+    var clientCheckins = cachedCheckins.filter(function(ch) { return ch.client_id === client.id; })
+      .sort(function(a, b) { return b.week_no - a.week_no; });
+
+    var fields = [
+      { label: 'Name', value: escapeHtml(client.name) },
+      { label: 'Phone', value: escapeHtml(client.phone) },
+      { label: 'Email', value: escapeHtml(client.email) },
+      { label: 'Program', value: formatProgram(client.program) },
+      { label: 'Status', value: statusBadge(client.status) },
+      { label: 'Current Week', value: 'Week ' + week },
+      { label: 'Started', value: formatDate(client.program_started_at) }
+    ];
+
+    var checkinHtml = '';
+    if (clientCheckins.length > 0) {
+      checkinHtml = '<div class="detail-row" style="margin-top:20px;"><div class="detail-label">Check-In History</div></div>';
+      clientCheckins.forEach(function(ch) {
+        checkinHtml += '<div style="background:var(--cream);padding:12px;border-radius:4px;margin-bottom:8px;font-size:12px;">' +
+          '<strong>Week ' + ch.week_no + '</strong>' +
+          (ch.weight ? ' &middot; ' + ch.weight + ' kg' : '') +
+          (ch.compliance_score ? ' &middot; Compliance: ' + ch.compliance_score + '/10' : '') +
+          (ch.form_submitted_at ? ' &middot; ' + formatDate(ch.form_submitted_at) : ' &middot; <em>Not submitted</em>') +
+        '</div>';
+      });
+    }
+
+    body.innerHTML = fields.map(function(f) {
+      return '<div class="detail-row"><div class="detail-label">' + f.label + '</div><div class="detail-value">' + (f.value || '-') + '</div></div>';
+    }).join('') + checkinHtml;
+    openDetail();
+  }
+
+  // ===== ESCALATIONS =====
+  function buildEscalationItem(e) {
+    return '<div class="escalation-item' + (e.resolved ? ' resolved' : '') + '" data-esc-id="' + e.id + '">' +
+      '<div class="escalation-meta">' +
+        '<div class="escalation-trigger">Trigger: "' + escapeHtml(e.trigger_word) + '" &middot; ' + maskPhone(e.phone) + '</div>' +
+        '<div class="escalation-body">' + escapeHtml(e.message_body) + '</div>' +
+        '<div class="escalation-time">' + escapeHtml(e.source || '') + ' &middot; ' + formatDate(e.created_at) +
+          (e.resolved ? ' &middot; Resolved by ' + escapeHtml(e.resolved_by || 'Unknown') : '') +
+        '</div>' +
+      '</div>' +
+      (e.resolved ? '' : '<button class="resolve-btn" data-esc-id="' + e.id + '">Resolve</button>') +
+    '</div>';
+  }
+
+  function renderEscalations(filter) {
+    filter = filter || document.getElementById('escalationFilter').value || 'open';
+    var list = cachedEscalations;
+    if (filter === 'open') list = list.filter(function(e) { return !e.resolved; });
+    else if (filter === 'resolved') list = list.filter(function(e) { return e.resolved; });
+
+    var container = document.getElementById('escalationsList');
+    if (list.length === 0) {
+      container.innerHTML = '<div class="loading-text">No escalations found</div>';
+      return;
+    }
+    container.innerHTML = list.map(function(e) { return buildEscalationItem(e); }).join('');
+    attachResolveHandlers(container);
+  }
+
+  function attachResolveHandlers(container) {
+    container.querySelectorAll('.resolve-btn').forEach(function(btn) {
+      btn.addEventListener('click', async function() {
+        var escId = this.getAttribute('data-esc-id');
+        this.disabled = true;
+        this.textContent = 'Resolving...';
+
+        if (!useDemoData && sb) {
+          try {
+            await sb.from('escalations').update({
+              resolved: true,
+              resolved_by: 'Admin',
+              resolved_at: new Date().toISOString()
+            }).eq('id', escId);
+          } catch (err) {
+            console.error('Error resolving escalation:', err);
+          }
+        }
+
+        var esc = cachedEscalations.find(function(e) { return e.id === escId; });
+        if (esc) {
+          esc.resolved = true;
+          esc.resolved_by = 'Admin';
+          esc.resolved_at = new Date().toISOString();
+        }
+        renderEscalations();
+        renderOverview();
+      });
+    });
+  }
+
+  document.getElementById('escalationFilter').addEventListener('change', function() {
+    renderEscalations(this.value);
+  });
+
+  // ===== MESSAGES =====
+  function renderMessages(searchPhone) {
+    var msgs = cachedMessages;
+    if (searchPhone) {
+      var q = searchPhone.toLowerCase().replace(/\s/g, '');
+      msgs = msgs.filter(function(m) { return m.phone.toLowerCase().includes(q); });
+    }
+    var container = document.getElementById('messagesList');
+    if (msgs.length === 0) {
+      container.innerHTML = '<div class="loading-text">No messages found</div>';
+      return;
+    }
+    container.innerHTML = msgs.map(function(m) {
+      return '<div class="msg-item">' +
+        '<span class="msg-direction ' + (m.direction === 'in' ? 'msg-in' : 'msg-out') + '">' +
+          (m.direction === 'in' ? 'IN' : 'OUT') +
+        '</span>' +
+        '<div class="msg-content">' +
+          '<div class="msg-phone">' + maskPhone(m.phone) + '</div>' +
+          '<div class="msg-body">' + escapeHtml(m.body || m.template_name || '') + '</div>' +
+        '</div>' +
+        '<div class="msg-time">' + formatDate(m.sent_at) + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  var msgSearchTimeout;
+  document.getElementById('msgSearch').addEventListener('input', function() {
+    var val = this.value;
+    clearTimeout(msgSearchTimeout);
+    msgSearchTimeout = setTimeout(function() {
+      renderMessages(val || null);
+    }, 300);
+  });
+
+  // ===== DETAIL PANEL =====
+  var detailOverlay = document.getElementById('detailOverlay');
+  var detailPanel = document.getElementById('detailPanel');
+
+  function openDetail() {
+    detailOverlay.classList.add('show');
+    detailPanel.classList.add('show');
+  }
+
+  function closeDetail() {
+    detailOverlay.classList.remove('show');
+    detailPanel.classList.remove('show');
+  }
+
+  document.getElementById('detailClose').addEventListener('click', closeDetail);
+  detailOverlay.addEventListener('click', closeDetail);
+
+  // ===== INIT =====
+  checkSession();
+})();
+</script>
+</body>
+</html>
