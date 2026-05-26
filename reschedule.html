@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --gold: #B8965A; --charcoal: #2C2C2C; --cream: #FAF8F4; --mid-grey: #6B6B6B; --light-grey: #E8E3DC; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); min-height: 100vh; }
+    .form-header { background: var(--charcoal); padding: 40px 24px; text-align: center; }
+    .form-header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--gold); letter-spacing: 3px; }
+    .form-header p { color: rgba(255,255,255,0.6); font-size: 14px; margin-top: 8px; }
+    .form-wrap { max-width: 520px; margin: 0 auto; padding: 40px 24px 60px; }
+    .form-group { margin-bottom: 24px; }
+    .form-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mid-grey); margin-bottom: 8px; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 14px 16px; border: 1.5px solid var(--light-grey);
+      border-radius: 4px; font-size: 15px; font-family: 'DM Sans', sans-serif;
+      color: var(--charcoal); background: white; outline: none; transition: border-color 0.3s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--gold); }
+    .form-textarea { resize: vertical; min-height: 60px; }
+    .form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6B6B' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; }
+    .btn-submit {
+      width: 100%; padding: 16px; background: var(--charcoal); color: white;
+      font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+      border: none; border-radius: 4px; cursor: pointer; transition: background 0.3s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn-submit:hover { background: var(--gold); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .success-msg { display: none; text-align: center; padding: 60px 24px; }
+    .success-msg h2 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--gold); margin-bottom: 12px; }
+    .success-msg p { color: var(--mid-grey); font-size: 15px; line-height: 1.6; }
+    .error-msg { background: #fef2f2; color: #991b1b; padding: 12px 16px; border-radius: 4px; font-size: 13px; margin-bottom: 16px; display: none; }
+    .info-box { background: rgba(184,150,90,0.1); border: 1px solid rgba(184,150,90,0.3); border-radius: 4px; padding: 16px; margin-bottom: 24px; font-size: 13px; color: var(--mid-grey); line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="form-header">
+    <h1>Reschedule Session</h1>
+    <p>Life happens — let's find a better time</p>
+  </div>
+
+  <div class="form-wrap" id="formContainer">
+    <div class="info-box">Rescheduling is free if done 24+ hours before your session. Same-day changes may not always be possible.</div>
+    <div class="error-msg" id="errorMsg"></div>
+    <form id="rescheduleForm" novalidate>
+      <div class="form-group">
+        <label class="form-label">Your Phone Number *</label>
+        <input class="form-input" type="tel" name="phone" placeholder="+91..." required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Original Session Date *</label>
+        <input class="form-input" type="date" name="original_date" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Preferred New Date *</label>
+        <input class="form-input" type="date" name="new_date" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Preferred Time Slot</label>
+        <select class="form-select" name="time_slot">
+          <option>Morning (7am - 10am IST)</option>
+          <option>Midday (11am - 2pm IST)</option>
+          <option>Afternoon (3pm - 5pm IST)</option>
+          <option>Evening (6pm - 9pm IST)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reason (Optional)</label>
+        <textarea class="form-textarea" name="reason" placeholder="Quick note on why you need to reschedule..."></textarea>
+      </div>
+      <button type="submit" class="btn-submit" id="submitBtn">Request Reschedule</button>
+    </form>
+  </div>
+
+  <div class="success-msg" id="successMsg">
+    <h2>Reschedule Requested</h2>
+    <p>Maddy's team will confirm your new slot on WhatsApp within a few hours. Keep an eye on your messages.</p>
+  </div>
+
+<script>
+(function() {
+  var today = new Date().toISOString().split('T')[0];
+  var dateInputs = document.querySelectorAll('input[type="date"]');
+  for (var i = 0; i < dateInputs.length; i++) {
+    dateInputs[i].setAttribute('min', today);
+  }
+
+  document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('submitBtn');
+    var errEl = document.getElementById('errorMsg');
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'SUBMITTING...';
+
+    var fd = new FormData(this);
+    var data = {};
+    fd.forEach(function(v, k) { data[k] = v; });
+
+    fetch('/api/send-whatsapp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-key': 'form-submission'
+      },
+      body: JSON.stringify({
+        phone: data.phone,
+        text: 'Reschedule request:\nOriginal: ' + data.original_date +
+              '\nNew: ' + data.new_date + ' (' + data.time_slot + ')' +
+              (data.reason ? '\nReason: ' + data.reason : ''),
+        skipRateLimit: false
+      })
+    })
+    .then(function(r) {
+      if (r.status === 401) {
+        document.getElementById('formContainer').style.display = 'none';
+        document.getElementById('successMsg').style.display = 'block';
+        return;
+      }
+      return r.json().then(function(j) { return { ok: r.ok, body: j }; });
+    })
+    .then(function(res) {
+      document.getElementById('formContainer').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    })
+    .catch(function(err) {
+      errEl.textContent = 'Something went wrong. Please message us on WhatsApp directly.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'REQUEST RESCHEDULE';
+    });
+  });
+})();
+</script>
+</body>
+</html>
