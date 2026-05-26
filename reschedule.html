@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <meta name="description" content="Need to reschedule your coaching session? Pick a new time that works for you.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="form-page">
+  <div class="form-hero">
+    <h1>Reschedule Your <em>Session</em></h1>
+    <p>Life happens. Pick a new time and we'll get you sorted.</p>
+  </div>
+
+  <div class="form-container">
+    <form id="reschedule-form">
+      <input type="hidden" id="client-id" name="client_id">
+
+      <div class="form-group">
+        <label>Your Name *</label>
+        <input type="text" name="name" required placeholder="Your full name">
+      </div>
+      <div class="form-group">
+        <label>WhatsApp Number *</label>
+        <input type="tel" name="phone" required placeholder="+91 98765 43210">
+      </div>
+      <div class="form-group">
+        <label>Original Session Date</label>
+        <input type="date" name="original_date">
+      </div>
+      <div class="form-group">
+        <label>Preferred New Date *</label>
+        <input type="date" name="new_date" required>
+      </div>
+      <div class="form-group">
+        <label>Preferred Time Slot *</label>
+        <select name="time_slot" required>
+          <option value="">Select a time</option>
+          <option>7:00 AM - 8:00 AM IST</option>
+          <option>8:00 AM - 9:00 AM IST</option>
+          <option>9:00 AM - 10:00 AM IST</option>
+          <option>10:00 AM - 11:00 AM IST</option>
+          <option>5:00 PM - 6:00 PM IST</option>
+          <option>6:00 PM - 7:00 PM IST</option>
+          <option>7:00 PM - 8:00 PM IST</option>
+          <option>8:00 PM - 9:00 PM IST</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Reason (optional)</label>
+        <textarea name="reason" placeholder="Let us know why you need to reschedule..."></textarea>
+      </div>
+
+      <button type="submit" class="form-submit" id="submit-btn">Request Reschedule</button>
+      <div id="form-status" class="form-status"></div>
+    </form>
+  </div>
+</div>
+
+<div class="form-success-overlay" id="success-overlay">
+  <div class="check">&#10003;</div>
+  <h2>Request Received</h2>
+  <p>We'll confirm your new session time on WhatsApp within 24 hours.</p>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  if (clientId) document.getElementById('client-id').value = clientId;
+
+  // Set min date to today
+  var today = new Date().toISOString().split('T')[0];
+  var dateInputs = document.querySelectorAll('input[type="date"]');
+  for (var i = 0; i < dateInputs.length; i++) {
+    if (dateInputs[i].name === 'new_date') dateInputs[i].min = today;
+  }
+
+  document.getElementById('reschedule-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('submit-btn');
+    var status = document.getElementById('form-status');
+    btn.disabled = true;
+    btn.textContent = 'SUBMITTING...';
+    status.className = 'form-status';
+    status.style.display = 'none';
+
+    var formData = new FormData(e.target);
+    var data = {};
+    formData.forEach(function(v, k) { if (v) data[k] = v; });
+
+    fetch('/api/send-whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: '+917082478374',
+        message: 'RESCHEDULE REQUEST from ' + (data.name || 'Unknown') +
+          ' (' + (data.phone || '') + ')' +
+          '\nOriginal: ' + (data.original_date || 'N/A') +
+          '\nRequested: ' + data.new_date + ' ' + data.time_slot +
+          '\nReason: ' + (data.reason || 'N/A')
+      })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+      document.getElementById('success-overlay').classList.add('visible');
+    })
+    .catch(function() {
+      document.getElementById('success-overlay').classList.add('visible');
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

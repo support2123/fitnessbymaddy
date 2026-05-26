@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In | Fitness by Maddy</title>
+  <meta name="description" content="Submit your weekly progress check-in to keep your transformation on track.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shred.html">6 Week Shred</a></li>
+    <li><a href="custom.html">12 Week Program</a></li>
+    <li><a href="vip.html">1-on-1 Coaching</a></li>
+  </ul>
+</nav>
+
+<div class="form-page">
+  <div class="form-hero">
+    <h1>Week <span id="week-display">—</span> <em>Check-In</em></h1>
+    <p>Track your progress, share your wins, and help us fine-tune your program for the best results.</p>
+  </div>
+
+  <div class="form-container">
+    <form id="checkin-form">
+      <input type="hidden" id="client-id" name="client_id">
+      <input type="hidden" id="week-no" name="week_no">
+
+      <h3 class="form-section-title">Body Metrics</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Current Weight (kg)</label>
+          <input type="number" name="weight" step="0.1" placeholder="70.5">
+        </div>
+        <div class="form-group">
+          <label>Waist Measurement (inches)</label>
+          <input type="number" name="waist" step="0.1" placeholder="32">
+        </div>
+      </div>
+
+      <h3 class="form-section-title">Self-Assessment</h3>
+      <div class="form-group">
+        <label>Workout Compliance (1 = missed most, 10 = followed perfectly)</label>
+        <div class="score-input">
+          <input type="range" name="compliance_score" min="1" max="10" value="7" oninput="this.parentNode.querySelector('.score-value').textContent=this.value">
+          <span class="score-value">7</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Energy Level (1 = very low, 10 = peak energy)</label>
+        <div class="score-input">
+          <input type="range" name="energy" min="1" max="10" value="7" oninput="this.parentNode.querySelector('.score-value').textContent=this.value">
+          <span class="score-value">7</span>
+        </div>
+      </div>
+
+      <h3 class="form-section-title">Notes</h3>
+      <div class="form-group">
+        <label>Any issues, pain, or things to flag?</label>
+        <textarea name="issues" placeholder="E.g., shoulder felt sore during bench press, slept badly on Tuesday, had a social event..."></textarea>
+      </div>
+
+      <h3 class="form-section-title">Progress Photos</h3>
+      <p style="font-size:12px; color:var(--mid-grey); margin-bottom:12px;">Front, side, and back — same lighting and clothing as last week.</p>
+      <div class="photo-upload">
+        <div class="photo-slot" id="photo-1">
+          <span class="photo-icon">+</span>
+          <span class="photo-label">Front</span>
+          <input type="file" accept="image/*" onchange="previewPhoto(this, 'photo-1')">
+        </div>
+        <div class="photo-slot" id="photo-2">
+          <span class="photo-icon">+</span>
+          <span class="photo-label">Side</span>
+          <input type="file" accept="image/*" onchange="previewPhoto(this, 'photo-2')">
+        </div>
+        <div class="photo-slot" id="photo-3">
+          <span class="photo-icon">+</span>
+          <span class="photo-label">Back</span>
+          <input type="file" accept="image/*" onchange="previewPhoto(this, 'photo-3')">
+        </div>
+      </div>
+
+      <button type="submit" class="form-submit" id="submit-btn">Submit Check-In</button>
+      <div id="form-status" class="form-status"></div>
+    </form>
+  </div>
+</div>
+
+<div class="form-success-overlay" id="success-overlay">
+  <div class="check">&#10003;</div>
+  <h2>Check-In Received</h2>
+  <p>Great work staying consistent! Your coach will review your progress and your updated program will be sent shortly.</p>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w');
+
+  if (clientId) document.getElementById('client-id').value = clientId;
+  if (weekNo) {
+    document.getElementById('week-no').value = weekNo;
+    document.getElementById('week-display').textContent = weekNo;
+  }
+
+  var photoData = [null, null, null];
+
+  window.previewPhoto = function(input, slotId) {
+    var file = input.files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Photo must be under 10MB');
+      return;
+    }
+
+    var slot = document.getElementById(slotId);
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var idx = parseInt(slotId.replace('photo-', '')) - 1;
+      photoData[idx] = e.target.result;
+
+      var existing = slot.querySelector('img');
+      if (existing) existing.remove();
+
+      var img = document.createElement('img');
+      img.src = e.target.result;
+      slot.appendChild(img);
+      slot.classList.add('has-photo');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  document.getElementById('checkin-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('submit-btn');
+    var status = document.getElementById('form-status');
+
+    if (!clientId || !weekNo) {
+      status.className = 'form-status error';
+      status.textContent = 'Invalid check-in link. Please use the link sent to your WhatsApp.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'SUBMITTING...';
+    status.className = 'form-status';
+    status.style.display = 'none';
+
+    var formData = new FormData(e.target);
+    var data = {
+      client_id: clientId,
+      week_no: weekNo,
+      weight: formData.get('weight'),
+      waist: formData.get('waist'),
+      compliance_score: formData.get('compliance_score'),
+      energy: formData.get('energy'),
+      issues: formData.get('issues'),
+      photos: photoData.filter(Boolean)
+    };
+
+    fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+      if (result.ok) {
+        document.getElementById('success-overlay').classList.add('visible');
+      } else {
+        status.className = 'form-status error';
+        status.textContent = result.error || 'Something went wrong. Please try again.';
+        btn.disabled = false;
+        btn.textContent = 'SUBMIT CHECK-IN';
+      }
+    })
+    .catch(function() {
+      status.className = 'form-status error';
+      status.textContent = 'Network error. Please check your connection and try again.';
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT CHECK-IN';
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
