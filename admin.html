@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Fitness by Maddy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    :root { --red: #c0392b; --green: #27ae60; }
+    .admin-page { min-height: 100vh; background: var(--cream); padding: 72px 0 0; }
+    .admin-container { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+    .admin-header { margin-bottom: 40px; }
+    .admin-header h1 {
+      font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300;
+      color: var(--charcoal); margin-bottom: 8px;
+    }
+    .admin-header h1 em { font-style: italic; color: var(--gold); }
+    .admin-header p { font-size: 14px; color: var(--mid-grey); }
+
+    .login-card {
+      max-width: 400px; margin: 80px auto; background: white; padding: 48px 32px;
+      border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); text-align: center;
+    }
+    .login-card h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 24px; }
+    .login-card .form-input { margin-bottom: 16px; }
+    .login-card .form-submit { margin-top: 8px; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .stat-card {
+      background: white; padding: 28px 24px; border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .stat-card .stat-label { font-size: 11px; color: var(--mid-grey); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+    .stat-card .stat-value {
+      font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600;
+      color: var(--charcoal); line-height: 1;
+    }
+    .stat-card .stat-sub { font-size: 12px; color: var(--taupe); margin-top: 4px; }
+
+    .section-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--gold); margin: 40px 0 16px;
+    }
+
+    .data-table { width: 100%; background: white; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 24px; }
+    .data-table th {
+      font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--mid-grey); padding: 14px 16px; text-align: left;
+      background: var(--sand); border-bottom: 1px solid var(--light-grey);
+    }
+    .data-table td { font-size: 13px; color: var(--charcoal); padding: 12px 16px; border-bottom: 1px solid var(--light-grey); }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; padding: 3px 10px; border-radius: 2px;
+    }
+    .badge-new { background: #eaf2ff; color: #2980b9; }
+    .badge-qualified { background: #fef5e7; color: var(--gold); }
+    .badge-converted { background: #eafaf1; color: var(--green); }
+    .badge-dropped { background: #fdeaea; color: var(--red); }
+    .badge-active { background: #eafaf1; color: var(--green); }
+    .badge-paused { background: #fef5e7; color: var(--gold); }
+    .badge-completed { background: #eaf2ff; color: #2980b9; }
+
+    .escalation-card {
+      background: white; border-left: 3px solid var(--red); padding: 16px 20px;
+      border-radius: 0 4px 4px 0; margin-bottom: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .escalation-card .esc-reason { font-size: 13px; font-weight: 600; color: var(--charcoal); margin-bottom: 4px; }
+    .escalation-card .esc-details { font-size: 12px; color: var(--mid-grey); line-height: 1.5; }
+    .escalation-card .esc-time { font-size: 10px; color: var(--taupe); margin-top: 8px; letter-spacing: 1px; }
+
+    .empty-state { text-align: center; padding: 40px; color: var(--mid-grey); font-size: 14px; }
+
+    #dashboard { display: none; }
+    .refresh-btn {
+      background: transparent; border: 1.5px solid var(--charcoal); color: var(--charcoal);
+      padding: 8px 20px; font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; border-radius: 2px; cursor: pointer; transition: all 0.3s;
+    }
+    .refresh-btn:hover { background: var(--charcoal); color: white; }
+    .admin-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Fitness by Maddy</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="admin.html" class="active">Admin</a></li>
+  </ul>
+</nav>
+
+<div class="admin-page">
+  <div class="admin-container">
+
+    <!-- Login -->
+    <div id="loginSection">
+      <div class="login-card">
+        <h2>Admin Access</h2>
+        <input type="password" id="adminPassword" class="form-input" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')login()">
+        <button class="form-submit" onclick="login()" style="width:100%;margin-top:8px">Access Dashboard →</button>
+        <div id="loginError" style="color:var(--red);font-size:13px;margin-top:12px;display:none">Invalid password</div>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard">
+      <div class="admin-top">
+        <div class="admin-header">
+          <h1>Ops <em>Dashboard</em></h1>
+          <p id="lastUpdated">Loading...</p>
+        </div>
+        <button class="refresh-btn" onclick="loadDashboard()">Refresh</button>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Leads Today</div>
+          <div class="stat-value" id="leadsToday">—</div>
+          <div class="stat-sub" id="leadsWeek">— this week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Conversion Rate</div>
+          <div class="stat-value" id="conversionRate">—%</div>
+          <div class="stat-sub">lead → paid</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Clients</div>
+          <div class="stat-value" id="activeClients">—</div>
+          <div class="stat-sub" id="programBreakdown">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pending Check-ins</div>
+          <div class="stat-value" id="pendingCheckins">—</div>
+          <div class="stat-sub">awaiting submission</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Programs Generated</div>
+          <div class="stat-value" id="programsGenerated">—</div>
+          <div class="stat-sub">this week</div>
+        </div>
+      </div>
+
+      <!-- Escalations -->
+      <div class="section-label">Escalations Awaiting Review</div>
+      <div id="escalations"><div class="empty-state">No escalations</div></div>
+
+      <!-- Recent Leads -->
+      <div class="section-label">Recent Leads</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Phone</th><th>Name</th><th>Status</th><th>Program</th><th>Market</th><th>Date</th></tr>
+        </thead>
+        <tbody id="leadsTable">
+          <tr><td colspan="6" class="empty-state">Loading...</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Active Clients -->
+      <div class="section-label">Active Clients</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Name</th><th>Program</th><th>Started</th><th>Week</th><th>Last Check-in</th><th>Status</th></tr>
+        </thead>
+        <tbody id="clientsTable">
+          <tr><td colspan="6" class="empty-state">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API_BASE = '/api';
+  let adminToken = '';
+
+  function login() {
+    const pw = document.getElementById('adminPassword').value;
+    adminToken = pw;
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadDashboard();
+  }
+
+  async function apiFetch(path) {
+    const res = await fetch(API_BASE + path, {
+      headers: { 'Authorization': 'Bearer ' + adminToken }
+    });
+    if (!res.ok) throw new Error('API error: ' + res.status);
+    return res.json();
+  }
+
+  async function loadDashboard() {
+    document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleString();
+
+    try {
+      const data = await apiFetch('/admin-data');
+      renderStats(data);
+      renderLeads(data.recentLeads || []);
+      renderClients(data.activeClients || []);
+      renderEscalations(data.escalations || []);
+    } catch (err) {
+      console.error('Dashboard load failed:', err);
+    }
+  }
+
+  function renderStats(d) {
+    document.getElementById('leadsToday').textContent = d.leadsToday || 0;
+    document.getElementById('leadsWeek').textContent = (d.leadsWeek || 0) + ' this week';
+    document.getElementById('conversionRate').textContent = (d.conversionRate || 0) + '%';
+    document.getElementById('activeClients').textContent = d.activeClientCount || 0;
+    document.getElementById('pendingCheckins').textContent = d.pendingCheckins || 0;
+    document.getElementById('programsGenerated').textContent = d.programsThisWeek || 0;
+
+    if (d.programBreakdown) {
+      const parts = Object.entries(d.programBreakdown).map(([k, v]) => k + ': ' + v);
+      document.getElementById('programBreakdown').textContent = parts.join(' · ') || '—';
+    }
+  }
+
+  function renderLeads(leads) {
+    const tbody = document.getElementById('leadsTable');
+    if (!leads.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No leads yet</td></tr>';
+      return;
+    }
+    tbody.innerHTML = leads.map(l => `<tr>
+      <td>${maskPhone(l.phone)}</td>
+      <td>${l.name || '—'}</td>
+      <td><span class="badge badge-${l.status}">${l.status}</span></td>
+      <td>${l.program_interest || '—'}</td>
+      <td>${l.market || '—'}</td>
+      <td>${formatDate(l.created_at)}</td>
+    </tr>`).join('');
+  }
+
+  function renderClients(clients) {
+    const tbody = document.getElementById('clientsTable');
+    if (!clients.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No active clients</td></tr>';
+      return;
+    }
+    tbody.innerHTML = clients.map(c => {
+      const weekNo = Math.floor((Date.now() - new Date(c.program_started_at).getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
+      return `<tr>
+        <td>${c.name || maskPhone(c.phone)}</td>
+        <td>${c.program || '—'}</td>
+        <td>${formatDate(c.program_started_at)}</td>
+        <td>Week ${weekNo}</td>
+        <td>${c.last_checkin ? formatDate(c.last_checkin) : 'None'}</td>
+        <td><span class="badge badge-${c.status}">${c.status}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderEscalations(esc) {
+    const container = document.getElementById('escalations');
+    if (!esc.length) {
+      container.innerHTML = '<div class="empty-state">No pending escalations</div>';
+      return;
+    }
+    container.innerHTML = esc.map(e => `<div class="escalation-card">
+      <div class="esc-reason">${e.reason || e.body || 'Escalation'}</div>
+      <div class="esc-details">${e.details || e.phone || ''}</div>
+      <div class="esc-time">${formatDate(e.created_at || e.sent_at)}</div>
+    </div>`).join('');
+  }
+
+  function maskPhone(phone) {
+    if (!phone || phone.length < 6) return '***';
+    return phone.slice(0, 3) + 'XXX...' + phone.slice(-3);
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+</script>
+<script src="js/nav.js"></script>
+</body>
+</html>
