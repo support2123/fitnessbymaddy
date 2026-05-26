@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Check-In | Fitness by Maddy</title>
+  <meta name="description" content="Submit your weekly progress check-in.">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<div class="form-page">
+  <div class="form-header">
+    <a href="index.html" class="form-logo">Fitness by Maddy</a>
+    <h1>Week <span id="weekNum">-</span> <em>Check-In</em></h1>
+    <p>Track your progress so we can keep optimizing your plan.</p>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <form id="checkinForm" class="form-card">
+    <input type="hidden" name="client_id" id="clientId">
+    <input type="hidden" name="week_no" id="weekNo">
+
+    <h3 class="form-section-title" style="margin-top:0;padding-top:0;border:none;">Body Stats</h3>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Current Weight (kg) *</label>
+        <input type="number" name="weight" step="0.1" required placeholder="72.5">
+      </div>
+      <div class="field">
+        <label>Waist (inches)</label>
+        <input type="number" name="waist" step="0.1" placeholder="32.0">
+      </div>
+    </div>
+
+    <h3 class="form-section-title">How Did You Do?</h3>
+
+    <div class="field">
+      <label>Workout Compliance (1-10)</label>
+      <div class="range-display" id="complianceVal">7</div>
+      <input type="range" name="compliance_score" min="1" max="10" value="7" oninput="document.getElementById('complianceVal').textContent=this.value">
+      <div class="field-hint">1 = barely trained &middot; 10 = followed every session perfectly</div>
+    </div>
+
+    <div class="field">
+      <label>Energy Level (1-10)</label>
+      <div class="range-display" id="energyVal">7</div>
+      <input type="range" name="energy" min="1" max="10" value="7" oninput="document.getElementById('energyVal').textContent=this.value">
+      <div class="field-hint">1 = exhausted all week &middot; 10 = full of energy</div>
+    </div>
+
+    <h3 class="form-section-title">Notes</h3>
+
+    <div class="field">
+      <label>Any Issues, Pain, or Concerns?</label>
+      <textarea name="issues" rows="3" placeholder="E.g., shoulder felt tight on pressing days, sleep was bad, digestion issues..."></textarea>
+      <div class="field-hint">Be honest so we can adjust your program.</div>
+    </div>
+
+    <h3 class="form-section-title">Progress Photos</h3>
+
+    <div class="field">
+      <label>Upload 3 Photos (front, side, back)</label>
+      <div class="photo-upload" id="photoUpload">
+        <div class="photo-upload-icon">&#128247;</div>
+        <div class="photo-upload-text">Tap to upload photos<br><span style="font-size:11px;color:var(--taupe)">Front, side, and back — good lighting</span></div>
+        <input type="file" id="photoInput" accept="image/*" multiple>
+      </div>
+      <div class="photo-preview" id="photoPreview"></div>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submitBtn">Submit Check-In</button>
+    <div class="form-footer">Your photos are stored securely and never shared publicly.</div>
+  </form>
+
+  <div class="success-state" id="successState">
+    <div class="success-icon">&#10003;</div>
+    <h2>Check-In Complete!</h2>
+    <p>Great work staying consistent. Your updated program will be sent to your WhatsApp within 24-48 hours.</p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  var weekNo = params.get('w') || '1';
+
+  if (clientId) document.getElementById('clientId').value = clientId;
+  document.getElementById('weekNo').value = weekNo;
+  document.getElementById('weekNum').textContent = weekNo;
+
+  var photoUpload = document.getElementById('photoUpload');
+  var photoInput = document.getElementById('photoInput');
+  var photoPreview = document.getElementById('photoPreview');
+  var selectedFiles = [];
+
+  photoUpload.addEventListener('click', function() { photoInput.click(); });
+  photoInput.addEventListener('change', function() {
+    selectedFiles = Array.from(this.files).slice(0, 3);
+    photoPreview.innerHTML = '';
+    selectedFiles.forEach(function(file) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = document.createElement('img');
+        img.src = e.target.result;
+        photoPreview.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  var form = document.getElementById('checkinForm');
+  var btn = document.getElementById('submitBtn');
+  var errorEl = document.getElementById('errorMsg');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    errorEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'SUBMITTING...';
+
+    var data = {};
+    var formData = new FormData(form);
+    formData.forEach(function(v, k) {
+      if (k !== 'photos') data[k] = v;
+    });
+    data.photos_urls = [];
+
+    fetch('/api/checkin-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json().then(function(j) { return { ok: r.ok, body: j }; }); })
+    .then(function(res) {
+      if (!res.ok) throw new Error(res.body.error || 'Submission failed');
+      form.style.display = 'none';
+      document.getElementById('successState').classList.add('visible');
+    })
+    .catch(function(err) {
+      errorEl.textContent = err.message;
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT CHECK-IN';
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

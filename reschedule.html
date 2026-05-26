@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reschedule Session | Fitness by Maddy</title>
+  <meta name="description" content="Reschedule your upcoming Zoom session.">
+  <link rel="stylesheet" href="css/forms.css">
+</head>
+<body>
+
+<div class="form-page">
+  <div class="form-header">
+    <a href="index.html" class="form-logo">Fitness by Maddy</a>
+    <h1>Reschedule Your <em>Session</em></h1>
+    <p>Need to move your Zoom session? Pick a new time below.</p>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <form id="rescheduleForm" class="form-card">
+    <input type="hidden" name="client_id" id="clientId">
+
+    <div class="field">
+      <label>Your Name *</label>
+      <input type="text" name="name" required placeholder="Full name">
+    </div>
+
+    <div class="field">
+      <label>Email *</label>
+      <input type="email" name="email" required placeholder="your@email.com">
+    </div>
+
+    <div class="field">
+      <label>Preferred New Date *</label>
+      <input type="date" name="preferred_date" required>
+    </div>
+
+    <div class="field">
+      <label>Preferred Time (IST) *</label>
+      <select name="preferred_time" required>
+        <option value="">Select a time slot...</option>
+        <option value="07:00">7:00 AM</option>
+        <option value="08:00">8:00 AM</option>
+        <option value="09:00">9:00 AM</option>
+        <option value="10:00">10:00 AM</option>
+        <option value="11:00">11:00 AM</option>
+        <option value="16:00">4:00 PM</option>
+        <option value="17:00">5:00 PM</option>
+        <option value="18:00">6:00 PM</option>
+        <option value="19:00">7:00 PM</option>
+        <option value="20:00">8:00 PM</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Reason (optional)</label>
+      <textarea name="reason" rows="2" placeholder="Why do you need to reschedule?"></textarea>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submitBtn">Request Reschedule</button>
+    <div class="form-footer">Reschedule requests are confirmed via WhatsApp within 24 hours.</div>
+  </form>
+
+  <div class="success-state" id="successState">
+    <div class="success-icon">&#10003;</div>
+    <h2>Request Sent!</h2>
+    <p>We'll confirm your new session time on WhatsApp within 24 hours.</p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var clientId = params.get('c');
+  if (clientId) document.getElementById('clientId').value = clientId;
+
+  var dateInput = document.querySelector('input[name="preferred_date"]');
+  var today = new Date();
+  today.setDate(today.getDate() + 1);
+  dateInput.min = today.toISOString().split('T')[0];
+
+  var form = document.getElementById('rescheduleForm');
+  var btn = document.getElementById('submitBtn');
+  var errorEl = document.getElementById('errorMsg');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    errorEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'SUBMITTING...';
+
+    var data = {};
+    new FormData(form).forEach(function(v, k) { data[k] = v; });
+
+    fetch('/api/send-whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: '+917082478374',
+        text_only: true,
+        body: 'RESCHEDULE REQUEST\nClient: ' + data.name + '\nEmail: ' + data.email +
+              '\nNew date: ' + data.preferred_date + ' at ' + data.preferred_time +
+              '\nReason: ' + (data.reason || 'Not specified')
+      })
+    })
+    .then(function() {
+      form.style.display = 'none';
+      document.getElementById('successState').classList.add('visible');
+    })
+    .catch(function(err) {
+      errorEl.textContent = 'Something went wrong. Please WhatsApp us directly.';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'REQUEST RESCHEDULE';
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
