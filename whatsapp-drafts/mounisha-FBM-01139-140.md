@@ -2,67 +2,48 @@
 
 **Body-ID:** FBM-01139-140 · LEAN-CORE · D2
 **WhatsApp:** +1 437 985 0167
-**Email:** mmounisha17@gmail.com
 **Recommended program:** 12-Week Custom Program — $297 (goal = lose 6–10 kg in 12 weeks)
 **Status:** Completed full Body-ID intake, did NOT checkout on Exly → warm lead, needs link + nudge
 
-> ⚠️ Before sending: replace `[EXLY CHECKOUT LINK]` with the real Exly checkout URL for the 12-Week Custom Program.
+> ⚠️ Before sending: replace `[EXLY CHECKOUT LINK]` with the real Exly checkout URL.
 
 ---
 
-## Main message (send first)
+## Main message
 
 Hi Mounisha! 👋 Maddy here 🌸
 
-Maine abhi tumhari Body-ID report *khud* review ki —
+I personally went through your Body-ID report — *FBM-01139-140, LEAN-CORE*. Your goal: lose 6–10 kg in 12 weeks. 🎯
 
-📋 *FBM-01139-140* · LEAN-CORE
-🎯 Goal: 6–10 kg fat loss in *12 weeks*
+And honestly? Your profile is super clear. You're at the exact stage where results come fastest — you just need the right structure.
 
-Aur honestly? Tumhara profile ekdum clear hai. Tum us exact stage pe ho jahan se results sabse fast aate hain — bas ek proper structure ki kami hai.
+This isn't a motivation problem, it's a *plan* problem. Random workouts won't move the needle when your sleep and energy are already low.
 
-Jo tumne bataya:
-• Ghar pe train karti ho (dumbbells + bands) ✅
-• 5 days × 60–75 min de sakti ho ✅
-• Neend 6 hrs se kam, energy low, desk job 😴
-• Ek saal pehle sab chhod diya tha
+So I've built a **12-Week Custom Program** for you:
+✨ 100% custom workout + nutrition (1159 kcal, macros 124P/53C/50F)
+✨ Home equipment only — no gym needed
+✨ Plan adjusted every 2 weeks
+✨ *Daily WhatsApp check-ins* — I track you myself
 
-Ye *motivation* ki problem nahi hai Mounisha — ye *plan* ki problem hai. Random workouts + guesswork se body change nahi hoti, especially jab sleep aur energy already low ho. Wahi to sabse bada reason hai ki abhi tak change nahi aaya.
-
-Isiliye tumhare liye maine **12-Week Custom Program** ready kiya hai:
-✨ 100% tumhari body pe based workout + nutrition (1159 kcal target, exact macros: 124P / 53C / 50F)
-✨ Ghar ke equipment ke hisaab se — koi gym ki zaroorat nahi
-✨ Har 2 hafte plan adjust
-✨ *Daily WhatsApp check-in* — main khud tumhe track karungi
-✨ Cycle phase ke according training (jaisa tumne bataya)
-
-12 hafte. 6–10 kg. Ye line tumne khud draw ki hai — main sirf raasta clear kar rahi hoon. 💪
-
-Poora plan ready hai — bas tumhe apni seat lock karni hai 👇
+12 weeks. 6–10 kg. Everything's ready — you just lock your seat 👇
 🔗 [EXLY CHECKOUT LINK]
 
-Payment hote hi, 24 hrs ke andar main tumhara custom plan bhej deti hoon aur hum start kar dete hain.
-
-Bas ek "IN" bhej do — main tumhare liye slot hold kar rahi hoon. Ye body kab se wait kar rahi hai… aur tum uske bilkul kareeb ho ❤️
+Once you're in, I send your custom plan within 24 hrs and we start. Just reply "IN" — I'm holding a slot for you ❤️
 
 — Maddy · *Fitness by Maddy*
 
 ---
 
-## Short follow-up (send only if no reply in a few hours)
+## Short follow-up (if no reply)
 
-Mounisha, tumhari FBM-01139-140 report abhi bhi meri screen pe open hai 🙂
-
-Sirf 1 step baaki hai — checkout, aur main aaj hi tumhara 12-week plan banana shuru kar deti hoon.
-
+Mounisha, your FBM-01139-140 report is still open on my screen 🙂 One step left — checkout, and I start building your 12-week plan today.
 👉 [EXLY CHECKOUT LINK]
-
-Koi doubt ho to yahin pooch lo, main reply karti hoon. Aaj start karein? 💪
+Any questions, just ask here. Shall we start today? 💪
 
 ---
 
 ## Notes for Maddy
-- Tone: warm + expert + light urgency. Uses her *own* answers back at her (home training, 5 days, poor sleep, daily check-ins) so it feels personal, not templated.
-- The "quit a year ago / low energy" reframe ("plan problem, not motivation problem") removes her guilt — a common re-activation objection.
-- Keep the price out of the first message; the Exly page shows it. If she asks, anchor on value: "$297 one-time for a fully custom 12 weeks + daily me on WhatsApp."
-- If she hesitates on budget, the $97 6-Week Shred is a natural down-sell, but push the 12-week first since her goal is explicitly 12 weeks.
+- Personalized from her own answers (home training, low sleep/energy, daily check-ins she requested).
+- "Plan problem, not motivation problem" removes the guilt of quitting a year ago.
+- Price stays off the message; Exly page shows it. If asked: "$297 one-time, fully custom 12 weeks + me daily on WhatsApp."
+- Budget objection → down-sell to $97 6-Week Shred, but push the 12-week first.
