@@ -104,22 +104,21 @@ def main() -> None:
 
         measure = subprocess.run([
             FF, "-hide_banner", "-i", str(premix), "-af",
-            "loudnorm=I=-14:TP=-1:LRA=11:print_format=json", "-f", "null", "-"
+            "loudnorm=I=-14:TP=-1.2:LRA=11:print_format=json", "-f", "null", "-"
         ], capture_output=True, text=True, check=False)
         match = re.search(r"\{[^{}]*\"input_i\".*?\}", measure.stderr, re.S)
         if not match:
             raise SystemExit("loudnorm measurement failed:\n" + measure.stderr[-1500:])
         data = json.loads(match.group(0))
         loudnorm = (
-            f"loudnorm=I=-14:TP=-1:LRA=11:measured_I={data['input_i']}:measured_TP={data['input_tp']}:"
+            f"loudnorm=I=-14:TP=-1.2:LRA=11:measured_I={data['input_i']}:measured_TP={data['input_tp']}:"
             f"measured_LRA={data['input_lra']}:measured_thresh={data['input_thresh']}:"
             f"offset={data['target_offset']}:linear=true"
         )
-        # AAC can overshoot an exact -1 dBTP target by a tenth. A transparent final
-        # ceiling leaves a small deterministic margin. `level=0` is essential: without
-        # it alimiter normalizes its own output back to full scale after limiting.
+        # Aim slightly below the release ceiling. AAC can overshoot an exact -1 dBTP
+        # target by a tenth, while a -1.2 dBTP target survives the encode at or below -1.
         subprocess.run([
-            FF, "-y", "-v", "error", "-i", str(premix), "-af", loudnorm + ",alimiter=limit=0.88:level=0",
+            FF, "-y", "-v", "error", "-i", str(premix), "-af", loudnorm,
             "-c:a", "aac", "-b:a", "320k", "-ar", str(SAMPLE_RATE), "-ac", "2", str(out)
         ], check=True)
     finally:
