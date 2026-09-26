@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+"""__EPISODE__ — doctrine-era film module.
+
+Frame zero is a cover-locked hero. Replace the marked beat blocks only after the
+research, final script, timeline, and hero lock all exist.
+"""
+import json
+import os
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path.insert(0, os.path.join(ROOT, "tools", "engine"))
+from filmlib import *  # noqa: F401,F403
+from hero_open import hero_frame
+from doctrine_kit import Box, assert_safe, clock_lands_on_cta
+
+TL = json.load(open(os.path.join(HERE, "timeline.json")))
+B = {key: list(value) for key, value in TL["seg"].items()}
+TOTAL, FRAMES = TL["total"], TL["frames"]
+EP = "__EPISODE__"
+TITLE = "__TITLE__"
+HERO = os.path.join(HERE, "hero", "cover.png")
+CTA_TIME = B["m06"][0] if "m06" in B else TOTAL - 3.0
+CLOCK_FINAL = 12
+
+# Every load-bearing text block must be checked against the 9:16 safe core.
+assert_safe(Box(90, 390, 990, 700, "hero title"))
+assert_safe(Box(90, 1440, 990, 1560, "Living Clock trace"))
+assert_safe(Box(90, 800, 990, 1180, "CTA"))
+
+
+def living_clock(t):
+    """Replace with a citation-supported curve. This is the only rolling number."""
+    start = B["m01"][0] if "m01" in B else 0.0
+    u = clamp((t - start) / max(0.001, CTA_TIME - start))
+    return CLOCK_FINAL * ease(u)
+
+
+def frame(t):
+    # Hero is already visible at t=0 and doubles as the manually-set cover PNG.
+    base = hero_frame(t, HERO, TITLE, kicker=EP, hold_frames=21)
+    clock = living_clock(t)
+
+    # TODO: compose hook, citation chip, and first visual change over the living hero.
+    # TODO: follow the tier in planning.json; use one visual question per beat.
+    # TODO: draw the same cited `clock` curve in environment, top-right telemetry, and bottom trace.
+    # TODO: fixed stats use stat_stamp() and pop whole. Never count a constant up.
+    # TODO: CTA begins exactly at CTA_TIME; assert the curve reaches CLOCK_FINAL on that frame.
+    if t >= CTA_TIME:
+        assert clock_lands_on_cta(living_clock(CTA_TIME), CLOCK_FINAL)
+        base = cta_block(base, t, [CTA_TIME, TOTAL - 0.2],
+                         "READ YOUR CLOCK.", "THEN TRAIN IT.",
+                         "COMMENT YOUR NUMBER", "FREE BODY-SCAN", "MADDY · NASM CPT")
+    return finish(base, grain=0.03, vig=0.12, frame=int(t * FPS))

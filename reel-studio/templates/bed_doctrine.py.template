@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+"""__EPISODE__ — doctrine score recipe.
+
+The musical impacts mirror the same Living Clock and CTA time as the film module.
+VO remains the primary layer; `mix_master.py` applies timeline-envelope ducking.
+"""
+import json
+import os
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path.insert(0, os.path.join(ROOT, "tools", "engine"))
+from bedlib import Bed
+
+T = json.load(open(os.path.join(HERE, "timeline.json")))
+S = {key: value[0] for key, value in T["seg"].items()}
+E = {key: value[1] for key, value in T["seg"].items()}
+
+bed = Bed(T["total"])
+bed.drone()
+bed.pad([174.61, 220.0, 261.63], 0.020, 0.0, E.get("m01", T["total"]))
+# Hook impact, then one riser + impact per actual reveal. Do not fill every beat with noise.
+bed.impact(S.get("m01", 0.8) + 0.20, 0.16, 42)
+if "m03" in S:
+    bed.riser(max(0, S["m03"] - 1.2), 1.2, 0.10)
+    bed.sub_drop(S["m03"] + 0.25, 0.28, 1.5)
+    bed.impact(S["m03"] + 0.25, 0.15, 38)
+if "m06" in S:
+    bed.riser(max(0, S["m06"] - 1.0), 1.0, 0.09)
+    bed.impact(S["m06"] + 0.10, 0.15, 44)
+bed.write("bed.wav")
