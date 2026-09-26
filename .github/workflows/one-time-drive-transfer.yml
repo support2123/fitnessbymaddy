@@ -17,17 +17,34 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Download the user-provided workspace archive
+        id: download
+        continue-on-error: true
         env:
           DRIVE_URL: https://drive.google.com/file/d/1_Lxb1lzj_SN8jW-AFgrDMiLOpRgLyNN-/view?usp=drive_link
         run: |
-          set -euo pipefail
-          python -m pip install --disable-pip-version-check --quiet gdown
-          gdown --fuzzy "$DRIVE_URL" --output /tmp/previous-arena-workspace.zip
-          test -s /tmp/previous-arena-workspace.zip
-          unzip -tq /tmp/previous-arena-workspace.zip
-          sha256sum /tmp/previous-arena-workspace.zip
-          du -h /tmp/previous-arena-workspace.zip
+          set -o pipefail
+          {
+            echo 'Installing gdown...'
+            python -m pip install --disable-pip-version-check --quiet gdown
+            echo 'Retrieving the public Drive archive...'
+            gdown --fuzzy --verbose "$DRIVE_URL" --output /tmp/previous-arena-workspace.zip
+            echo 'Archive details:'
+            ls -lh /tmp/previous-arena-workspace.zip
+            file /tmp/previous-arena-workspace.zip
+            unzip -tq /tmp/previous-arena-workspace.zip
+            sha256sum /tmp/previous-arena-workspace.zip
+          } 2>&1 | tee /tmp/drive-transfer-debug.txt
+          test "${PIPESTATUS[0]}" -eq 0
+      - name: Upload transfer diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drive-transfer-diagnostics
+          path: /tmp/drive-transfer-debug.txt
+          if-no-files-found: warn
+          retention-days: 1
       - name: Retain the archive for the transfer only
+        if: steps.download.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: previous-arena-workspace
@@ -35,3 +52,6 @@ jobs:
           if-no-files-found: error
           retention-days: 1
           compression-level: 0
+      - name: Enforce successful archive verification
+        if: steps.download.outcome != 'success'
+        run: exit 1
