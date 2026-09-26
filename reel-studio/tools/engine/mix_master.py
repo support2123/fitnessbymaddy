@@ -115,8 +115,11 @@ def main() -> None:
             f"measured_LRA={data['input_lra']}:measured_thresh={data['input_thresh']}:"
             f"offset={data['target_offset']}:linear=true"
         )
+        # AAC can overshoot an exact -1 dBTP target by a tenth. A transparent final
+        # ceiling leaves a small deterministic margin. `level=0` is essential: without
+        # it alimiter normalizes its own output back to full scale after limiting.
         subprocess.run([
-            FF, "-y", "-v", "error", "-i", str(premix), "-af", loudnorm,
+            FF, "-y", "-v", "error", "-i", str(premix), "-af", loudnorm + ",alimiter=limit=0.88:level=0",
             "-c:a", "aac", "-b:a", "320k", "-ar", str(SAMPLE_RATE), "-ac", "2", str(out)
         ], check=True)
     finally:

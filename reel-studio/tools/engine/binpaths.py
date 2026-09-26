@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """FBM ENGINE · binary locator — makes the toolchain portable (no hard-coded Mac paths).
 
-Order: $FBM_FFMPEG/$FBM_FFPROBE env → tools/bin/ → static_ffmpeg (pip) → imageio_ffmpeg → PATH.
+Order: $FBM_FFMPEG/$FBM_FFPROBE env → tools/bin/ → imageio_ffmpeg (bundled ffmpeg)
+→ static_ffmpeg → PATH. `probe()` deliberately falls back to ffmpeg parsing when a
+real ffprobe binary is unavailable, so a failed static_ffmpeg archive fetch can never
+block a render on an otherwise capable imageio runtime.
 Run `zsh tools/engine/bootstrap_env.sh` once on a fresh box to install the pip fallbacks.
 """
 import os, re, shutil, subprocess, sys
@@ -17,6 +20,16 @@ def _find(name, env_var):
     if os.path.exists(local):
         return local
     if name == "ffmpeg":
+        # imageio-ffmpeg's wheel contains a usable Linux binary; prefer it over the
+        # network-fetching fallback so a transient GitHub failure does not slow every
+        # frame/render command.
+        try:
+            import imageio_ffmpeg
+            candidate = imageio_ffmpeg.get_ffmpeg_exe()
+            if os.path.exists(candidate):
+                return candidate
+        except Exception:
+            pass
         try:
             import static_ffmpeg
             ff, _fp = static_ffmpeg.run.get_or_fetch_platform_executables_else_raise()
@@ -24,19 +37,13 @@ def _find(name, env_var):
                 return ff
         except Exception:
             pass
-        try:
-            import imageio_ffmpeg
-            return imageio_ffmpeg.get_ffmpeg_exe()
-        except Exception:
-            pass
     else:
-        try:
-            import static_ffmpeg
-            _ff, fp = static_ffmpeg.run.get_or_fetch_platform_executables_else_raise()
-            if os.path.exists(fp):
-                return fp
-        except Exception:
-            pass
+        # Never fetch a large archive merely to probe metadata. `probe()` below
+        # handles a missing ffprobe with the already-available ffmpeg binary.
+        p = shutil.which(name)
+        if p:
+            return p
+        sys.exit(f"FATAL: {name} not found; binpaths.probe will use ffmpeg fallback")
     p = shutil.which(name)
     if p:
         return p

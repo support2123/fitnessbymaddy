@@ -52,6 +52,7 @@ def hero_frame(
     kicker: str = "DECODE",
     hold_frames: int = 21,
     focal=(0.5, 0.43),
+    text_opacity: float = 1.0,
 ) -> Image.Image:
     """Return a frame-zero-safe hero layer with title composited in reserved top space.
 
@@ -62,8 +63,9 @@ def hero_frame(
     scale = 1.0 + 0.06 * ease(move)
     base = _cover_crop(_image(str(image_path)), scale, focal)
     # Type stays visible at frame zero, so the exported cover and first frame can match exactly.
-    base = put(base, text_img(kicker.upper(), "monob", 32, "INK", tracking=4), (90, 280), "lt", opacity=0.86, shadow=False)
-    base = put(base, text_img(title.upper(), "anton", 144, "INK", tracking=-1.5, max_w=900, align="left"), (90, 390), "lt", opacity=1.0, shadow=True)
+    text_opacity = clamp(text_opacity)
+    base = put(base, text_img(kicker.upper(), "monob", 32, "INK", tracking=4), (90, 280), "lt", opacity=0.86 * text_opacity, shadow=False)
+    base = put(base, text_img(title.upper(), "anton", 144, "INK", tracking=-1.5, max_w=900, align="left"), (90, 390), "lt", opacity=text_opacity, shadow=True)
     if t > hold:
         base = _atmosphere(base, t - hold, min(1.0, move * 1.4))
         pulse = math.exp(-((t - hold - 0.55) / 0.13) ** 2) * 0.10
