@@ -1,0 +1,85 @@
+WATER-01 · PRUNE NOTES
+======================
+
+KEEP (archive, never delete)
+  WATER-01-PUBLISH.mp4      delivery master (sterile) — 1080x1920, upload copy
+  WATER-01-VIEW.mp4         480x854 · 2.5 MB · Quick Look / download copy
+  WATER-01-PLAYER.html      in-app preview tab: video embedded, no external refs
+  cover.png / cover-story.png
+  bed.wav                   the score stem
+  segments.json durs.json timeline.json
+  film_water.py bed_water.py
+  SCRIPT-FINAL.md CAPTION.md README.md FRESH-EYES-AUDIT.md PRUNE-NOTES.txt
+  qc/                       contact sheets + frame grabs
+  previews/                 6 boundary frames — the visual record if binaries vanish again
+
+SAFE TO PRUNE once the publish file is verified
+  render.mp4                the raw picture render (regenerable, ~175 MB)
+  reel.mp4                  pre-delivery mux (regenerable)
+  vo/seg_*.wav              per-segment voice takes (regenerable from the script)
+
+ONE-COMMAND REBUILD (after any loss)
+  zsh tools/engine/run_episode.sh episodes/WATER-01 episodes/WATER-01/film_water.py --scratch
+  # voice, timeline, score, mix, render, mux, delivery, QC sweeps, sterile publish
+
+VOICE SWAP (when the cloned voice lands)
+  tools/engine/swap_voice.sh episodes/WATER-01 episodes/WATER-01/film_water.py
+  # refuses to run without an EL key + voice id + sample; re-runs VO -> timeline -> score -> mix -> QC
+
+WARNING FROM 24 SEP 2026
+  This episode has now been wiped TWICE by workspace snapshot restores: only qc/ survives each
+  time, and /tmp (render + montage) is gone too, because a restore lands in a fresh container.
+  So: the sources are text and cheap to rewrite; the RENDER IS THE EXPENSIVE PART (~28 min).
+  If the publish file is missing when the user asks to see it, rebuild first, then present.
+  Render times: ~28 min picture, ~4 min mux + delivery, ~1 min QC + publish.
+  Voice model: ~/.cache/piper/en_US-ryan-high.onnx (120,786,792 B, re-fetch in ~10 s).
+
+WHY FILES KEPT VANISHING (found 24 Sep 2026)
+  The workspace snapshot is best-effort capped near 128 MB. With two 1080x1920 masters
+  (95 MB together) plus assets, this repo already sits at ~121 MB — so any large new
+  artifact pushed it over, the turn-end snapshot silently failed, and the NEXT restore
+  reverted to an older state. That is why the freshly built viewer copies disappeared
+  twice while the masters survived. Rules that follow from it:
+    · keep total workspace <= ~120 MB, prune before adding
+    · viewers must stay tiny: tools/engine/make_viewer.py builds both in ~90 s, 4.3 MB total
+    · the in-app preview uses WATER-01-PLAYER.html (everything embedded, cannot 404)
+
+HINDI CUT (24 Sep 2026)
+  segments.json        = Hindi VO script (the SHIPPED cut)
+  segments-hi.json     = same file kept under an explicit name
+  segments-en.json     = English VO script + timeline-en.json + WATER-01-EN-VIEW.mp4 (archived cut)
+  vo_hi/               = the raw Hindi takes — moved out of the repo to ~/.cache/archive/vo_hi
+                         (session-only; regenerate with generate_speech from segments-hi.json if needed)
+  mix.m4a              = pruned for snapshot headroom; the mix lives inside every master
+                         (regenerate: mux is one command, see README)
+  WATER-01-VO-HINDI.mp3= voice-only preview, 1.4 MB, for judging the narration
+  chain_vo.py          = locked chain + per-beat pacing fit (--fit-cap). Hindi needed x1.28 max,
+                         m09 only x1.09 so the close still breathes.
+
+FINAL MASTER (24 Sep 2026, after the fact-check fixes)
+  WATER-01-PUBLISH.mp4   66,613,719 B · 121.17 s · 3635 f · 1080x1920 · 30 fps
+                         -14.0 LUFS / LRA 2.0 / TPK -1.2 dBTP · decode clean · sterile PASS
+  sha256                 330430968fcefc142dc0991f0293b58b0f13de2ad21eb2c4c955beeb32528cf0
+  fixes in this build    m05 narration now says 1945 (was 1950) · m02 cite chip names Mitchell 1945
+  regenerable            raw Hindi takes lived in vo_hi2/ and are not kept (re-speak from segments-hi.json)
+
+DOWNLOAD PATH (24 Sep 2026)
+  tools/engine/serve_episode.py <ep_dir> [port] boots a tiny HTTP server with a dark
+  download page: every deliverable listed, MP4s sent as attachments so a click SAVES
+  them instead of trying to stream a 63 MB file. This is the reliable route whenever the
+  in-app viewer cannot render the master — the user just opens the URL in a real tab.
+
+TOP-QUALITY MASTER (24 Sep 2026)
+  WATER-01-INSTA-MASTER.mp4   single-encode crf15/slow master, H.264 1080x1920 30fps + the
+                              shipped AAC track copied bit-for-bit. This is the Instagram upload
+                              file: highest fidelity the pipeline can produce.
+                              Lives in ~/.cache/serve-water/ (NOT snapshotted — it is ~4x the
+                              size of the workspace budget). Regenerate any time with:
+                                FBM_RENDER_CRF=15 FBM_RENDER_PRESET=slow \
+                                PYTHONPATH=tools/engine python3 tools/engine/render_film.py \
+                                  episodes/WATER-01 episodes/WATER-01/film_water.py /tmp/water_hq.mp4
+                              then mux + strip metadata (see README §How it was made).
+  WATER-01-PUBLISH.mp4        the compact master that stays in the repo (66.6 MB, sterile)
+  serve_episode.py            watch + download page: player streams the best MP4 inline,
+                              every download button is a direct ?dl=1 MP4 (never an HTML file),
+                              HTTP range so a broken download resumes.
