@@ -262,7 +262,9 @@ def kinetic_words(base, txt, xy, t, at, size=88, col="INK", max_w=850,
         rows, current, width = [], [], 0
         for word in raw_words:
             probe = text_img(word, "anton", size, col)
-            gap = int(size * .18) if current else 0
+            # A deliberate word gap remains legible after the seven-frame pop scale;
+            # .18 collapsed adjacent Anton glyphs in delivery previews ("THENFOLLOW").
+            gap = int(size * .30) if current else 0
             if current and width + gap + probe.width > max_w:
                 rows.append(current); current, width = [], 0; gap = 0
             current.append((word, probe.width)); width += gap + probe.width
@@ -283,7 +285,7 @@ def kinetic_words(base, txt, xy, t, at, size=88, col="INK", max_w=850,
                     y = line_y - rise * (1 - ease(p))
                     base = put(base, img, (x, y), "lt", opacity=min(1, p * 2.8),
                                scale=scale, clip=ease(p), clip_dir="h", glow=glow if not emph else "RED")
-                x += nominal_w + int(size * .18)
+                x += nominal_w + int(size * .30)
                 word_index += 1
                 if emph:
                     used_emphasis = True
