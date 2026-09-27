@@ -63,13 +63,12 @@ jobs:
           umask 077
           bridge_path=".arena-voice-bridge/${RUN_ID}.b64"
           received=false
+          # Poll the branch ref, not the initial checkout. The encrypted payload is
+          # committed after this job publishes its ephemeral public key.
           for attempt in $(seq 1 120); do
-            status=$(curl --silent --show-error --output /tmp/bridge-payload.json --write-out '%{http_code}' \
-              "$GH_API/repos/$GH_REPO/contents/$bridge_path?ref=$BRIDGE_BRANCH" \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H 'Accept: application/vnd.github+json')
-            if [ "$status" = 200 ]; then
-              encoded=$(jq -r '.content // empty' /tmp/bridge-payload.json | tr -d '\n')
+            git fetch --no-tags --quiet origin "$BRIDGE_BRANCH" || true
+            if git cat-file -e "FETCH_HEAD:$bridge_path" 2>/dev/null; then
+              encoded=$(git show "FETCH_HEAD:$bridge_path" | tr -d '\n')
               if [ -n "$encoded" ] && \
                  printf '%s' "$encoded" | base64 --decode | base64 --decode > /tmp/transfer-link.enc 2>/dev/null && \
                  openssl pkeyutl -decrypt -inkey /tmp/transfer-handoff-private.key -in /tmp/transfer-link.enc -out /tmp/transfer-url; then
