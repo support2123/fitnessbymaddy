@@ -17,7 +17,7 @@ LAYOUT LAW (identical to the TSX kit):
   headline bottom:400 · citation bottom:330 · chapter top:46 · cred top:250
 """
 from __future__ import annotations
-import math, os, functools
+import math, os, functools, re
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageChops, ImageEnhance
 
@@ -239,6 +239,55 @@ def kicker(base, xy, small, big, sub=None, o=1.0, anchor="lt", big_size=72):
     if sub:
         base = put(base, text_img(sub, "mono", 19, "INK", tracking=1.6), (x, y + 18), "lt",
                    opacity=o * 0.75, shadow=False)
+    return base
+
+
+def kinetic_words(base, txt, xy, t, at, size=88, col="INK", max_w=850,
+                  emphasis=None, stagger=0.105, rise=22, glow=None):
+    """Word-by-word kinetic type: clip-mask + y-rise + seven-frame overshoot.
+
+    Fixed facts must use :func:`stat_stamp`; this function is for language and claims.
+    Exactly one `emphasis` word is allowed per call (red italic by default), which keeps
+    a line legible instead of turning the entire sentence into a template panel.
+    """
+    if t < at:
+        return base
+    x0, y0 = xy
+    raw_lines = [line.split() for line in str(txt).split("\\n")]
+    placed = []
+    used_emphasis = False
+    line_y = y0
+    word_index = 0
+    for raw_words in raw_lines:
+        rows, current, width = [], [], 0
+        for word in raw_words:
+            probe = text_img(word, "anton", size, col)
+            gap = int(size * .18) if current else 0
+            if current and width + gap + probe.width > max_w:
+                rows.append(current); current, width = [], 0; gap = 0
+            current.append((word, probe.width)); width += gap + probe.width
+        if current:
+            rows.append(current)
+        for row in rows or [[]]:
+            x = x0
+            for word, nominal_w in row:
+                normalized = re.sub(r"[^A-Za-z0-9]+", "", word).upper()
+                emph = bool(emphasis and not used_emphasis and normalized == str(emphasis).upper())
+                style = "corm" if emph else "anton"
+                word_col = "RED" if emph else col
+                img = text_img(word, style, size if not emph else int(size * .94), word_col)
+                onset = at + word_index * stagger
+                p = clamp((t - onset) / (7 / FPS))
+                if p > 0.001:
+                    scale = 1.16 - .16 * ease(p)
+                    y = line_y - rise * (1 - ease(p))
+                    base = put(base, img, (x, y), "lt", opacity=min(1, p * 2.8),
+                               scale=scale, clip=ease(p), clip_dir="h", glow=glow if not emph else "RED")
+                x += nominal_w + int(size * .18)
+                word_index += 1
+                if emph:
+                    used_emphasis = True
+            line_y += int(size * .92)
     return base
 
 

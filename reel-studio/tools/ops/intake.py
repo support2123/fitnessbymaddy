@@ -89,6 +89,7 @@ def main() -> None:
         raise SystemExit(f"refusing to overwrite populated episode: {ep}")
     ep.mkdir(parents=True, exist_ok=True)
     (ep / "hero").mkdir(exist_ok=True)
+    (ep / "assets" / "motion").mkdir(parents=True, exist_ok=True)
     (ep / "qc").mkdir(exist_ok=True)
 
     now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -111,7 +112,9 @@ def main() -> None:
             "research approval before final script",
             "every statistic resolves to a locked citation",
             "frame zero is a full-bleed cover-locked hero",
-            "Living Clock lands on CTA",
+            "Living Clock is prominent and lands on CTA with score-synced ticks",
+            "every story beat receives a distinct live moving MP4 under one grade",
+            "motion QC blocks static windows, repeated shots, and freeze-tail padding",
             "Fresh Eyes score must be at least 8.5"
         ]
     }
@@ -144,6 +147,14 @@ def main() -> None:
         "## Beat map\n\n"
         + "\n".join(f"- **{beat.upper()}** — ON-SCREEN / SPOKEN / citation / visual change" for beat in planning["shape"])
         + "\n\n## The turn\n\n\n## Honesty bound\n\n\n## CTA\n\n- Owned number:\n- Series loop:\n\n## Viral 6/6\n\n- [ ] Shareable\n- [ ] Saveable\n- [ ] Commentable\n- [ ] Rewatch\n- [ ] Screenshot\n- [ ] Wait-for-next\n",
+        encoding="utf-8"
+    )
+    (ep / "MOTION-BRIEF.md").write_text(
+        f"# LIVE MOTION BRIEF — {episode_id}\n\n"
+        "This reel cannot use held still backgrounds. After the final script, clone VO, and `timeline.json` exist, run:\n\n"
+        f"```bash\npython3 tools/engine/motion_manifest.py episodes/{episode_id} plan\n```\n\n"
+        "Read `MOTION-GENERATION-PACK.md`, source one selected moving MP4 per beat into `assets/motion/`, then pass strict manifest and optical-flow QC before Film.\n\n"
+        "Continuity lock: one approved reference image, one style reference, one lighting direction, one house grade, no embedded text, no native audio, no flat still fallback.\n",
         encoding="utf-8"
     )
     stem = slugify(episode_id).lower().replace("-", "_")

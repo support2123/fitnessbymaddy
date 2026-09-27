@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""__EPISODE__ — doctrine-era film module.
+"""__EPISODE__ — doctrine-era live-motion film module.
 
-Frame zero is a cover-locked hero. Replace the marked beat blocks only after the
-research, final script, timeline, and hero lock all exist.
+The ASSET / B-ROLL stage must have selected every MP4 in motion-manifest.json before
+this module renders. Frame zero is the first frame of the m00 live hero clip and must
+pixel-match the approved social cover still.
 """
 import json
+import math
 import os
 import sys
 
@@ -12,7 +14,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(ROOT, "tools", "engine"))
 from filmlib import *  # noqa: F401,F403
-from hero_open import hero_frame
+from hero_open import hero_overlay
+from motion_media import MotionDeck
 from doctrine_kit import Box, assert_safe, clock_lands_on_cta
 
 TL = json.load(open(os.path.join(HERE, "timeline.json")))
@@ -20,14 +23,23 @@ B = {key: list(value) for key, value in TL["seg"].items()}
 TOTAL, FRAMES = TL["total"], TL["frames"]
 EP = "__EPISODE__"
 TITLE = "__TITLE__"
-HERO = os.path.join(HERE, "hero", "cover.png")
+DECK = MotionDeck(HERE)
 CTA_TIME = B["m06"][0] if "m06" in B else TOTAL - 3.0
 CLOCK_FINAL = 12
 
 # Every load-bearing text block must be checked against the 9:16 safe core.
 assert_safe(Box(90, 390, 990, 700, "hero title"))
-assert_safe(Box(90, 1440, 990, 1560, "Living Clock trace"))
+assert_safe(Box(660, 250, 980, 558, "prominent top-right Living Clock"))
 assert_safe(Box(90, 800, 990, 1180, "CTA"))
+
+
+def background(t):
+    """Return the selected moving background for this exact frame; never a still."""
+    for row in DECK.data["beats"]:
+        if float(row["start_s"]) <= t < float(row["end_s"]):
+            return DECK.frame(str(row["id"]), t, float(row["start_s"]), dark=.03)
+    row = DECK.data["beats"][-1]
+    return DECK.frame(str(row["id"]), t, float(row["start_s"]), dark=.03)
 
 
 def living_clock(t):
@@ -37,19 +49,43 @@ def living_clock(t):
     return CLOCK_FINAL * ease(u)
 
 
-def frame(t):
-    # Hero is already visible at t=0 and doubles as the manually-set cover PNG.
-    base = hero_frame(t, HERO, TITLE, kicker=EP, hold_frames=21)
-    clock = living_clock(t)
+def clock_hud(base, t):
+    """Prominent top-right telemetry; score recipe must use the same curve keys."""
+    if t < (B["m01"][0] if "m01" in B else 0):
+        return base
+    value = living_clock(t)
+    x0, x1, y = 692, 944, 520
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0)); draw = ImageDraw.Draw(layer)
+    draw.rounded_rectangle([660, 250, 980, 558], radius=22, fill=(5, 8, 11, 204), outline=C["GOLD2"] + (220,), width=2)
+    draw.rectangle([x0, y, x1, y + 4], fill=C["DIM"] + (175,))
+    marker = int(x0 + (x1 - x0) * value / CLOCK_FINAL)
+    draw.rectangle([x0, y, marker, y + 5], fill=C["GOLD"] + (248,))
+    draw.ellipse([marker - 12, y - 12, marker + 12, y + 12], fill=C["GOLD"], outline=C["INK"], width=2)
+    base = Image.alpha_composite(base.convert("RGBA"), layer)
+    base = put(base, text_img("LIVING CLOCK", "mono", 16, "INK", tracking=1.7), (692, 282), "lt", opacity=.92, shadow=False)
+    base = put(base, text_img(f"{int(round(value)):02d}", "anton", 66, "GOLD"), (944, 323), "rt", opacity=.98, glow="GOLD2", glow_px=14)
+    base = trace(base, (692, 390, 252, 76), [(u / 24, 1 - ease(u / 24) * .72) for u in range(25)], col="CYAN", width=3, glow=6, alpha=.76)
+    if abs(t - CTA_TIME) < .16:
+        pulse = math.exp(-((t - CTA_TIME) / .16) ** 2)
+        base = Image.alpha_composite(base.convert("RGBA"), Image.new("RGBA", (W, H), C["GOLD"] + (int(72 * pulse),)))
+    return base
 
-    # TODO: compose hook, citation chip, and first visual change over the living hero.
-    # TODO: follow the tier in planning.json; use one visual question per beat.
-    # TODO: draw the same cited `clock` curve in environment, top-right telemetry, and bottom trace.
-    # TODO: fixed stats use stat_stamp() and pop whole. Never count a constant up.
-    # TODO: CTA begins exactly at CTA_TIME; assert the curve reaches CLOCK_FINAL on that frame.
+
+def frame(t):
+    base = background(t)
+    # `m00` must start from the approved hero still so this cover and frame zero match.
+    base = hero_overlay(base, t, TITLE, kicker=EP, hold_frames=21)
+
+    # Replace this placeholder with per-beat kinetic composition. Use kinetic_words()
+    # for language and stat_stamp() for fixed scientific constants. Do not add a static
+    # text panel or a count-up for a fixed number.
+    base = kinetic_words(base, "LIVE MOTION\nIS REQUIRED.", (90, 650), t, 0.25, size=80, col="INK", max_w=850, emphasis="REQUIRED")
+
     if t >= CTA_TIME:
         assert clock_lands_on_cta(living_clock(CTA_TIME), CLOCK_FINAL)
         base = cta_block(base, t, [CTA_TIME, TOTAL - 0.2],
                          "READ YOUR CLOCK.", "THEN TRAIN IT.",
                          "COMMENT YOUR NUMBER", "FREE BODY-SCAN", "MADDY · NASM CPT")
-    return finish(base, grain=0.03, vig=0.12, frame=int(t * FPS))
+        # A real episode puts its concrete series tease here at TOTAL-2.0s.
+        base = kinetic_words(base, "NEXT: THE QUESTION THIS REEL OPENS.", (90, 1210), t, TOTAL - 2.0, size=32, col="CYAN", max_w=820)
+    return finish(clock_hud(base, t), grain=0, vig=.12, frame=int(t * FPS))

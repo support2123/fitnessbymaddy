@@ -45,24 +45,23 @@ def _atmosphere(base: Image.Image, t: float, amount: float) -> Image.Image:
     return Image.alpha_composite(base, layer.filter(ImageFilter.GaussianBlur(1.2)))
 
 
-def hero_frame(
+def hero_overlay(
+    base: Image.Image,
     t: float,
-    image_path: str | Path,
     title: str,
     kicker: str = "DECODE",
     hold_frames: int = 21,
-    focal=(0.5, 0.43),
     text_opacity: float = 1.0,
 ) -> Image.Image:
-    """Return a frame-zero-safe hero layer with title composited in reserved top space.
+    """Composite the cover-lock type over either a still or a true live hero clip.
 
-    `hold_frames` should be 15–30 at 30 fps. The call at t=0 is the cover PNG source.
+    A live hero clip must have its first frame generated from the approved cover still.
+    This makes frame zero cover-identical while allowing the pixels behind the title to
+    start moving immediately after the short (15–30 frame) hold.
     """
     hold = hold_frames / 30.0
     move = clamp((t - hold) / 1.2)
-    scale = 1.0 + 0.06 * ease(move)
-    base = _cover_crop(_image(str(image_path)), scale, focal)
-    # Type stays visible at frame zero, so the exported cover and first frame can match exactly.
+    base = base.convert("RGBA")
     text_opacity = clamp(text_opacity)
     base = put(base, text_img(kicker.upper(), "monob", 32, "INK", tracking=4), (90, 280), "lt", opacity=0.86 * text_opacity, shadow=False)
     base = put(base, text_img(title.upper(), "anton", 144, "INK", tracking=-1.5, max_w=900, align="left"), (90, 390), "lt", opacity=text_opacity, shadow=True)
@@ -73,6 +72,27 @@ def hero_frame(
             glow = Image.new("RGBA", (W, H), C["GOLD"] + (int(255 * pulse),))
             base = Image.alpha_composite(base, glow)
     return base
+
+
+def hero_frame(
+    t: float,
+    image_path: str | Path,
+    title: str,
+    kicker: str = "DECODE",
+    hold_frames: int = 21,
+    focal=(0.5, 0.43),
+    text_opacity: float = 1.0,
+) -> Image.Image:
+    """Return the legacy still-backed cover frame.
+
+    New release modules should use :func:`hero_overlay` on a MotionDeck `m00` frame.
+    This function remains for cover generation and legacy episode review only.
+    """
+    hold = hold_frames / 30.0
+    move = clamp((t - hold) / 1.2)
+    scale = 1.0 + 0.06 * ease(move)
+    base = _cover_crop(_image(str(image_path)), scale, focal)
+    return hero_overlay(base, t, title, kicker, hold_frames, text_opacity)
 
 
 def export_cover(image_path: str | Path, out_path: str | Path, title: str, kicker: str = "DECODE", hold_frames: int = 21) -> None:

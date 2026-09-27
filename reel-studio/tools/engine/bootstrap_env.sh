@@ -5,7 +5,8 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
 echo "── python dependencies ──"
-pip install --quiet pillow numpy static-ffmpeg faster-whisper piper-tts
+# OpenCV is required by the live-motion gate for actual optical-flow inspection.
+pip install --quiet pillow numpy opencv-python-headless static-ffmpeg faster-whisper piper-tts
 
 echo "── scratch voice for timeline proofs only ──"
 mkdir -p ~/.cache/piper

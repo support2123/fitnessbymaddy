@@ -7,6 +7,7 @@ This directory is intentionally separate from the static website at the reposito
 ## What is locked
 
 - Full-bleed, cover-locked hero from frame zero. No black or contents-card opens.
+- Every story beat is a distinct moving MP4 under a locked continuity contract—never a held still or flat Ken-Burns background. Optical-flow, pHash, and freeze-tail QC block a motion poster from shipping.
 - Runtime router: Tier A (15–30s), B (30–60s), or C (60–120s), always choosing the shortest complete teaching shape.
 - Twelve hook archetypes, named-vs-teased slate tracking, and the Viral 6/6 pass gate.
 - Design tokens, safe-zone law, living-clock specification, type hierarchy, sound protocol, and technical delivery spec.
@@ -49,7 +50,7 @@ python3 tools/ops/intake.py \
   --episode WOMEN-BULKY-01
 ```
 
-The command makes `episodes/WOMEN-BULKY-01/` with a request record, planning decision, production manifest, research brief, script skeleton, and hero directory. It deliberately stops **before** voice generation: Research approval and the final script are human gates.
+The command makes `episodes/WOMEN-BULKY-01/` with a request record, planning decision, production manifest, research brief, script skeleton, hero directory, and empty live-motion asset directory. It deliberately stops **before** voice generation: Research approval and the final script are human gates.
 
 ## Hero open
 
@@ -61,9 +62,23 @@ python3 tools/ops/hero_open.py episodes/WOMEN-BULKY-01 --concept "THE CONFRONTAT
 
 It writes a generation-ready prompt, framing map, exact first-second movement plan, and cover-lock checklist. Generate the still without baked text, composite the type in the film, and record the final still path in `hero/hero-open.json` before rendering.
 
+## Build live motion before Film
+
+After the final script, verified VO, and measured `timeline.json` exist, create the provider-neutral live-motion handoff:
+
+```bash
+python3 tools/engine/motion_manifest.py episodes/WOMEN-BULKY-01 plan
+# Read episodes/WOMEN-BULKY-01/MOTION-GENERATION-PACK.md.
+# Source/generate/grade muted 1080x1920 30fps clips into assets/motion/.
+python3 tools/engine/motion_manifest.py episodes/WOMEN-BULKY-01 validate --strict
+python3 tools/engine/motion_qc.py episodes/WOMEN-BULKY-01
+```
+
+The generation pack is compatible with authorized UI/API workflows for Runway, Kling, Veo, Luma, Sora, Pika, Midjourney Video, licensed stock, or anatomy/3D tools. It is intentionally not a fake vendor API wrapper: it records selected clips, exact prompt/seed/reference/grade requirements, and a reproducible cache key. A missing clip, a static two-second window, a reused shot, or freeze padding blocks the render.
+
 ## Produce, then gate
 
-The inherited portable engine remains available under `tools/engine/`.
+The portable engine remains available under `tools/engine/`.
 
 ```bash
 # once on a production machine

@@ -28,6 +28,21 @@ bed.riser(max(0.0, S["m03"] - 1.05), 1.05, 0.070)
 bed.sub_drop(S["m03"] + 0.24, 0.14, 1.1)
 bed.impact(S["m03"] + 0.24, 0.13, 40)
 bed.ticks(S["m04"] + 0.70, E["m04"] - 0.45, every=0.60, amp=0.018)
+# The visual clock uses smoothstep from m02 to the CTA. Invert that same curve so
+# each visible week marker lands on a score tick, with the final marker/impact on CTA.
+CLOCK_START, CLOCK_CTA, CLOCK_FINAL = S["m02"], S["m05"], 4
+def smoothstep(u): return u*u*(3-2*u)
+def clock_time_for(value):
+ lo, hi = 0.0, 1.0
+ target = value / CLOCK_FINAL
+ for _ in range(28):
+  mid = (lo + hi) / 2
+  if smoothstep(mid) < target: lo = mid
+  else: hi = mid
+ return CLOCK_START + ((lo + hi) / 2) * (CLOCK_CTA - CLOCK_START)
+for week in range(1, CLOCK_FINAL):
+ bed.stand_tick(clock_time_for(week), amp=0.032, f=760 + week * 35)
 bed.riser(max(0.0, S["m05"] - 0.85), 0.85, 0.055)
-bed.impact(S["m05"] + 0.10, 0.13, 44)
+bed.stand_tick(CLOCK_CTA, amp=0.075, f=980)
+bed.impact(CLOCK_CTA, 0.14, 44)
 bed.write("bed.wav")

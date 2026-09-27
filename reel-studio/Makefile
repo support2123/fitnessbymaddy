@@ -1,11 +1,13 @@
 PYTHON ?= python3
 
-.PHONY: help intake hero preflight record-publish bootstrap list-topics
+.PHONY: help intake hero motion-plan motion-qc preflight record-publish bootstrap list-topics
 
 help:
 	@printf '%s\n' 'FBM Reel Studio commands:' \
 	  '  make intake TOPIC="..." DURATION=auto EP=EPISODE-ID [TIP="..."]' \
 	  '  make hero EP=EPISODE-ID [CONCEPT="auto"]' \
+	  '  make motion-plan EP=EPISODE-ID [OVERWRITE=1]' \
+	  '  make motion-qc EP=EPISODE-ID' \
 	  '  make preflight EP=EPISODE-ID [STAGE=planning|script|release]' \
 	  '  make record-publish EP=EPISODE-ID' \
 	  '  make bootstrap' \
@@ -18,6 +20,15 @@ intake:
 hero:
 	@test -n "$(EP)" || (echo 'EP is required' && exit 2)
 	$(PYTHON) tools/ops/hero_open.py episodes/$(EP) --concept "$(or $(CONCEPT),auto)"
+
+motion-plan:
+	@test -n "$(EP)" || (echo 'EP is required' && exit 2)
+	$(PYTHON) tools/engine/motion_manifest.py episodes/$(EP) plan $(if $(OVERWRITE),--overwrite,)
+
+motion-qc:
+	@test -n "$(EP)" || (echo 'EP is required' && exit 2)
+	$(PYTHON) tools/engine/motion_manifest.py episodes/$(EP) validate --strict
+	$(PYTHON) tools/engine/motion_qc.py episodes/$(EP)
 
 preflight:
 	@test -n "$(EP)" || (echo 'EP is required' && exit 2)

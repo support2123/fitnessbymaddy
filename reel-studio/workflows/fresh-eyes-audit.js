@@ -22,11 +22,12 @@ NON-NEGOTIABLES:
 - frame zero is a full-bleed psychological hero and the social cover; no black or contents-card open
 - hook lands within two seconds, category is clear by second three, and the first frame works silent
 - every stat has an author/year citation on that frame; thin evidence is bounded in the same spoken beat
-- one cited Living Clock synchronizes environment, telemetry, and trace, then lands its final value on the CTA frame
-- no static beat over 2.5 seconds; a visual / number / turn arrives every 4–6 seconds
-- all load-bearing content stays inside x90–990 / y250–1590 and clear of the right rail below y1150
-- no more than two type sizes, one red element maximum, one gold payoff hero, no fixed-stat count-up
-- one owned-number CTA plus a concrete next-reel loop in the final two seconds
+- one cited Living Clock is prominent top-right above the icon rail, synchronizes environment / telemetry / trace, has score-synced ticks, and lands its final value on the exact CTA frame
+- every story beat owns a distinct LIVE moving shot: inspect sequential frames, reject a frozen or near-frozen background over 2.0 seconds, repeated B-roll, last-frame holds, or an action label where the body never performs the action
+- motion is quiet enough for reading: one dominant subject, slow monotonic camera, no visual fight with text, and one coherent graphite/gold/cyan Editorial Athletic grade with no grain drift
+- all load-bearing content stays inside x90–990 / y250–1590; citations sit above the bottom platform UI zone and the clock clears the icon rail
+- words reveal per-word with a brief overshoot/y-rise, fixed numbers pop-land rather than count, and no static rounded template panel carries the message
+- one owned-number CTA plus a concrete next-reel loop visibly occupies the final two seconds
 
 ${args?.extra || ''}
 Be adversarial and timestamp every finding. Do not flatter. End exactly with:

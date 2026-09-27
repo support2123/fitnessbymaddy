@@ -6,6 +6,7 @@
 - `DOCTRINE-01-HOOK-SCRIPT.md` — the world-best hook + viral-script system (12 archetypes, 3 length tiers, 6/6 viral checklist, line-craft).
 - `DOCTRINE-02-OPENING-IMAGE.md` — the mind-bending first-frame / cover doctrine (no black open, ever).
 - `DOCTRINE-03-DESIGN-MOTION.md` — the world-top type / motion / color / sound / layout system.
+- `DOCTRINE-04-LIVE-MOTION.md` — the live-footage / generated-motion asset law, per-beat clip manifest, continuity contract, and hard motion QC.
 
 ---
 
@@ -63,10 +64,11 @@ Keep the existing 9-strike DECODER OS flow. **Insert one new strike (HERO OPEN, 
 | 3 | **Script** | replace with DOCTRINE-01 §2–4 (tier router, angle grid, viral 6/6, line-craft) | `script-gauntlet.js`, `shows.json`, `SCRIPT-FINAL.md` |
 | 4 | Voice | unchanged (cloned VO, lints, verify gate) | `gen_vo_lib.py`, `verify_vo.py` |
 | 5 | Timeline | unchanged (word-level → one clock) | `assemble_vo.py` → `timeline.json` |
-| **5.5** | **HERO OPEN (NEW)** | generate the full-bleed psychological hero image (DOCTRINE-02), lock it as cover, build the 1–2s living reveal. **No reel proceeds on a black open.** | new `hero_open.py` + `content/hero-concepts.json` |
-| 6 | Score | unchanged + DOCTRINE-03 §4 sound rules | `bedlib.py`, `mix_master.py` |
-| 7 | **Film** | apply DOCTRINE-03 (type ladder, kinetic rules, living motion, palette, layout law) | `filmlib.py`, `film_<ep>.py`, `render_film.py` |
-| 8 | QC | unchanged + DOCTRINE-03 §6 world-class bar checklist | `qc_sweep.py` |
+| **5.5** | **HERO OPEN (NEW)** | generate the full-bleed psychological hero image (DOCTRINE-02), lock it as cover, build the 1–2s living reveal. **No reel proceeds on a black open.** | `hero_open.py` + `content/hero-concepts.json` |
+| **5.7** | **ASSET / B-ROLL (NEW)** | source or generate a distinct moving MP4 for every story beat, lock references/seed/grade, loop without a freeze, and write the per-beat contract (DOCTRINE-04). | `motion_manifest.py` → `motion-manifest.json` + `MOTION-GENERATION-PACK.md` |
+| 6 | Score | score ticks map to the Living Clock curve and the final CTA landing | `bedlib.py`, `mix_master.py` |
+| 7 | **Film** | composite kinetic type + prominent clock **over live per-beat clips**; fixed values pop-land and words reveal per-word | `motion_media.py`, `filmlib.py`, `film_<ep>.py`, `render_film.py` |
+| 8 | QC | hard optical-flow/no-freeze/distinct-shot motion gate plus technical and layout QC | `motion_qc.py`, `qc_sweep.py` |
 | 9 | Fresh-eyes | unchanged, **raise ship gate to ≥ 8.5** and add the DOCTRINE-03 §6 + DOCTRINE-01 §3 checklists to the audit | `fresh-eyes-audit.js` |
 | 10 | Publish | unchanged + **manually set the locked hero still as the IG cover** (DOCTRINE-02 §4) | `publish_ig.py`, `make_cover.py` |
 
@@ -88,12 +90,13 @@ Keep the existing 9-strike DECODER OS flow. **Insert one new strike (HERO OPEN, 
 Build a **locked project template** carrying:
 1. **Type ladder + 6-token palette + Editorial Athletic grade** (DOCTRINE-03 §1,3) as reusable presets.
 2. **Living-Clock component** (value curve → 3 synced layers: environment + counter + trace, lands on CTA) (DOCTRINE-03 §2).
-3. **HERO-OPEN module** (`hero_open.py`): concept picker (DOCTRINE-02 §2) → image-gen prompt → upscale → img2video reveal → cover-still export + lock (DOCTRINE-02 §4).
-4. **`content/hero-concepts.json`** — the 12 hero concepts + master prompt template, tagged to pillar/topic.
-5. **`hooks.json` upgrade** — the 12 archetypes + `reveal: name|tease` + the 6:4 ratio guard.
-6. **Duration router** — request-card intake → tier selection (§2).
-7. **Layout-law safe zones** baked into the render template (bottom 330px + right 130px + top corners clear).
-8. **Fresh-eyes audit** updated with the two new checklists (design world-class-bar + viral 6/6).
+3. **HERO-OPEN module** (`hero_open.py`): concept picker (DOCTRINE-02 §2) → image-gen prompt → live first-shot reference → cover-still export + lock (DOCTRINE-02 §4).
+4. **Live Motion asset stage** (`motion_manifest.py`, `motion_media.py`, `motion_qc.py`): per-beat MP4 contract, provider-neutral generation pack, seed/style/subject lock, live decode in Film, optical-flow/pHash/freeze-tail gate (DOCTRINE-04).
+5. **`content/hero-concepts.json`** — the 12 hero concepts + master prompt template, tagged to pillar/topic.
+6. **`hooks.json` upgrade** — the 12 archetypes + `reveal: name|tease` + the 6:4 ratio guard.
+7. **Duration router** — request-card intake → tier selection (§2).
+8. **Layout-law safe zones** baked into the render template (citations above the bottom platform UI zone; clock top-right above icon rail).
+9. **Fresh-eyes audit** updated with the three new checklists (live-motion world-class-bar + design world-class-bar + viral 6/6).
 Once these exist, an episode = fill the REQUEST CARD → the system produces the rest at the locked bar.
 
 ## 8 · THE OPERATING LOOP (how Arena runs one request, start to finish)
@@ -102,11 +105,11 @@ Once these exist, an episode = fill the REQUEST CARD → the system produces the
 3. Hook: pick archetype (DOCTRINE-01 §1), write ON-SCREEN + SPOKEN.
 4. Script: tier beat-map + angle grid, pass the 6/6 viral checklist, line-craft clean (DOCTRINE-01).
 5. Voice → verify gate → timeline (one clock).
-6. **HERO OPEN**: choose concept (DOCTRINE-02), generate + upscale + living reveal, export & lock cover still.
-7. Film: build over the hero + real footage/anatomy, apply the full design/motion system (DOCTRINE-03), Living Clock synced to land on CTA.
-8. Score + mix (−14 LUFS, ducked, no pump).
-9. QC world-class bar → Fresh-eyes ≥ 8.5 → fix criticals → re-render if visual, remux if audio-only.
-10. Publish sterile + set locked hero as cover + caption (4-block) + pinned comment + series-loop line.
+6. **HERO OPEN**: choose concept (DOCTRINE-02), generate + upscale + living first-shot reference, export & lock cover still.
+7. **ASSET / B-ROLL**: source or generate one distinct moving MP4 per story beat; lock seed/style/reference; loop or extend without a freeze; pass the manifest gate (DOCTRINE-04).
+8. Score + mix (−14 LUFS, ducked, no pump), with every Living Clock tick aligned to the curve and CTA landing.
+9. Film: build kinetic word-reveal type and the prominent clock **over live clips**, then run motion QC (no static >2s, no repeated shot, no freeze-tail) plus technical QC.
+10. Fresh-eyes ≥ 8.5 → fix criticals → re-render if visual, remux if audio-only → publish sterile + set locked hero as cover + caption + pinned comment + series-loop line.
 
 ## 9 · THE ACCEPTANCE TEST (Arena self-checks before delivery)
 - [ ] Opens on a living full-bleed hero image; first frame = the cover; no black card.
@@ -114,6 +117,10 @@ Once these exist, an episode = fill the REQUEST CARD → the system produces the
 - [ ] Length matches tier; no padding; Living Clock lands on the CTA.
 - [ ] Every stat cited; thin evidence bounded out loud; zero hype words; no "AI" text.
 - [ ] Design/motion passes DOCTRINE-03 §6; script passes DOCTRINE-01 §3 (6/6).
-- [ ] Gates green (VO / −14 LUFS / QC / fresh-eyes ≥8.5 / sterile / brand).
+- [ ] Every beat background is a moving MP4 (or the full four-part 2.5D fallback), no static or near-frozen window exceeds 2 seconds, and every beat is a distinct shot under one matched grade.
+- [ ] Living Clock is prominent top-right above the icon rail, every tick is score-synced, and the final value lands on the exact CTA frame.
+- [ ] Fixed numbers pop-land and language reveals word-by-word; no static template text panel carries the beat.
+- [ ] Citations clear the platform UI zone; CTA combines the owned reply prompt with a last-two-seconds series tease.
+- [ ] Gates green (VO / motion manifest / optical-flow motion QC / −14 LUFS / QC / fresh-eyes ≥8.5 / sterile / brand).
 - [ ] Ends on a series loop that makes them wait for the next one.
 Any single NO → rebuild that piece, do not ship.
