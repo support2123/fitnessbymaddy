@@ -1,0 +1,100 @@
+name: Encrypted voice-clone intake
+
+on:
+  workflow_dispatch:
+    inputs:
+      transfer_url:
+        description: Existing WeTransfer link containing the user-owned clone samples
+        required: true
+        type: string
+
+jobs:
+  retrieve-and-encrypt:
+    name: Retrieve and encrypt clone audio
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Retrieve transfer
+        env:
+          TRANSFER_URL: ${{ inputs.transfer_url }}
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet requests
+          cat > /tmp/download_transfer.py <<'PY'
+          import os
+          import re
+          from pathlib import Path
+          from urllib.parse import urlparse, unquote
+          import requests
+
+          source_url = os.environ['TRANSFER_URL']
+          headers = {
+              'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36',
+              'x-requested-with': 'XMLHttpRequest',
+          }
+          session = requests.Session()
+          session.headers.update(headers)
+          landing = session.get(source_url, allow_redirects=True, timeout=60)
+          landing.raise_for_status()
+          resolved = landing.url
+          parts = [p for p in urlparse(resolved).path.split('/') if p]
+          # Expected: /downloads/<transfer-id>/<security-hash>
+          try:
+              pos = parts.index('downloads')
+              transfer_id, security_hash = parts[pos + 1], parts[pos + 2]
+          except (ValueError, IndexError):
+              raise SystemExit(f'Could not parse a WeTransfer download URL: {resolved}')
+
+          csrf = re.search(r'name="csrf-token" content="([^"]+)"', landing.text)
+          if csrf:
+              session.headers['x-csrf-token'] = csrf.group(1)
+          api = f'https://wetransfer.com/api/v4/transfers/{transfer_id}/download'
+          response = session.post(api, json={'intent': 'entire_transfer', 'security_hash': security_hash}, timeout=60)
+          response.raise_for_status()
+          direct_link = response.json().get('direct_link')
+          if not direct_link:
+              raise SystemExit('WeTransfer did not return a direct download link.')
+
+          media = session.get(direct_link, stream=True, timeout=180)
+          media.raise_for_status()
+          disposition = media.headers.get('content-disposition', '')
+          matched = re.search(r'filename\*?=(?:UTF-8\'\')?["\']?([^"\';]+)', disposition, re.I)
+          filename = unquote(matched.group(1)) if matched else 'voice-clone-intake.bin'
+          filename = Path(filename).name or 'voice-clone-intake.bin'
+          destination = Path('/tmp/clone-intake')
+          destination.mkdir(parents=True, exist_ok=True)
+          output = destination / filename
+          total = 0
+          with output.open('wb') as handle:
+              for chunk in media.iter_content(chunk_size=1024 * 1024):
+                  if chunk:
+                      handle.write(chunk)
+                      total += len(chunk)
+          if total < 256:
+              raise SystemExit('Downloaded file is unexpectedly small.')
+          print(f'Retrieved clone intake payload: {total} bytes')
+          PY
+          python3 /tmp/download_transfer.py
+
+      - name: Encrypt temporary payload to local public key
+        run: |
+          set -euo pipefail
+          umask 077
+          openssl rand -hex 32 > /tmp/voice-intake.key
+          tar -C /tmp/clone-intake -czf - . | openssl enc -aes-256-cbc -salt -pbkdf2 -pass file:/tmp/voice-intake.key -out /tmp/voice-clones.payload.enc
+          openssl pkeyutl -encrypt -pubin -inkey .github/voice-intake-bridge.pub -in /tmp/voice-intake.key -out /tmp/voice-clones.key.enc
+          rm -rf /tmp/clone-intake /tmp/download_transfer.py
+          shred -u /tmp/voice-intake.key
+          mkdir -p /tmp/voice-clone-artifact
+          mv /tmp/voice-clones.payload.enc /tmp/voice-clones.key.enc /tmp/voice-clone-artifact/
+          test -s /tmp/voice-clone-artifact/voice-clones.payload.enc
+          test -s /tmp/voice-clone-artifact/voice-clones.key.enc
+
+      - name: Upload encrypted intake
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-clone-intake-encrypted
+          path: /tmp/voice-clone-artifact
+          if-no-files-found: error
+          retention-days: 1
