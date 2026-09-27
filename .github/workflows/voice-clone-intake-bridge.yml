@@ -12,7 +12,7 @@ jobs:
     name: Retrieve and encrypt clone audio
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       issues: write
     steps:
       - name: Check out bridge public key
@@ -162,13 +162,23 @@ jobs:
           test -s /tmp/voice-clone-artifact/voice-clones.payload.enc
           test -s /tmp/voice-clone-artifact/voice-clones.key.enc
 
-      - name: Upload encrypted intake
-        uses: actions/upload-artifact@v4
-        with:
-          name: voice-clone-intake-encrypted
-          path: /tmp/voice-clone-artifact
-          if-no-files-found: error
-          retention-days: 1
+      - name: Commit encrypted intake for local decryption
+        env:
+          BRIDGE_BRANCH: ${{ github.ref_name }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          git fetch origin "$BRIDGE_BRANCH"
+          git checkout -B "$BRIDGE_BRANCH" "origin/$BRIDGE_BRANCH"
+          destination=".arena-voice-artifacts/${RUN_ID}"
+          mkdir -p "$destination"
+          mv /tmp/voice-clone-artifact/voice-clones.payload.enc "$destination/"
+          mv /tmp/voice-clone-artifact/voice-clones.key.enc "$destination/"
+          git config user.name 'arena-ai-coding-agent[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$destination"
+          git commit -m "Store encrypted voice intake ${RUN_ID}"
+          git push origin "HEAD:refs/heads/$BRIDGE_BRANCH"
 
       - name: Close encrypted handoff
         if: always()
