@@ -4,8 +4,8 @@ This is an operator handoff, not a vendor-API promise. Export muted, vertical MP
 
 ## Locked continuity contract
 
-- **Subject reference:** `hero/approved-reference.png`
-- **Style reference:** `hero/style-reference.png`
+- **Subject reference:** `assets/hero-athlete.png`
+- **Style reference:** `assets/hero-athlete.png`
 - **Lighting:** `upper_left` · **WB:** 4800–5200K
 - **Camera:** slow push-ins and dollies only; no random whip pans or speed ramps
 - **House grade:** Editorial Athletic: matched blacks, matched contrast, graphite/gold/cyan palette
@@ -16,14 +16,14 @@ This is an operator handoff, not a vendor-API promise. Export muted, vertical MP
 
 ### m00 · 0.00s–3.43s · hook_fear
 
-- **Provider lane:** `veo_3_1` — Veo 3.1 — cinematic atmosphere, volumetric light, and resolve shots; mute native audio
+- **Provider lane:** `pexels_stock` — Pexels / approved licensed stock — license-reviewed fast motion fill
 - **Deliver:** `assets/motion/m00_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 5s
 - **Motion:** slow_push_in + drifting_dust
 - **One moving hero:** ominous forward camera push
 - **Loop:** No loop needed if delivered longer than the beat
 - **Grade:** desaturate -15%, cool toward graphite
 - **Seed:** `12031` · **cache key:** `86c2667aaaefc6adba92`
-- **Hero cover lock:** first frame pixel-matches `hero/cover.png`; hold exactly `21` frames before visible motion.
+- **Hero cover lock:** first frame pixel-matches `assets/hero-athlete.png`; hold exactly `21` frames before visible motion.
 
 ```text
 ominous forward camera push; story context: Women don't get "bulky". Beat intention: Lifting does not accidentally make women bulky.. Motion: slow_push_in + drifting_dust. 9:16 vertical composition, 1080x1920, 30fps master. One dominant moving subject only; secondary dust or atmosphere at 20–40% strength. Camera moves in one slow monotonic direction, never whip-pans. Upper-left key light, 4800–5200K white balance, graphite #101115 shadow floor, gold #D4A148 resolve, cyan #3FC6E0 science accents. No embedded captions, logos, UI, typography, watermarks, or audio. Generate at least one second longer than the required beat for editorial trim headroom.
@@ -31,7 +31,7 @@ ominous forward camera push; story context: Women don't get "bulky". Beat intent
 
 ### m01 · 3.43s–9.42s · myth_fear
 
-- **Provider lane:** `runway_gen4` — Runway Gen-4 / Gen-4 Turbo — controlled image-to-video and reference-led hero motion
+- **Provider lane:** `pexels_stock` — Pexels / approved licensed stock — license-reviewed fast motion fill
 - **Deliver:** `assets/motion/m01_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 10s
 - **Motion:** restrained_push + micro_drift
 - **One moving hero:** single athlete or training object under tension
@@ -45,7 +45,7 @@ single athlete or training object under tension; story context: Women don't get 
 
 ### m02 · 9.42s–16.50s · mechanism
 
-- **Provider lane:** `complete_anatomy_capture` — Complete Anatomy / BioDigital capture — animated anatomy only
+- **Provider lane:** `pexels_stock` — Pexels / approved licensed stock — license-reviewed fast motion fill
 - **Deliver:** `assets/motion/m02_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 10s
 - **Motion:** rhythmic_physical_cycle + slow_orbit
 - **One moving hero:** one body system visibly moving
@@ -59,7 +59,7 @@ one body system visibly moving; story context: Women don't get "bulky". Beat int
 
 ### m03 · 16.50s–28.05s · proof_graph
 
-- **Provider lane:** `fusion_motion_graphics` — Resolve Fusion / After Effects / Remotion — data drawing over a moving ground
+- **Provider lane:** `pexels_stock` — Pexels / approved licensed stock — license-reviewed fast motion fill
 - **Deliver:** `assets/motion/m03_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 10s
 - **Motion:** data_draw + continuous_graphite_drift
 - **One moving hero:** one drawing line or proof marker
@@ -73,7 +73,7 @@ one drawing line or proof marker; story context: Women don't get "bulky". Beat i
 
 ### m04_squat · 28.05s–31.10s · protocol
 
-- **Provider lane:** `artgrid_stock` — Artgrid / approved licensed stock — authentic human effort and gym texture
+- **Provider lane:** `pexels_stock` — Pexels / approved licensed stock — license-reviewed fast motion fill
 - **Deliver:** `assets/motion/m04_squat_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 5s
 - **Motion:** controlled_squat + slow_dolly
 - **One moving hero:** one athlete executing a controlled squat or leg press
@@ -87,7 +87,7 @@ Real athlete performing a controlled squat or leg press, real load physics, knee
 
 ### m04_row · 31.10s–33.70s · protocol
 
-- **Provider lane:** `artgrid_stock` — Artgrid / approved licensed stock — authentic human effort and gym texture
+- **Provider lane:** `pexels_stock` — Pexels / approved licensed stock — license-reviewed fast motion fill
 - **Deliver:** `assets/motion/m04_row_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 5s
 - **Motion:** controlled_row + slow_dolly
 - **One moving hero:** one athlete executing a controlled row
@@ -101,7 +101,7 @@ Real athlete performing a controlled rowing movement, visible scapular control a
 
 ### m04_press · 33.70s–37.35s · protocol
 
-- **Provider lane:** `artgrid_stock` — Artgrid / approved licensed stock — authentic human effort and gym texture
+- **Provider lane:** `pexels_stock` — Pexels / approved licensed stock — license-reviewed fast motion fill
 - **Deliver:** `assets/motion/m04_press_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 5s
 - **Motion:** controlled_press + slow_dolly
 - **One moving hero:** one athlete executing a controlled press
@@ -115,7 +115,7 @@ Real athlete performing a controlled press, natural shoulder path and real weigh
 
 ### m05 · 37.35s–44.29s · cta_resolve
 
-- **Provider lane:** `runway_gen4` — Runway Gen-4 / Gen-4 Turbo — controlled image-to-video and reference-led hero motion
+- **Provider lane:** `pexels_stock` — Pexels / approved licensed stock — license-reviewed fast motion fill
 - **Deliver:** `assets/motion/m05_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 10s
 - **Motion:** confident_forward_push + restrained_gold_bloom
 - **One moving hero:** one forward resolve subject

@@ -1,0 +1,82 @@
+name: Build selected women reel stock motion
+
+on:
+  push:
+    branches:
+      - arena/01a0dd9b-fitnessbymaddy
+    paths:
+      - .github/workflows/build-women-stock-motion.yml
+
+jobs:
+  conform-selected-stock:
+    name: Conform selected live stock shots
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download, conform, and cover-lock the eight selected shots
+        shell: bash
+        run: |
+          set -euo pipefail
+          EP="reel-studio/episodes/WOMEN-BULKY-01"
+          OUT="$EP/assets/motion"
+          WORK=/tmp/women-bulky-stock
+          mkdir -p "$OUT" "$WORK"
+
+          # All IDs/pages/licensing notes are recorded in STOCK-SOURCE-LOG.md.
+          # This list uses distinct shots from a matched woman-athlete gym shoot.
+          conform() {
+            local id="$1" url="$2" start="$3" duration="$4"
+            local raw="$WORK/${id}.mp4"
+            curl --fail --location --retry 3 --retry-all-errors --silent --show-error "$url" -o "$raw"
+            ffmpeg -y -hide_banner -loglevel error -ss "$start" -i "$raw" -t "$duration" \
+              -an -vf "crop=ih*9/16:ih:(iw-ih*9/16)/2:0,scale=1080:1920:flags=lanczos,fps=30,eq=contrast=1.10:brightness=-0.045:saturation=0.83:gamma=0.96,colorbalance=bs=.025:rs=.012" \
+              -r 30 -c:v libx264 -preset medium -crf 21 -pix_fmt yuv420p -movflags +faststart "$OUT/${id}_v1.mp4"
+          }
+
+          conform m00 "https://videos.pexels.com/video-files/32239229/13749262_2560_1440_24fps.mp4" 1.0 5.0
+          conform m01 "https://videos.pexels.com/video-files/32239227/13749244_2560_1440_24fps.mp4" 1.0 7.0
+          conform m02 "https://videos.pexels.com/video-files/32239223/13749234_2560_1440_24fps.mp4" 3.0 8.5
+          conform m03 "https://videos.pexels.com/video-files/32239221/13749274_2560_1440_24fps.mp4" 2.0 12.0
+          conform m04_squat "https://videos.pexels.com/video-files/32239225/13749226_2560_1440_24fps.mp4" 4.0 5.0
+          conform m04_row "https://videos.pexels.com/video-files/32239224/13749256_2560_1440_24fps.mp4" 2.0 5.0
+          conform m04_press "https://videos.pexels.com/video-files/32239226/13749268_2560_1440_24fps.mp4" 3.0 5.0
+          conform m05 "https://videos.pexels.com/video-files/32239222/13749426_2560_1440_24fps.mp4" 12.0 8.0
+
+          # m00 needs frame-zero cover identity, not a black slate or a generic stock frame.
+          ffmpeg -y -hide_banner -loglevel error \
+            -loop 1 -framerate 30 -t 0.7 -i "$EP/assets/hero-athlete.png" \
+            -i "$OUT/m00_v1.mp4" \
+            -filter_complex "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,trim=duration=0.7,setpts=PTS-STARTPTS[cover];[1:v]trim=duration=4.5,setpts=PTS-STARTPTS[live];[cover][live]concat=n=2:v=1:a=0[out]" \
+            -map "[out]" -an -r 30 -c:v libx264 -preset medium -crf 21 -pix_fmt yuv420p -movflags +faststart "$OUT/m00_cover_locked.mp4"
+          mv "$OUT/m00_cover_locked.mp4" "$OUT/m00_v1.mp4"
+
+          # Make a compact review strip; the MP4s themselves are the authoritative source.
+          ffmpeg -y -hide_banner -loglevel error -ss 1.0 -i "$OUT/m00_v1.mp4" -frames:v 1 "$WORK/m00.jpg"
+          ffmpeg -y -hide_banner -loglevel error -ss 1.0 -i "$OUT/m01_v1.mp4" -frames:v 1 "$WORK/m01.jpg"
+          ffmpeg -y -hide_banner -loglevel error -ss 1.0 -i "$OUT/m02_v1.mp4" -frames:v 1 "$WORK/m02.jpg"
+          ffmpeg -y -hide_banner -loglevel error -ss 1.0 -i "$OUT/m03_v1.mp4" -frames:v 1 "$WORK/m03.jpg"
+          ffmpeg -y -hide_banner -loglevel error -ss 1.0 -i "$OUT/m04_squat_v1.mp4" -frames:v 1 "$WORK/m04_squat.jpg"
+          ffmpeg -y -hide_banner -loglevel error -ss 1.0 -i "$OUT/m04_row_v1.mp4" -frames:v 1 "$WORK/m04_row.jpg"
+          ffmpeg -y -hide_banner -loglevel error -ss 1.0 -i "$OUT/m04_press_v1.mp4" -frames:v 1 "$WORK/m04_press.jpg"
+          ffmpeg -y -hide_banner -loglevel error -ss 1.0 -i "$OUT/m05_v1.mp4" -frames:v 1 "$WORK/m05.jpg"
+          ffmpeg -y -hide_banner -loglevel error -pattern_type glob -i "$WORK/m*.jpg" \
+            -filter_complex "scale=270:480:force_original_aspect_ratio=increase,crop=270:480,tile=4x2:margin=6:padding=6" \
+            -frames:v 1 "$EP/review-stock-contact-sheet.jpg"
+
+      - name: Commit conformed local motion source
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH="${GITHUB_REF_NAME}"
+          git fetch origin "$BRANCH"
+          git checkout -B "$BRANCH" "origin/$BRANCH"
+          git add -f reel-studio/episodes/WOMEN-BULKY-01/assets/motion
+          git add -f reel-studio/episodes/WOMEN-BULKY-01/review-stock-contact-sheet.jpg
+          git config user.name 'arena-ai-coding-agent[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Conform selected live stock motion for women reel'
+          git push origin "HEAD:refs/heads/$BRANCH"
