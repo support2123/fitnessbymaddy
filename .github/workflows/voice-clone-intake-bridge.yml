@@ -1,12 +1,11 @@
 name: Encrypted voice-clone intake
 
 on:
-  workflow_dispatch:
-    inputs:
-      transfer_url:
-        description: Existing WeTransfer link containing the user-owned clone samples
-        required: true
-        type: string
+  push:
+    branches:
+      - arena/01a0dd9b-fitnessbymaddy
+    paths:
+      - .github/workflows/voice-clone-intake-bridge.yml
 
 jobs:
   retrieve-and-encrypt:
@@ -14,12 +13,79 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      issues: write
     steps:
-      - name: Retrieve transfer
+      - name: Prepare encrypted handoff
+        id: handoff
         env:
-          TRANSFER_URL: ${{ inputs.transfer_url }}
+          GH_API: ${{ github.api_url }}
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
+          umask 077
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out /tmp/transfer-handoff-private.key >/dev/null 2>&1
+          openssl pkey -in /tmp/transfer-handoff-private.key -pubout -out /tmp/transfer-handoff-public.pem
+          issue_title="VOICE-BRIDGE-${RUN_ID}"
+          body_file=/tmp/bridge-issue-body.md
+          {
+            printf '%s\n\n' 'Temporary encrypted handoff for a user-owned voice-clone transfer. The public key below accepts one encrypted payload only; no audio or download link should be posted here.'
+            printf '%s\n' '```'
+            cat /tmp/transfer-handoff-public.pem
+            printf '%s\n' '```'
+          } > "$body_file"
+          request=$(jq -n --arg title "$issue_title" --rawfile body "$body_file" '{title: $title, body: $body}')
+          curl --fail-with-body --silent --show-error \
+            -X POST "$GH_API/repos/$GH_REPO/issues" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            -d "$request" > /tmp/bridge-issue.json
+          issue_number=$(jq -r '.number' /tmp/bridge-issue.json)
+          test "$issue_number" != null
+          echo "issue_number=$issue_number" >> "$GITHUB_OUTPUT"
+          echo "VOICE_BRIDGE_ISSUE=$issue_number"
+
+      - name: Wait for encrypted transfer link
+        env:
+          GH_API: ${{ github.api_url }}
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.handoff.outputs.issue_number }}
+        run: |
+          set -euo pipefail
+          umask 077
+          received=false
+          for attempt in $(seq 1 120); do
+            curl --fail-with-body --silent --show-error \
+              "$GH_API/repos/$GH_REPO/issues/$ISSUE_NUMBER/comments?per_page=100" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H 'Accept: application/vnd.github+json' > /tmp/bridge-comments.json
+            payload=$(jq -r '[.[] | select(.body | startswith("BRIDGE_PAYLOAD:"))] | last | .body // empty' /tmp/bridge-comments.json)
+            if [ -n "$payload" ]; then
+              encoded=${payload#BRIDGE_PAYLOAD:}
+              if printf '%s' "$encoded" | base64 --decode > /tmp/transfer-link.enc 2>/dev/null && \
+                 openssl pkeyutl -decrypt -inkey /tmp/transfer-handoff-private.key -in /tmp/transfer-link.enc -out /tmp/transfer-url; then
+                transfer_url=$(cat /tmp/transfer-url)
+                if [[ "$transfer_url" == https://we.tl/* || "$transfer_url" == https://wetransfer.com/* ]]; then
+                  printf '%s' "$transfer_url" > /tmp/transfer-url
+                  received=true
+                  break
+                fi
+              fi
+            fi
+            sleep 3
+          done
+          if [ "$received" != true ]; then
+            echo 'No valid encrypted transfer link arrived before the 6-minute handoff deadline.' >&2
+            exit 1
+          fi
+
+      - name: Retrieve transfer
+        run: |
+          set -euo pipefail
+          export TRANSFER_URL="$(cat /tmp/transfer-url)"
           python3 -m pip install --quiet requests
           cat > /tmp/download_transfer.py <<'PY'
           import os
@@ -85,7 +151,7 @@ jobs:
           tar -C /tmp/clone-intake -czf - . | openssl enc -aes-256-cbc -salt -pbkdf2 -pass file:/tmp/voice-intake.key -out /tmp/voice-clones.payload.enc
           openssl pkeyutl -encrypt -pubin -inkey .github/voice-intake-bridge.pub -in /tmp/voice-intake.key -out /tmp/voice-clones.key.enc
           rm -rf /tmp/clone-intake /tmp/download_transfer.py
-          shred -u /tmp/voice-intake.key
+          shred -u /tmp/voice-intake.key /tmp/transfer-url /tmp/transfer-link.enc /tmp/transfer-handoff-private.key
           mkdir -p /tmp/voice-clone-artifact
           mv /tmp/voice-clones.payload.enc /tmp/voice-clones.key.enc /tmp/voice-clone-artifact/
           test -s /tmp/voice-clone-artifact/voice-clones.payload.enc
@@ -98,3 +164,20 @@ jobs:
           path: /tmp/voice-clone-artifact
           if-no-files-found: error
           retention-days: 1
+
+      - name: Close encrypted handoff
+        if: always()
+        env:
+          GH_API: ${{ github.api_url }}
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.handoff.outputs.issue_number }}
+        run: |
+          if [ -n "$ISSUE_NUMBER" ]; then
+            curl --silent --show-error --fail-with-body \
+              -X PATCH "$GH_API/repos/$GH_REPO/issues/$ISSUE_NUMBER" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              -d '{"state":"closed"}'
+          fi
