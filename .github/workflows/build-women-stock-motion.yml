@@ -19,8 +19,15 @@ jobs:
 
       - name: Download, conform, and cover-lock the eight selected shots
         shell: bash
+        env:
+          GH_API: ${{ github.api_url }}
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
         run: |
-          set -euo pipefail
+          set -Eeuo pipefail
+          exec > >(tee /tmp/stock-conform.log) 2>&1
+          trap 'rc=$?; body=$(tail -c 3500 /tmp/stock-conform.log); payload=$(jq -n --arg title "STOCK-MOTION-FAIL-${RUN_ID}" --arg body "Stock conform failed. Safe diagnostic tail follows:\n\n\`\`\`text\n${body}\n\`\`\`" "{title: \$title, body: \$body}"); curl --silent --show-error --fail-with-body -X POST "$GH_API/repos/$GH_REPO/issues" -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -d "$payload" >/dev/null || true; exit $rc' ERR
           EP="reel-studio/episodes/WOMEN-BULKY-01"
           OUT="$EP/assets/motion"
           WORK=/tmp/women-bulky-stock
@@ -31,7 +38,9 @@ jobs:
           conform() {
             local id="$1" url="$2" start="$3" duration="$4"
             local raw="$WORK/${id}.mp4"
-            curl --fail --location --retry 3 --retry-all-errors --silent --show-error "$url" -o "$raw"
+            curl --fail --location --retry 3 --retry-all-errors --silent --show-error \
+              --user-agent 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36' \
+              --referer 'https://www.pexels.com/' "$url" -o "$raw"
             ffmpeg -y -hide_banner -loglevel error -ss "$start" -i "$raw" -t "$duration" \
               -an -vf "crop=ih*9/16:ih:(iw-ih*9/16)/2:0,scale=1080:1920:flags=lanczos,fps=30,eq=contrast=1.10:brightness=-0.045:saturation=0.83:gamma=0.96,colorbalance=bs=.025:rs=.012" \
               -r 30 -c:v libx264 -preset medium -crf 21 -pix_fmt yuv420p -movflags +faststart "$OUT/${id}_v1.mp4"
