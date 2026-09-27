@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""chain_vo.py <ep_dir> <src_dir> [seg_id ...]
+"""chain_vo.py <ep_dir> <src_dir> [--clone] [seg_id ...]
 
 Takes externally generated per-segment voice files (any sample rate / channel count —
-e.g. the Hindi platform-TTS takes in vo_hi/), runs them through the SAME locked
-broadcast chain the scratch voice uses (imported live from gen_vo_scratch.py, so the
-two paths can never drift) and writes the files assemble_vo.py expects:
+e.g. a user-owned ElevenLabs clone or Hindi platform-TTS takes), runs them through
+its matching locked broadcast chain, and writes the files assemble_vo.py expects:
+
+`--clone` selects the clone chain, including its gentle noise-floor treatment. The
+default remains the scratch/TTS chain so existing Hindi workflows retain their
+previous sound. Neither path calls a provider API or requires a provider credential.
 
     p_<id>.wav   48 kHz mono, de-rumbled, de-mudded, presence + air, compressed,
                  de-essed, one short room reflection, limited
@@ -25,7 +28,6 @@ import json, os, pathlib, re, subprocess, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import binpaths
-from gen_vo_scratch import CHAIN, TRIM          # one chain, two voice sources
 
 # shortest the picture can be without clipping its own choreography (seconds)
 MIN = {"m00": 7.3, "m01": 7.6, "m02": 9.5, "m03": 8.4, "m04": 8.9, "m05": 14.8,
@@ -38,12 +40,24 @@ def dur(path):
 
 def main():
     args = [a for a in sys.argv[1:]]
+    profile = "scratch"
+    if "--clone" in args:
+        profile = "clone"; args.remove("--clone")
     cap = 1.25
     if "--no-fit" in args:
         cap = 1.0; args.remove("--no-fit")
     if "--fit-cap" in args:
         i = args.index("--fit-cap"); cap = float(args[i + 1]); del args[i:i + 2]
+    if len(args) < 2:
+        raise SystemExit("usage: chain_vo.py <episode_dir> <source_dir> [--clone] [--no-fit] [seg_id ...]")
+    if profile == "clone":
+        # A supplied ElevenLabs clone is already the authority take; it gets the
+        # same v2 finishing chain as gen_vo_lib.py, without an API re-generation.
+        from gen_vo_lib import CHAIN, TRIM
+    else:
+        from gen_vo_scratch import CHAIN, TRIM
     ep = pathlib.Path(args[0]); src = ep / args[1]; only = set(args[2:])
+    print(f"VOICE IMPORT · profile={profile} · fit_cap={cap:.2f}")
     cfg = json.load(open(ep / "segments.json"))
     durs = {}
     FF = binpaths.ffmpeg()

@@ -7,7 +7,8 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 EP="$ROOT/$1"
 FILM="$ROOT/$2"
 MODE="${3:-}"
-PY=python3
+PY="${FBM_PYTHON:-$ROOT/.venv/bin/python}"
+[ -x "$PY" ] || PY=python3
 cd "$ROOT"
 
 echo "── 1/12 VO ───────────────────────────────────────────"

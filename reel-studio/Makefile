@@ -1,4 +1,6 @@
-PYTHON ?= python3
+# Prefer the isolated environment created by `make bootstrap`; callers may override
+# with `make PYTHON=/path/to/python …`.
+PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 
 .PHONY: help intake hero motion-plan motion-qc preflight record-publish bootstrap list-topics
 

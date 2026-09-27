@@ -14,7 +14,7 @@ This is an operator handoff, not a vendor-API promise. Export muted, vertical MP
 
 ## Beat contracts
 
-### m00 · 0.00s–3.38s · hook_fear
+### m00 · 0.00s–3.43s · hook_fear
 
 - **Provider lane:** `veo_3_1` — Veo 3.1 — cinematic atmosphere, volumetric light, and resolve shots; mute native audio
 - **Deliver:** `assets/motion/m00_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 5s
@@ -29,7 +29,7 @@ This is an operator handoff, not a vendor-API promise. Export muted, vertical MP
 ominous forward camera push; story context: Women don't get "bulky". Beat intention: Lifting does not accidentally make women bulky.. Motion: slow_push_in + drifting_dust. 9:16 vertical composition, 1080x1920, 30fps master. One dominant moving subject only; secondary dust or atmosphere at 20–40% strength. Camera moves in one slow monotonic direction, never whip-pans. Upper-left key light, 4800–5200K white balance, graphite #101115 shadow floor, gold #D4A148 resolve, cyan #3FC6E0 science accents. No embedded captions, logos, UI, typography, watermarks, or audio. Generate at least one second longer than the required beat for editorial trim headroom.
 ```
 
-### m01 · 3.38s–11.13s · myth_fear
+### m01 · 3.43s–9.42s · myth_fear
 
 - **Provider lane:** `runway_gen4` — Runway Gen-4 / Gen-4 Turbo — controlled image-to-video and reference-led hero motion
 - **Deliver:** `assets/motion/m01_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 10s
@@ -43,7 +43,7 @@ ominous forward camera push; story context: Women don't get "bulky". Beat intent
 single athlete or training object under tension; story context: Women don't get "bulky". Beat intention: You are not one dumbbell session away from a new body. That fear keeps too many women away from getting stronger.. Motion: restrained_push + micro_drift. 9:16 vertical composition, 1080x1920, 30fps master. One dominant moving subject only; secondary dust or atmosphere at 20–40% strength. Camera moves in one slow monotonic direction, never whip-pans. Upper-left key light, 4800–5200K white balance, graphite #101115 shadow floor, gold #D4A148 resolve, cyan #3FC6E0 science accents. No embedded captions, logos, UI, typography, watermarks, or audio. Generate at least one second longer than the required beat for editorial trim headroom.
 ```
 
-### m02 · 11.13s–20.87s · mechanism
+### m02 · 9.42s–16.50s · mechanism
 
 - **Provider lane:** `complete_anatomy_capture` — Complete Anatomy / BioDigital capture — animated anatomy only
 - **Deliver:** `assets/motion/m02_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 10s
@@ -57,7 +57,7 @@ single athlete or training object under tension; story context: Women don't get 
 one body system visibly moving; story context: Women don't get "bulky". Beat intention: The female-only research measures change across four weeks to twelve months, not one workout. That is what gradual adaptation looks like.. Motion: rhythmic_physical_cycle + slow_orbit. 9:16 vertical composition, 1080x1920, 30fps master. One dominant moving subject only; secondary dust or atmosphere at 20–40% strength. Camera moves in one slow monotonic direction, never whip-pans. Upper-left key light, 4800–5200K white balance, graphite #101115 shadow floor, gold #D4A148 resolve, cyan #3FC6E0 science accents. No embedded captions, logos, UI, typography, watermarks, or audio. Generate at least one second longer than the required beat for editorial trim headroom.
 ```
 
-### m03 · 20.87s–32.76s · proof_graph
+### m03 · 16.50s–28.05s · proof_graph
 
 - **Provider lane:** `fusion_motion_graphics` — Resolve Fusion / After Effects / Remotion — data drawing over a moving ground
 - **Deliver:** `assets/motion/m03_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 10s
@@ -71,7 +71,7 @@ one body system visibly moving; story context: Women don't get "bulky". Beat int
 one drawing line or proof marker; story context: Women don't get "bulky". Beat intention: Across ten studies, women and men showed no meaningful difference in relative muscle growth from the same programme. Women can build muscle. That is not the same as getting bulky by accident.. Motion: data_draw + continuous_graphite_drift. 9:16 vertical composition, 1080x1920, 30fps master. One dominant moving subject only; secondary dust or atmosphere at 20–40% strength. Camera moves in one slow monotonic direction, never whip-pans. Upper-left key light, 4800–5200K white balance, graphite #101115 shadow floor, gold #D4A148 resolve, cyan #3FC6E0 science accents. No embedded captions, logos, UI, typography, watermarks, or audio. Generate at least one second longer than the required beat for editorial trim headroom.
 ```
 
-### m04_squat · 32.76s–36.61s · protocol
+### m04_squat · 28.05s–31.10s · protocol
 
 - **Provider lane:** `artgrid_stock` — Artgrid / approved licensed stock — authentic human effort and gym texture
 - **Deliver:** `assets/motion/m04_squat_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 5s
@@ -85,7 +85,7 @@ one drawing line or proof marker; story context: Women don't get "bulky". Beat i
 Real athlete performing a controlled squat or leg press, real load physics, knees and feet anatomically credible, slow dolly toward the working lower body, single moving subject, steady gym background, no embedded type or logos. 9:16 vertical composition, 1080x1920, 30fps, muted, upper-left key, 4800–5200K, Editorial Athletic grade target.
 ```
 
-### m04_row · 36.61s–40.46s · protocol
+### m04_row · 31.10s–33.70s · protocol
 
 - **Provider lane:** `artgrid_stock` — Artgrid / approved licensed stock — authentic human effort and gym texture
 - **Deliver:** `assets/motion/m04_row_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 5s
@@ -99,7 +99,7 @@ Real athlete performing a controlled squat or leg press, real load physics, knee
 Real athlete performing a controlled rowing movement, visible scapular control and natural resistance, slow dolly toward the working upper back, single moving subject, steady gym background, no embedded type or logos. 9:16 vertical composition, 1080x1920, 30fps, muted, upper-left key, 4800–5200K, Editorial Athletic grade target.
 ```
 
-### m04_press · 40.46s–44.31s · protocol
+### m04_press · 33.70s–37.35s · protocol
 
 - **Provider lane:** `artgrid_stock` — Artgrid / approved licensed stock — authentic human effort and gym texture
 - **Deliver:** `assets/motion/m04_press_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 5s
@@ -113,7 +113,7 @@ Real athlete performing a controlled rowing movement, visible scapular control a
 Real athlete performing a controlled press, natural shoulder path and real weight physics, slow dolly toward the working muscle, single moving subject, steady gym background, no embedded type or logos. 9:16 vertical composition, 1080x1920, 30fps, muted, upper-left key, 4800–5200K, Editorial Athletic grade target.
 ```
 
-### m05 · 44.31s–54.51s · cta_resolve
+### m05 · 37.35s–44.29s · cta_resolve
 
 - **Provider lane:** `runway_gen4` — Runway Gen-4 / Gen-4 Turbo — controlled image-to-video and reference-led hero motion
 - **Deliver:** `assets/motion/m05_v1.mp4` · 1080x1920 · 30fps · muted MP4 · at least 10s
@@ -121,10 +121,10 @@ Real athlete performing a controlled press, natural shoulder path and real weigh
 - **One moving hero:** one forward resolve subject
 - **Loop:** YES — extend/loop without a tail freeze
 - **Grade:** gold resolve over graphite, steady camera
-- **Seed:** `12536` · **cache key:** `e9a3143529144cc3ebd5`
+- **Seed:** `12536` · **cache key:** `55f21af8bad7e7ddb27e`
 
 ```text
-one forward resolve subject; story context: Women don't get "bulky". Beat intention: Comment the lift you have been avoiding. Follow Fitness By Maddy. We do not chase bodies. We teach you to read yours.. Motion: confident_forward_push + restrained_gold_bloom. 9:16 vertical composition, 1080x1920, 30fps master. One dominant moving subject only; secondary dust or atmosphere at 20–40% strength. Camera moves in one slow monotonic direction, never whip-pans. Upper-left key light, 4800–5200K white balance, graphite #101115 shadow floor, gold #D4A148 resolve, cyan #3FC6E0 science accents. No embedded captions, logos, UI, typography, watermarks, or audio. Generate at least one second longer than the required beat for editorial trim headroom.
+one forward resolve subject; story context: Women do not get bulky from lifting. Beat intention: Comment the lift you have been avoiding. Next, the rep range that actually builds muscle. Motion: confident_forward_push + restrained_gold_bloom. 9:16 vertical composition, 1080x1920, 30fps master. One dominant moving subject only; secondary dust or atmosphere at 20–40% strength. Camera moves in one slow monotonic direction, never whip-pans. Upper-left key light, 4800–5200K white balance, graphite #101115 shadow floor, gold #D4A148 resolve, cyan #3FC6E0 science accents. No embedded captions, logos, UI, typography, watermarks, or audio. Generate at least one second longer than the required beat for editorial trim headroom.
 ```
 
 ## Before handing clips to Film
