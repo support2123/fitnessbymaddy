@@ -52,20 +52,22 @@ jobs:
           GH_API: ${{ github.api_url }}
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
-          ISSUE_NUMBER: ${{ steps.handoff.outputs.issue_number }}
+          BRIDGE_BRANCH: ${{ github.ref_name }}
+          RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
           umask 077
+          bridge_path=".arena-voice-bridge/${RUN_ID}.b64"
           received=false
           for attempt in $(seq 1 120); do
-            curl --fail-with-body --silent --show-error \
-              "$GH_API/repos/$GH_REPO/issues/$ISSUE_NUMBER/comments?per_page=100" \
+            status=$(curl --silent --show-error --output /tmp/bridge-payload.json --write-out '%{http_code}' \
+              "$GH_API/repos/$GH_REPO/contents/$bridge_path?ref=$BRIDGE_BRANCH" \
               -H "Authorization: Bearer $GH_TOKEN" \
-              -H 'Accept: application/vnd.github+json' > /tmp/bridge-comments.json
-            payload=$(jq -r '[.[] | select(.body | startswith("BRIDGE_PAYLOAD:"))] | last | .body // empty' /tmp/bridge-comments.json)
-            if [ -n "$payload" ]; then
-              encoded=${payload#BRIDGE_PAYLOAD:}
-              if printf '%s' "$encoded" | base64 --decode > /tmp/transfer-link.enc 2>/dev/null && \
+              -H 'Accept: application/vnd.github+json')
+            if [ "$status" = 200 ]; then
+              encoded=$(jq -r '.content // empty' /tmp/bridge-payload.json | tr -d '\n')
+              if [ -n "$encoded" ] && \
+                 printf '%s' "$encoded" | base64 --decode > /tmp/transfer-link.enc 2>/dev/null && \
                  openssl pkeyutl -decrypt -inkey /tmp/transfer-handoff-private.key -in /tmp/transfer-link.enc -out /tmp/transfer-url; then
                 transfer_url=$(cat /tmp/transfer-url)
                 if [[ "$transfer_url" == https://we.tl/* || "$transfer_url" == https://wetransfer.com/* ]]; then
