@@ -1,0 +1,62 @@
+name: Encrypted voice-clone intake
+
+# Short-lived retrieval bridge. The expiring link is supplied at dispatch time only;
+# it is not written to this repository or printed in workflow logs.
+on:
+  workflow_dispatch:
+    inputs:
+      transfer_url:
+        description: Expiring source transfer URL
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  retrieve-and-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve approved clone transfer
+        env:
+          TRANSFER_URL: ${{ inputs.transfer_url }}
+        run: |
+          set -euo pipefail
+          umask 077
+          python3 -m pip install --quiet requests
+          cat > /tmp/retrieve.py <<'PY'
+          import os, re
+          from pathlib import Path
+          from urllib.parse import urlparse, unquote
+          import requests
+          u=os.environ['TRANSFER_URL']
+          if not u.startswith('https://'): raise SystemExit('Missing transfer URL.')
+          s=requests.Session(); s.headers.update({'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36','x-requested-with':'XMLHttpRequest'})
+          landing=s.get(u,allow_redirects=True,timeout=60); landing.raise_for_status()
+          parts=[p for p in urlparse(landing.url).path.split('/') if p]; pos=parts.index('downloads')
+          tid, sec=parts[pos+1], parts[pos+2]
+          csrf=re.search(r'name="csrf-token" content="([^"]+)"',landing.text)
+          if csrf: s.headers['x-csrf-token']=csrf.group(1)
+          r=s.post(f'https://wetransfer.com/api/v4/transfers/{tid}/download',json={'intent':'entire_transfer','security_hash':sec},timeout=60); r.raise_for_status()
+          direct=r.json().get('direct_link')
+          if not direct: raise SystemExit('WeTransfer did not return a download URL.')
+          media=s.get(direct,stream=True,timeout=180); media.raise_for_status()
+          disp=media.headers.get('content-disposition','')
+          match=re.search(r'''filename\*?=(?:UTF-8'')?["']?([^"';]+)''',disp,re.I)
+          name=Path(unquote(match.group(1)) if match else 'clone3-intake.bin').name
+          folder=Path('/tmp/clone3'); folder.mkdir(mode=0o700)
+          dest=folder/name; size=0
+          with dest.open('wb') as h:
+            for chunk in media.iter_content(1024*1024):
+              if chunk: h.write(chunk); size += len(chunk)
+          if size < 256: raise SystemExit('Transfer payload was unexpectedly small.')
+          print(f'Retrieved approved clone intake: {size} bytes.')
+          PY
+          python3 /tmp/retrieve.py
+      - name: Make a one-day protected handoff
+        uses: actions/upload-artifact@v4
+        with:
+          name: rep-range-clone3-intake
+          path: /tmp/clone3/*
+          if-no-files-found: error
+          retention-days: 1
