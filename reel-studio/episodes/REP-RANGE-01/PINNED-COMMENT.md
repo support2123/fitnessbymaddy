@@ -1,0 +1,1 @@
+Eight to twelve is efficient, not magic. For muscle, choose a load you can control and finish close to failure. For heavy compounds, leave one to two good reps in the tank. Comment 30 if this changed how you train.
