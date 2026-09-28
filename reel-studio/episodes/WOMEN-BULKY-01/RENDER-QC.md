@@ -1,10 +1,12 @@
 # Render QC — WOMEN-BULKY-01 · live-motion rebuild
 
-**Render date:** 27 September 2026
+**Render date:** 28 September 2026 · local recovery rebuild
 
 **Master:** `WOMEN-BULKY-01-PUBLISH.mp4` (local delivery file)
 
-**SHA-256:** `191e24f49024bdb83a2cc5dd014e6471935394da1ff25e501ac563fb26f1b70b`
+**SHA-256:** `920089a759ee12bc749231ae9866ddc18db97d47b0b2e993cecd226296620300`
+
+The recovered local master uses the same locked Clone-3 source, VO-led timeline, live-motion assets, film module, and master settings as the prior review build. It remains a **review master**, pending the human release gates below.
 
 ## Render and media checks
 
