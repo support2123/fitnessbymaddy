@@ -4,9 +4,9 @@ import json, math, os, sys
 HERE=os.path.dirname(os.path.abspath(__file__)); ROOT=os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0,os.path.join(ROOT,'tools','engine'))
 from filmlib import *
-from motion_media import MotionDeck, live_scene
 from doctrine_kit import Box, assert_safe, clock_lands_on_cta
-TL=json.load(open(os.path.join(HERE,'timeline.json'))); B={k:list(v) for k,v in TL['seg'].items()}; TOTAL=TL['total']; FPS=TL['fps']; TITLE='REP RANGE · DECODE'; DECK=MotionDeck(HERE)
+TL=json.load(open(os.path.join(HERE,'timeline.json'))); B={k:list(v) for k,v in TL['seg'].items()}; TOTAL=TL['total']; FPS=TL['fps']; TITLE='REP RANGE · DECODE'
+STILL={'m00':'hook.jpg','m01':'lie.jpg','m02':'system.jpg','m03':'trade.jpg','m04':'receipt.jpg','m05':'protocol.jpg','m06':'cta.jpg'}; CACHE={}
 assert_safe(Box(90,530,990,1290,'headline and proof'))
 assert_safe(Box(90,1370,930,1575,'illustrative trace'))
 
@@ -17,7 +17,21 @@ def wash(base, dark=.16):
     d.rectangle([0,1220,W,H],fill=(5,8,11,205))
     d.rectangle([0,450,W,1220],fill=(4,7,10,int(35+dark*110)))
     return Image.alpha_composite(base.convert('RGBA'),lay)
-def bg(s,t,w,dark=.13): return wash(live_scene(DECK,s,t,w,dark=0),dark)
+def bg(s,t,w,dark=.13):
+    # Purpose-built stills, not recycled footage: a slow optical push, lateral drift,
+    # depth haze and moving particles make each picture beat visibly alive.
+    if s not in CACHE:
+        CACHE[s]=Image.open(os.path.join(HERE,'assets','stills',STILL[s])).convert('RGBA')
+    u=clamp((t-w[0])/max(.01,w[1]-w[0])); im=CACHE[s]
+    scale=1.12+.09*u; ww,hh=int(W*scale),int(H*scale)
+    base=im.resize((ww,hh),Image.LANCZOS)
+    x=int((ww-W)*(.25+.35*u)); y=int((hh-H)*(.22+.18*math.sin((u+.12)*math.pi)))
+    base=base.crop((x,y,x+W,y+H))
+    haze=Image.new('RGBA',(W,H),(0,0,0,0)); d=ImageDraw.Draw(haze)
+    for i in range(22):
+        x=(i*137+int(t*31))%W; y=(i*283+int(t*47))%H; r=1+(i%3)
+        d.ellipse((x-r,y-r,x+r,y+r),fill=C['GOLD']+(22+(i%4)*6,))
+    return wash(Image.alpha_composite(base,haze),dark)
 def label(b,txt,col='GOLD'):
     b=put(b,text_img('DECODE · REP RANGE','mono',19,col,tracking=4.2),(90,278),'lt',opacity=.95,shadow=False)
     return put(b,text_img(txt,'mono',18,'INK',tracking=3.0),(90,326),'lt',opacity=.88,shadow=False)

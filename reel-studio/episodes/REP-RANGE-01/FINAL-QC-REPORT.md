@@ -1,17 +1,8 @@
 # REP-RANGE-01 — final QC
 
-**Master:** `REP-RANGE-01-PUBLISH.mp4`
-
-**Duration:** 80.60 seconds / 2,418 frames at 30 fps
-
-**Picture:** H.264, 1080 × 1920 vertical; clean decode
-
-**Audio:** supplied Maddy Clone-3 narration; 48 kHz; −14.1 LUFS; −1.2 dBFS peak
-
-**Motion:** strict manifest PASS; optical-flow/freeze-tail QC PASS
-
-**Metadata scan:** sterile publish PASS
-
-**Cover:** extracted directly from master frame 0
-
-The master is retained in `reel-studio/deliverables/REP-RANGE-01-PUBLISH.mp4`.
+- **Master:** H.264 / 1080 × 1920 / 30 fps / 80.58 seconds.
+- **Audio:** supplied Maddy Clone-3 mix retained unchanged; −14.1 LUFS; −1.2 dBFS peak.
+- **Decode and sterile metadata scan:** PASS.
+- **Motion QC:** PASS. Each chapter has continuous image motion, with no near-static or freeze-tail failure.
+- **Background selection:** PASS. Seven purpose-built, text-matched stills replace all reused prior-reel background video.
+- **Cover:** extracted directly from the revised master frame zero.
