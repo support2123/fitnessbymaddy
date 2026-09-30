@@ -98,8 +98,11 @@ for p in PRICES_BLOCKED:
         add("BLOCK", "price-drift", PRICES_BLOCKED[p])
 
 # 6 · hype adjectives + absolute verbs
+visible_copy = (seg + cap).lower()
 for w in ["insane", "crazy", "shredded af", "god-tier", "secret weapon", "guarantees", "cures", "melts fat", "detoxes"]:
-    if w in (seg + cap).lower():
+    # Teaching people to *avoid* a detox product is safety guidance, not a detox promise.
+    negated_safety_use = w == "detoxes" and re.search(r"\b(skip|avoid)\b[^.\n]{0,70}\bdetoxes\b", visible_copy)
+    if w in visible_copy and not negated_safety_use:
         add("BLOCK", "hype-or-absolute", f"{w!r} present")
 
 res = dict(episode=EP, findings=findings,

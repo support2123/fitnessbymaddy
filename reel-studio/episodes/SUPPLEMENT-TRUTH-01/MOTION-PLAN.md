@@ -2,7 +2,7 @@
 
 ## Visual direction
 
-A high-contrast, premium **clinical-athletic vault**: graphite space, brushed chrome, mineral amber, cyan diagnostic lines, macro ingredient photography, and six new chapter-specific backgrounds. No recycled previous-reel video backgrounds. Still-life plates receive continuous 2.5D camera movement, depth haze, texture particles, and illustrated data overlays; human footage is reserved only where it explains resistance training.
+A high-contrast, premium **clinical-athletic vault**: graphite space, brushed chrome, mineral amber, cyan diagnostic lines, macro ingredient photography, and nine new chapter-specific backgrounds. No recycled previous-reel video backgrounds. Still-life plates receive continuous 2.5D camera movement, depth haze, texture particles, and illustrated data overlays; human footage is reserved only where it explains resistance training.
 
 ## Beat map
 

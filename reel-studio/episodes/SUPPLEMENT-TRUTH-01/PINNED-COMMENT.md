@@ -1,0 +1,1 @@
+The decision is not “which supplement is best?” It is “what specific gap am I filling?” Food first. Test or clinician plan when there is a real reason. Creatine is optional performance support—not a requirement. Comment CHECKLIST for the sources.
