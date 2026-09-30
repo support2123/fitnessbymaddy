@@ -1,0 +1,1 @@
+No fake 21-day promise here. Pick a cue, make a repeatable plan, and build your week. 150 minutes and two strength days is a public-health benchmark—not a reason to go from zero to all-out. Train with purpose. — FitnessByMaddy
