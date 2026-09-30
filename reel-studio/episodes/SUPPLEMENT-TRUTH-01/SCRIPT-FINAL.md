@@ -2,7 +2,7 @@
 
 **Title:** `THE SUPPLEMENT CHECKLIST`
 
-**Spoken words:** 142
+**Spoken words:** 143
 
 **Target:** 58–65 seconds at a natural delivery.
 
