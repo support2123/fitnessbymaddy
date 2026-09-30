@@ -1,15 +1,14 @@
 # SUPPLEMENT-TRUTH-01 — Maddy Clone-3 render brief
 
-Render the approved script in **natural English** with Maddy’s approved Clone-3 voice. Do not speed up or pitch-shift. Keep the delivery calm, evidence-led, and decisive—not ad-like.
+Render the approved simple-English script in Maddy’s approved Clone-3 voice. Natural pace, calm and clear—not ad-like. Do not speed up or pitch-shift.
 
 Export 48 kHz mono WAV files named exactly:
 
-- `m00.wav` — “Most supplements solve a marketing problem. Start with the gap.”
-- `m01.wav` — “If food already covers protein, powder is not essential. It is convenience.”
-- `m02.wav` — “Plant-based or low in animal foods? Vitamin B12 deserves attention. Long-term metformin, acid-suppressing drugs, gut disease, or older age can matter too.”
-- `m03.wav` — “Vitamin D is not a universal megadose. Consider a test or clinician plan for limited sun, darker skin, malabsorption, obesity, or a known low level.”
-- `m04.wav` — “Iron is not an energy drink. Use it for confirmed deficiency or clinician-led pregnancy care—not because you feel tired.”
-- `m05.wav` — “For healthy adults who resistance train, creatine monohydrate is a best-supported performance option: three to five grams daily. Useful? Yes. Essential? No.”
-- `m06.wav` — “Skip fat burners, testosterone boosters, detoxes, and proprietary blends. Pregnant, on prescriptions, or managing kidney or liver disease? Ask your clinician first. Buy the gap. Not the label. Comment CHECKLIST for sources.”
+- `m00.wav` — “Before you buy another supplement, ask one question: what gap am I filling? Most people buy powders before they need them.”
+- `m01.wav` — “Protein powder is not magic. If food gives you enough protein, you do not need it. Use it only when food is not practical.”
+- `m02.wav` — “Eat little or no animal food? Check B12. Low sunlight? Ask about vitamin D. Do not take huge doses just because Instagram said so.”
+- `m03.wav` — “Iron is not for low-energy guesses. Take it only when a test or your doctor says you need it.”
+- `m04.wav` — “Lift weights? Creatine monohydrate is one of the few that works. Three to five grams a day can help training. But it is optional, not essential.”
+- `m05.wav` — “Skip fat burners, detoxes, testosterone boosters, and mystery blends. Pregnant, on medicines, or have kidney or liver problems? Ask your clinician first. Supplements fill a gap. They never replace food. Comment CHECKLIST for the sources.”
 
 Leave approximately 250–500 ms of clean head and tail room per segment. Do not add music or sound effects. Upload a ZIP or a full WAV after rendering.

@@ -2,29 +2,31 @@
 
 **Title:** `THE SUPPLEMENT CHECKLIST`
 
-**Spoken words:** 143
+**Spoken words:** 149
 
-**Target:** 58–65 seconds at a natural delivery.
+**Target:** 55–65 seconds at a natural delivery.
 
-**Language:** English.
+**Language:** simple English.
 
 **Safety:** Educational, not individual medical advice.
 
-> Most supplements solve a marketing problem. Start with the gap.
+> Before you buy another supplement, ask one question: what gap am I filling?
 >
-> If food already covers protein, powder is not essential. It is convenience.
+> Most people buy powders before they need them.
 >
-> Plant-based or low in animal foods? Vitamin B12 deserves attention. Long-term metformin, acid-suppressing drugs, gut disease, or older age can matter too.
+> Protein powder is not magic. If food gives you enough protein, you do not need it. Use it only when food is not practical.
 >
-> Vitamin D is not a universal megadose. Consider a test or clinician plan for limited sun, darker skin, malabsorption, obesity, or a known low level.
+> Eat little or no animal food? Check B12. Low sunlight? Ask about vitamin D. Do not take huge doses just because Instagram said so.
 >
-> Iron is not an energy drink. Use it for confirmed deficiency or clinician-led pregnancy care—not because you feel tired.
+> Iron is not for low-energy guesses. Take it only when a test or your doctor says you need it.
 >
-> For healthy adults who resistance train, creatine monohydrate is a best-supported performance option: three to five grams daily. Useful? Yes. Essential? No.
+> Lift weights? Creatine monohydrate is one of the few that works. Three to five grams a day can help training. But it is optional, not essential.
 >
-> Skip fat burners, testosterone boosters, detoxes, and proprietary blends. Pregnant, on prescriptions, or managing kidney or liver disease? Ask your clinician first.
+> Skip fat burners, detoxes, testosterone boosters, and mystery blends.
 >
-> Buy the gap. Not the label. Comment CHECKLIST for sources.
+> Pregnant, on medicines, or have kidney or liver problems? Ask your clinician first.
+>
+> Supplements fill a gap. They never replace food. Comment CHECKLIST for the sources.
 
 ## Locked on-screen number rules
 
