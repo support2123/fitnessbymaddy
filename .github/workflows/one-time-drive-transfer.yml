@@ -12,26 +12,33 @@ jobs:
       - name: Fetch, trim and package licensed stock clips
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           mkdir -p clips raw
+          exec > >(tee bridge.log) 2>&1
           cat > clips.tsv <<'EOF'
-          deadlift|https://videos.pexels.com/video-files/12890962/12890962-uhd_1440_2560_60fps.mp4|3
-          curls|https://videos.pexels.com/video-files/5319426/5319426-uhd_1440_2560_25fps.mp4|5
-          pullups|https://videos.pexels.com/video-files/5752496/5752496-uhd_1440_2560_25fps.mp4|2
-          treadmill|https://videos.pexels.com/video-files/5320011/5320011-uhd_1440_2560_25fps.mp4|4
-          ropes|https://videos.pexels.com/video-files/4117488/4117488-uhd_1440_2560_25fps.mp4|2
-          boxing|https://videos.pexels.com/video-files/5752370/5752370-uhd_1440_2560_25fps.mp4|3
-          dumbbells|https://videos.pexels.com/video-files/5319439/5319439-uhd_1440_2560_25fps.mp4|6
-          barbell|https://videos.pexels.com/video-files/5319095/5319095-uhd_1440_2560_25fps.mp4|8
-          sprint|https://videos.pexels.com/video-files/4921639/4921639-hd_1066_1920_25fps.mp4|2
+          deadlift|https://www.pexels.com/download/video/12890962/|3
+          curls|https://www.pexels.com/download/video/5319426/|5
+          pullups|https://www.pexels.com/download/video/5752496/|2
+          treadmill|https://www.pexels.com/download/video/5320011/|4
+          ropes|https://www.pexels.com/download/video/4117488/|2
+          boxing|https://www.pexels.com/download/video/5752370/|3
+          dumbbells|https://www.pexels.com/download/video/5319439/|6
+          barbell|https://www.pexels.com/download/video/5319095/|8
+          sprint|https://www.pexels.com/download/video/4921639/|2
           EOF
           while IFS='|' read -r name url ss; do
-            curl -L --fail --retry 4 --retry-delay 2 -A 'Mozilla/5.0' "$url" -o "raw/$name.mp4"
-            ffmpeg -y -ss "$ss" -i "raw/$name.mp4" -t 3.34 -an -vf "fps=30,scale=540:960:force_original_aspect_ratio=increase,crop=540:960,eq=contrast=1.10:saturation=0.86:brightness=-0.025" -c:v libx264 -preset veryfast -crf 20 -movflags +faststart "clips/$name.mp4"
+            echo "FETCH $name"
+            if ! curl -L --fail --retry 4 --retry-delay 2 -A 'Mozilla/5.0' "$url" -o "raw/$name.mp4"; then echo "FAILED_DOWNLOAD $name"; continue; fi
+            if ! ffmpeg -y -ss "$ss" -i "raw/$name.mp4" -t 3.34 -an -vf "fps=30,scale=540:960:force_original_aspect_ratio=increase,crop=540:960,eq=contrast=1.10:saturation=0.86:brightness=-0.025" -c:v libx264 -preset veryfast -crf 20 -movflags +faststart "clips/$name.mp4"; then echo "FAILED_CONFORM $name"; rm -f "clips/$name.mp4"; fi
           done < clips.tsv
+          find clips -maxdepth 1 -name "*.mp4" -print -quit | grep -q . || { echo "NO_CLIPS_CREATED"; exit 1; }
           sha256sum clips/*.mp4 > clips/SHA256SUMS.txt
-      - uses: actions/upload-artifact@v4
+          cp bridge.log clips/bridge.log
+      - if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: motivation-video-clips
-          path: clips/
+          path: |
+            clips/
+            bridge.log
           retention-days: 1
