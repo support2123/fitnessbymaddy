@@ -16,7 +16,7 @@ HIIT is not magic either. When total work is matched, HIIT and steady cardio usu
 
 Then lift. Resistance training may not create the biggest scale drop, but during diet-based weight loss it helps preserve lean mass, strength, and improves the quality of the weight you lose.
 
-The winning stack: a manageable deficit, protein- and fibre-rich meals, at least two strength sessions, 150 to 300 cardio minutes, and more daily movement.
+The winning stack: a manageable deficit, protein- and fibre-rich meals, at least two strength sessions, 150 to 300 cardio minutes, more daily movement, and recovery that lets you repeat it.
 
 Track the trend. Adjust slowly. If you are pregnant, injured, managing diabetes or medication, or have an eating-disorder history, get personal guidance from a qualified clinician.
 
