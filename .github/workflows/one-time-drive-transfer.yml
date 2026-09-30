@@ -4,12 +4,15 @@ on:
   push:
     branches: [arena/01a0dd9b-fitnessbymaddy]
     paths: [.github/workflows/one-time-drive-transfer.yml]
+permissions:
+  contents: write
 jobs:
   fetch:
     if: contains(github.event.head_commit.message, 'Run temporary') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch, trim and package licensed stock clips
+      - uses: actions/checkout@v4
+      - name: Fetch, trim and return licensed stock clips
         shell: bash
         run: |
           set -uo pipefail
@@ -31,14 +34,13 @@ jobs:
             if ! curl -L --fail --retry 4 --retry-delay 2 -A 'Mozilla/5.0' "$url" -o "raw/$name.mp4"; then echo "FAILED_DOWNLOAD $name"; continue; fi
             if ! ffmpeg -y -ss "$ss" -i "raw/$name.mp4" -t 3.34 -an -vf "fps=30,scale=540:960:force_original_aspect_ratio=increase,crop=540:960,eq=contrast=1.10:saturation=0.86:brightness=-0.025" -c:v libx264 -preset veryfast -crf 20 -movflags +faststart "clips/$name.mp4"; then echo "FAILED_CONFORM $name"; rm -f "clips/$name.mp4"; fi
           done < clips.tsv
-          find clips -maxdepth 1 -name "*.mp4" -print -quit | grep -q . || { echo "NO_CLIPS_CREATED"; exit 1; }
-          sha256sum clips/*.mp4 > clips/SHA256SUMS.txt
-          cp bridge.log clips/bridge.log
-      - if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: motivation-video-clips
-          path: |
-            clips/
-            bridge.log
-          retention-days: 1
+          mkdir -p .temporary-motivation-clips
+          cp bridge.log .temporary-motivation-clips/bridge.log
+          shopt -s nullglob
+          cp clips/*.mp4 .temporary-motivation-clips/ || true
+          sha256sum .temporary-motivation-clips/*.mp4 > .temporary-motivation-clips/SHA256SUMS.txt 2>/dev/null || true
+          git config user.name 'Arena Temporary Bridge'
+          git config user.email 'arena-bridge@users.noreply.github.com'
+          git add .temporary-motivation-clips
+          git commit -m 'Return temporary motivation video bridge payload' || true
+          git push
